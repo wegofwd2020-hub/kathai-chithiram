@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Environment / secrets
+.env
+*.key
+secrets/
+
+# Generated media artifacts (do not commit rendered output by default)
+*.mp4
+*.mov
+*.gif
+*.wav
+*.mp3
+renders/
+out/
+tmp/
+
+# Personal story data — NEVER commit
+stories/
+story_data/
+*.story.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
