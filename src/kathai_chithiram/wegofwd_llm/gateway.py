@@ -57,6 +57,7 @@ def run_generation(
     provider: LLMProvider,
     config: ProviderConfig,
     request_id: str,
+    system_prompt: str = "",
     clock: Callable[[], datetime] | None = None,
 ) -> GenerationResult:
     """Pseudonymize, guard, dispatch, and record a single generation request.
@@ -68,6 +69,9 @@ def run_generation(
         provider: Any concrete provider implementing :class:`LLMProvider`.
         config: The provider configuration; must be privacy-compliant.
         request_id: Caller-supplied correlation id for the audit record.
+        system_prompt: Optional system instructions forwarded to the provider
+            (e.g. the content-safety prompt from
+            :func:`kathai_chithiram.generation.build_generation_system_prompt`).
         clock: Optional callable returning the current time, used to stamp the
             record. Injectable for deterministic tests; if ``None`` the record
             carries no timestamp.
@@ -118,7 +122,9 @@ def run_generation(
         config.zero_retention,
         len(prompt),
     )
-    response = provider.complete(LLMRequest(prompt=prompt, config=config))
+    response = provider.complete(
+        LLMRequest(prompt=prompt, config=config, system_prompt=system_prompt)
+    )
 
     # 5. Record the privacy posture this request ran under.
     record = ProviderRequestRecord(

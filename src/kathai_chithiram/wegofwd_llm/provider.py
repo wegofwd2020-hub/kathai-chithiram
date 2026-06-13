@@ -63,10 +63,13 @@ class LLMRequest:
     Args:
         prompt: The text to send. Must not contain a child identifier.
         config: The provider configuration governing this request.
+        system_prompt: Optional system instructions (e.g. the content-safety
+            prompt). Static policy text, so it carries no child identifier.
     """
 
     prompt: str
     config: ProviderConfig
+    system_prompt: str = ""
 
 
 @dataclass(frozen=True)

@@ -14,6 +14,7 @@ __all__ = [
     "IdentifierLeakError",
     "KathaiChithiramError",
     "ProviderConfigError",
+    "RenderSafetyError",
     "SceneScriptInvalidError",
     "StoryNotFoundError",
 ]
@@ -138,3 +139,24 @@ class DeletionError(KathaiChithiramError):
         self.story_id = story_id
         self.reason = reason
         super().__init__(f"deletion of story {story_id!r} failed: {reason}")
+
+
+class RenderSafetyError(KathaiChithiramError):
+    """A render output or configuration violates a technical safety limit.
+
+    These are the render-time guards of ``docs/CONTENT_SAFETY.md`` §2/§5:
+    frame-rate, flashing / high-contrast oscillation (seizure safety), and audio
+    levels. Output that trips a guard must not reach a child.
+
+    Args:
+        rule: Stable identifier of the violated guard, e.g.
+            ``"render.flash_rate"``.
+        detail: Explanation with measured values (numbers only, no story text).
+    """
+
+    def __init__(self, rule: str, detail: str) -> None:
+        if not rule:
+            raise ValueError("rule must be a non-empty rule identifier")
+        self.rule = rule
+        self.detail = detail
+        super().__init__(f"[{rule}]: {detail}")

@@ -52,8 +52,8 @@ For the current prototype stage, a person reviews each generated story before it
 
 ## 7. Open items (tracked as tickets)
 
-- [ ] Encode MUST/MUST-NOT rules into the generation system prompt.
-- [ ] Implement scene-script safety validation (frame-rate, scene length, banned-content flags).
-- [ ] Implement render-time seizure-safety guards (flash/contrast/audio).
-- [ ] Define the risk-of-harm handling path with appropriate resources.
-- [ ] Keep human review gate until §5 is tested.
+- [x] Encode MUST/MUST-NOT rules into the generation system prompt. *(KC-4: `generation/system_prompt.py`)*
+- [x] Implement scene-script safety validation (frame-rate, scene length, banned-content flags). *(KC-3: `scene_script/validation.py`)*
+- [x] Implement render-time seizure-safety guards (flash/contrast/audio). *(KC-4: `rendering/safety.py`)*
+- [ ] Define the risk-of-harm handling path with appropriate resources. *(ADR-001; not yet built)*
+- [ ] Keep human review gate until §5 is tested. *(REMAINS — automated §5 enforcement is unit-tested but not yet wired into the renderers end-to-end)*
