@@ -77,14 +77,14 @@ A script that violates any rule is **rejected, not rendered**, and the failure i
 
 | Renderer | Status | Notes |
 |---|---|---|
-| `generate_animation.py` | v1 | matplotlib + imageio, stick figures, 24 fps |
-| `blender_animation.py` | v2 | Blender Grease Pencil + compositor text cards |
+| `generate_animation.py` | v1 | matplotlib stick figures; `MatplotlibStickFigureRenderer` |
+| `blender_animation.py` | v2 | Blender Grease Pencil; `BlenderGreasePencilRenderer` |
 
-Both must consume a v1 script unchanged. New renderers must pass the shared contract test suite (mock scripts → asserts) before use.
+Both subclass `kathai_chithiram.rendering.SceneScriptRenderer`, so they consume a v1 script through the shared pipeline (validate → reinsert name → version-gate → render → safety-guard → promote). New renderers must subclass it and pass the shared conformance suite (`tests/kathai_chithiram/rendering/test_conformance.py`) before use.
 
 ## 6. Open items (tracked as tickets)
 
 - [x] Define the JSON Schema for v1 and validate every script against it. *(KC-3: `src/kathai_chithiram/scene_script/schema.py`)*
 - [x] Implement the safety validator (§3) as the gate before rendering. *(KC-3: `validate_scene_script()`)*
-- [ ] Add a shared renderer conformance test suite with mock scripts.
-- [ ] Migrate existing renderers to consume the contract explicitly. *(KC-4)*
+- [x] Add a shared renderer conformance test suite with mock scripts. *(`rendering/pipeline.py` + `test_conformance.py`)*
+- [x] Migrate existing renderers to consume the contract explicitly. *(`SceneScriptRenderer` base; both reference renderers migrated)*

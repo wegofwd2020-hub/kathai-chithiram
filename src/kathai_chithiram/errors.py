@@ -17,6 +17,7 @@ __all__ = [
     "RenderSafetyError",
     "SceneScriptInvalidError",
     "StoryNotFoundError",
+    "UnsupportedSchemaVersionError",
 ]
 
 
@@ -160,3 +161,26 @@ class RenderSafetyError(KathaiChithiramError):
         self.rule = rule
         self.detail = detail
         super().__init__(f"[{rule}]: {detail}")
+
+
+class UnsupportedSchemaVersionError(KathaiChithiramError):
+    """A renderer was handed a scene script whose MAJOR version it can't render.
+
+    The contract has renderers declare the schema MAJOR versions they support
+    (``docs/SCENE_SCRIPT_CONTRACT.md`` §4); this is raised when a script falls
+    outside that set.
+
+    Args:
+        renderer_name: The renderer that rejected the script.
+        major: The script's schema MAJOR version.
+        supported: The MAJOR versions the renderer supports.
+    """
+
+    def __init__(self, renderer_name: str, major: int, supported: list[int]) -> None:
+        self.renderer_name = renderer_name
+        self.major = major
+        self.supported = supported
+        super().__init__(
+            f"renderer {renderer_name!r} does not support schema MAJOR {major} "
+            f"(supports {supported})"
+        )

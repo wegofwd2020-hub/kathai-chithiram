@@ -26,16 +26,15 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+# "." lets the conformance suite import the root-level reference renderers
+# (generate_animation.py / blender_animation.py).
+pythonpath = ["src", "."]
 addopts = "-ra"
 
 [tool.ruff]
 target-version = "py39"
 line-length = 100
 src = ["src", "tests"]
-# Reference prototype renderers predate the WeGoFwd code standards. They are
-# linted only once migrated to consume the scene-script contract (KC-4).
-extend-exclude = ["generate_animation.py", "blender_animation.py"]
 
 [tool.ruff.lint]
 # E/F: pyflakes+pycodestyle, I: isort, B: bugbear, UP: pyupgrade,

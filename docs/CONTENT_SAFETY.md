@@ -56,4 +56,4 @@ For the current prototype stage, a person reviews each generated story before it
 - [x] Implement scene-script safety validation (frame-rate, scene length, banned-content flags). *(KC-3: `scene_script/validation.py`)*
 - [x] Implement render-time seizure-safety guards (flash/contrast/audio). *(KC-4: `rendering/safety.py`)*
 - [ ] Define the risk-of-harm handling path with appropriate resources. *(ADR-001; not yet built)*
-- [ ] Keep human review gate until §5 is tested. *(REMAINS — automated §5 enforcement is unit-tested but not yet wired into the renderers end-to-end)*
+- [ ] Keep human review gate until §5 is tested. *(REMAINS — §5 is now wired end-to-end through `SceneScriptRenderer` (validate → guard before delivery) and covered by the renderer conformance suite, but the gate stays until this is proven in production)*
