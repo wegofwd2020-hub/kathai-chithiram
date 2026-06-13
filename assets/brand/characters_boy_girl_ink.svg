@@ -1,0 +1,90 @@
+<svg width="100%" viewBox="0 0 680 470" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>A young boy and girl in R.K. Laxman's black-and-white ink style</title>
+<desc>The same two children rendered in monochrome pen-and-ink: black outlines on white paper, with cross-hatching standing in for tone instead of colour. A small crow sits to the side.</desc>
+<defs>
+  <pattern id="h1" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <line x1="0" y1="0" x2="0" y2="6" stroke="#1F1F1F" stroke-width="0.8" opacity="0.4"/>
+  </pattern>
+  <pattern id="h2" width="7" height="7" patternUnits="userSpaceOnUse">
+    <path d="M0 7 L7 0 M-1 1 L1 -1 M6 8 L8 6" stroke="#1F1F1F" stroke-width="0.7" opacity="0.5"/>
+    <path d="M0 0 L7 7 M-1 6 L1 8 M6 -1 L8 1" stroke="#1F1F1F" stroke-width="0.7" opacity="0.5"/>
+  </pattern>
+</defs>
+
+<rect x="0" y="0" width="680" height="470" rx="12" fill="#FBFAF7"/>
+<path d="M70 402 Q340 392 612 402" fill="none" stroke="#1F1F1F" stroke-width="2" stroke-linecap="round"/>
+<circle cx="300" cy="408" r="2" fill="#1F1F1F"/><circle cx="324" cy="412" r="2" fill="#1F1F1F"/>
+<circle cx="348" cy="408" r="2" fill="#1F1F1F"/><circle cx="372" cy="412" r="2" fill="#1F1F1F"/>
+<path d="M300 408 Q336 396 372 412" fill="none" stroke="#1F1F1F" stroke-width="1" opacity="0.5"/>
+
+<g stroke="#1F1F1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M168 196 Q150 240 162 286 Q160 320 168 360 L196 360 L204 312 L214 360 L242 360 Q250 318 246 286 Q258 240 240 198" fill="#FBFAF7"/>
+  <path d="M168 196 Q204 184 240 198 L240 220 Q204 210 168 218 Z" fill="url(#h1)"/>
+  <path d="M168 286 Q204 296 246 286 L246 320 Q204 312 162 320 Z" fill="url(#h2)"/>
+  <path d="M236 232 Q236 286 244 300" fill="url(#h1)" stroke="none"/>
+  <path d="M170 200 Q150 250 156 300" fill="none"/>
+  <path d="M242 200 Q268 224 264 150" fill="none"/>
+  <circle cx="264" cy="146" r="9" fill="#FBFAF7"/>
+  <circle cx="156" cy="300" r="9" fill="#FBFAF7"/>
+  <path d="M196 360 L194 384 L182 388" fill="none"/>
+  <path d="M214 360 L218 384 L232 386" fill="none"/>
+  <ellipse cx="178" cy="390" rx="13" ry="6" fill="#1F1F1F"/>
+  <ellipse cx="228" cy="390" rx="13" ry="6" fill="#1F1F1F"/>
+  <path d="M188 180 Q204 188 222 180 L218 196 Q204 202 192 196 Z" fill="#FBFAF7"/>
+  <circle cx="204" cy="138" r="46" fill="#FBFAF7"/>
+  <ellipse cx="160" cy="142" rx="7" ry="10" fill="#FBFAF7"/>
+  <ellipse cx="248" cy="142" rx="7" ry="10" fill="#FBFAF7"/>
+  <path d="M160 132 Q160 86 204 84 Q250 86 250 134 Q236 108 204 106 Q174 106 160 132 Z" fill="#1F1F1F" stroke="none"/>
+  <path d="M204 84 Q210 70 222 78 Q214 80 212 90" fill="#1F1F1F" stroke="none"/>
+  <path d="M176 120 Q184 113 193 119" fill="none" stroke-width="3"/>
+  <path d="M215 119 Q224 113 232 120" fill="none" stroke-width="3"/>
+  <ellipse cx="186" cy="136" rx="8" ry="9" fill="#FFFFFF" stroke-width="2"/>
+  <ellipse cx="222" cy="136" rx="8" ry="9" fill="#FFFFFF" stroke-width="2"/>
+  <circle cx="189" cy="138" r="3.6" fill="#1F1F1F" stroke="none"/>
+  <circle cx="219" cy="138" r="3.6" fill="#1F1F1F" stroke="none"/>
+  <path d="M201 142 Q195 158 203 161 Q210 159 208 150" fill="none" stroke-width="2.2"/>
+  <path d="M188 170 Q204 182 222 170" fill="none" stroke-width="2.4"/>
+</g>
+
+<g stroke="#1F1F1F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M444 214 Q436 250 440 268 Q416 286 410 352 L470 352 L476 300 L482 352 L540 352 Q532 288 510 268 Q514 250 506 214 Q475 202 444 214 Z" fill="#FBFAF7"/>
+  <path d="M444 214 Q436 250 440 268 Q416 286 410 352 L470 352 L476 300 L482 352 L540 352 Q532 288 510 268 Q514 250 506 214 Q475 202 444 214 Z" fill="url(#h1)" stroke="none"/>
+  <path d="M444 214 Q475 204 506 214 L504 236 Q475 226 446 236 Z" fill="url(#h2)"/>
+  <path d="M474 290 Q440 300 414 344" fill="url(#h2)" stroke="none"/>
+  <path d="M444 218 Q420 244 426 158" fill="none"/>
+  <path d="M506 216 Q532 244 526 158" fill="none"/>
+  <circle cx="426" cy="154" r="9" fill="#FBFAF7"/>
+  <circle cx="526" cy="154" r="9" fill="#FBFAF7"/>
+  <ellipse cx="450" cy="358" rx="12" ry="6" fill="#1F1F1F"/>
+  <ellipse cx="502" cy="358" rx="12" ry="6" fill="#1F1F1F"/>
+  <path d="M460 196 Q476 204 492 196 L488 212 Q476 218 464 212 Z" fill="#FBFAF7"/>
+  <circle cx="476" cy="152" r="46" fill="#FBFAF7"/>
+  <ellipse cx="432" cy="156" rx="7" ry="10" fill="#FBFAF7"/>
+  <ellipse cx="520" cy="156" rx="7" ry="10" fill="#FBFAF7"/>
+  <path d="M430 150 Q428 100 476 96 Q524 100 522 150 Q520 124 476 120 Q436 122 430 150 Z" fill="#1F1F1F" stroke="none"/>
+  <path d="M430 150 Q420 156 416 132 Q415 116 426 112" fill="#1F1F1F" stroke="none"/>
+  <path d="M522 150 Q532 156 536 132 Q537 116 526 112" fill="#1F1F1F" stroke="none"/>
+  <path d="M420 168 Q410 200 414 230 Q416 244 410 252" fill="#1F1F1F" stroke="none"/>
+  <path d="M532 168 Q542 200 538 230 Q536 244 542 252" fill="#1F1F1F" stroke="none"/>
+  <circle cx="411" cy="258" r="6" fill="#FBFAF7" stroke-width="2"/>
+  <circle cx="541" cy="258" r="6" fill="#FBFAF7" stroke-width="2"/>
+  <path d="M450 134 Q458 127 467 133" fill="none" stroke-width="3"/>
+  <path d="M487 133 Q496 127 504 134" fill="none" stroke-width="3"/>
+  <ellipse cx="460" cy="150" rx="8" ry="9" fill="#FFFFFF" stroke-width="2"/>
+  <ellipse cx="494" cy="150" rx="8" ry="9" fill="#FFFFFF" stroke-width="2"/>
+  <circle cx="462" cy="152" r="3.6" fill="#1F1F1F" stroke="none"/>
+  <circle cx="492" cy="152" r="3.6" fill="#1F1F1F" stroke="none"/>
+  <path d="M473 156 Q468 170 475 173 Q482 171 480 163" fill="none" stroke-width="2.2"/>
+  <path d="M461 182 Q477 194 493 182" fill="none" stroke-width="2.4"/>
+  <circle cx="476" cy="120" r="7" fill="#FBFAF7" stroke-width="2"/>
+</g>
+
+<g stroke="#1F1F1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <ellipse cx="612" cy="316" rx="22" ry="12" fill="#1F1F1F"/>
+  <circle cx="592" cy="308" r="10" fill="#1F1F1F"/>
+  <path d="M584 305 L575 303 L583 309" fill="#FBFAF7" stroke="none"/>
+  <circle cx="589" cy="306" r="1.6" fill="#FFFFFF" stroke="none"/>
+  <path d="M600 312 Q612 300 624 312" fill="none" stroke-width="1.6" opacity="0.6"/>
+  <path d="M612 328 L609 342 M620 327 L621 342" fill="none"/>
+</g>
+</svg>
