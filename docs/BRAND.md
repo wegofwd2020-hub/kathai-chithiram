@@ -125,12 +125,34 @@ its label and read-aloud audio (Law #2).
 | home | `home.svg` |
 | go back | `go-back.svg` |
 
-## 7. Open decisions
+## 7. Adult action icons (parent & therapist)
+
+A deliberately **distinct, lighter** language from the child set — outline (not filled),
+thin stroke, one ink colour (`currentColor`, theme-adaptive) with a quiet blue accent
+(`#4A90D9`), conventional UI metaphors. No grown-up control should be mistaken for a child
+button. All live in [`assets/brand/icons/adult/`](../assets/brand/icons/adult/), standalone
+32×32 SVGs.
+
+Same icon, different surface — `share` points therapist→parent, `request-changes` points
+parent→therapist; `premises` is therapist-owned, `feedback` parent-owned (the read-only /
+writable split from the share model).
+
+| Group | Files · persona |
+|---|---|
+| Authoring | `new-story` • · `write` • · `generate` T · `premises` T · `demonstration` • · `feedback` P · `edit` • |
+| Safety & sharing | `safety-check` • · `approve` T · `share` T→P · `request-changes` P→T · `tags` • · `templates` T |
+| People | `caseload` T · `child` P |
+| Plan & track | `plan` • · `add-to-plan` P · `timer` • · `goal` T · `progress` • · `mark-done` P |
+| System | `search` • · `alerts` • · `settings` • |
+
+(T = therapist · P = parent · • = shared.)
+
+## 8. Open decisions
 
 - **ARASAAC alignment.** Plan an optional symbol layer aligned to ARASAAC — the
   open-license (Creative Commons) AAC pictogram set many of these children already use at
   school and in therapy. Our house icons are the friendly default; an ARASAAC toggle speaks
   a vocabulary the child has already learned.
-- **Adult icon language.** Parent/therapist surfaces (literate adults: author, share,
-  caseload, review, add-to-plan, track) get a deliberately *distinct, lighter* icon
-  treatment — not the child set. To be designed separately.
+- **Deferred adult icons.** `review`/annotate, `account`/profile, and `history`/versions —
+  add when those surfaces need them. `generate` uses an AI-sparkle metaphor (the one
+  non-literal adult icon); revisit if it reads as cliché.
