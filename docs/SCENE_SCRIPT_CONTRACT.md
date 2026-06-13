@@ -84,7 +84,7 @@ Both must consume a v1 script unchanged. New renderers must pass the shared cont
 
 ## 6. Open items (tracked as tickets)
 
-- [ ] Define the JSON Schema for v1 and validate every script against it.
-- [ ] Implement the safety validator (§3) as the gate before rendering.
+- [x] Define the JSON Schema for v1 and validate every script against it. *(KC-3: `src/kathai_chithiram/scene_script/schema.py`)*
+- [x] Implement the safety validator (§3) as the gate before rendering. *(KC-3: `validate_scene_script()`)*
 - [ ] Add a shared renderer conformance test suite with mock scripts.
-- [ ] Migrate existing renderers to consume the contract explicitly.
+- [ ] Migrate existing renderers to consume the contract explicitly. *(KC-4)*

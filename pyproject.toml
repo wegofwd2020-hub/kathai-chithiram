@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kathai-chithiram"
+version = "0.1.0"
+description = "Turns a parent's written story into a short, calm, captioned animation for a child with special needs."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+dependencies = [
+    "jsonschema>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "mypy>=1.8",
+    "types-jsonschema>=4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+src = ["src", "tests"]
+# Reference prototype renderers predate the WeGoFwd code standards. They are
+# linted only once migrated to consume the scene-script contract (KC-4).
+extend-exclude = ["generate_animation.py", "blender_animation.py"]
+
+[tool.ruff.lint]
+# E/F: pyflakes+pycodestyle, I: isort, B: bugbear, UP: pyupgrade,
+# BLE: flake8-blind-except (enforces "no bare/blind except" from CLAUDE.md).
+select = ["E", "F", "I", "B", "UP", "BLE"]
+
+[tool.mypy]
+python_version = "3.9"
+packages = ["kathai_chithiram"]
+mypy_path = "src"
+strict = true
+warn_unused_ignores = true
+
+# jsonschema ships no inline types; types-jsonschema (a dev dep) supplies stubs.
+# Fall back to ignoring its imports when the stub package is absent so a strict
+# check never fails purely on a missing third-party stub.
+[[tool.mypy.overrides]]
+module = ["jsonschema.*"]
+ignore_missing_imports = true

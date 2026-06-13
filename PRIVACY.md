@@ -70,9 +70,9 @@ This product concerns children, frequently children with disabilities. Depending
 
 ## 9. Open items (tracked as tickets)
 
-- [ ] Implement verifiable hard-delete of story + script + media.
-- [ ] Implement identifier minimization/pseudonymization before LLM calls.
-- [ ] Record provider no-training/zero-retention configuration.
+- [x] Implement verifiable hard-delete of story + script + media. *(KC-1: `storage/deletion.py` + 30-day `retention.py`)*
+- [x] Implement identifier minimization/pseudonymization before LLM calls. *(KC-2: `privacy/pseudonymize.py`, enforced by the `wegofwd-llm` seam)*
+- [x] Record provider no-training/zero-retention configuration. *(KC-2: `ProviderConfig` + `ProviderRequestRecord`)*
 - [ ] Draft parent-facing privacy notice + consent capture.
 - [ ] DPIA before EU launch.
 
