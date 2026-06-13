@@ -55,15 +55,22 @@ output match. Lead with blue + green; amber is a sparing accent; **red is intent
 - Alternates with good Tamil + Latin coverage: Mukta Malar, Hind Madurai, Noto Sans Tamil.
 - Two weights only (regular 400, medium 500). Generous spacing; sentence case.
 
-## 4. Logomark
+## 4. Logomark — Kolam loop
 
-Three explored directions; **selection pending** (no logo asset committed yet):
+**Selected.** A single continuous looping line (true to Tamil *kolam*, drawn as one
+unbroken stroke) framed by four *pulli* dots — a calm, repeating, predictable motif. It
+*means* the product (predictability is the therapeutic mechanism), honours the Tamil name,
+and stays abstract enough to never read as a face. Reproduces cleanly at favicon size.
 
-- **Kolam loop** *(recommended)* — a calm, repeating, predictable looping motif rooted in
-  Tamil kolam; the mark *means* the product. Distinctive and abstract enough to never read
-  as a face.
-- **Spoken frame** — a speech bubble that is also a picture (best at teaching the name).
-- **Open story** — a book whose page becomes a screen (clear but generic).
+| Variant | File |
+|---|---|
+| Primary (blue loop, amber dots) | [`assets/brand/logo-kolam.svg`](../assets/brand/logo-kolam.svg) |
+| Mono (single-colour, theme-adaptive `currentColor`) | [`assets/brand/logo-kolam-mono.svg`](../assets/brand/logo-kolam-mono.svg) |
+| App icon (white on calm blue) | [`assets/brand/logo-kolam-app-icon.svg`](../assets/brand/logo-kolam-app-icon.svg) |
+| Bilingual lockup (mark + wordmark, Baloo) | [`assets/brand/logo-kolam-lockup.svg`](../assets/brand/logo-kolam-lockup.svg) |
+
+Not chosen, kept on record as explored alternates: *Spoken frame* (a speech bubble that is
+also a picture) and *Open story* (a book whose page becomes a screen).
 
 ## 5. Characters
 
