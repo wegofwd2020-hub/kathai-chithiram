@@ -79,6 +79,19 @@ def test_provider_config_recorded_per_request() -> None:
     assert record.created_at == datetime(2026, 6, 13, tzinfo=timezone.utc)
 
 
+def test_system_prompt_is_forwarded_to_provider() -> None:
+    provider = CapturingProvider()
+    run_generation(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+        system_prompt="SAFETY RULES HERE",
+    )
+    assert provider.requests[0].system_prompt == "SAFETY RULES HERE"
+
+
 def test_response_is_returned() -> None:
     result = run_generation(
         story_text=MOCK_STORY,
