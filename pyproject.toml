@@ -14,11 +14,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Runtime deps for the matplotlib reference renderer (generate_animation.py).
+# Kept optional because the contract/validation/storage layers don't need them;
+# the Blender renderer's 'bpy' is intentionally absent — it isn't pip-installable
+# and is loaded lazily only when running inside Blender.
+render = [
+    "matplotlib>=3.7",
+    "numpy>=1.24",
+    "pillow>=9.0",
+    "imageio>=2.27",
+    "imageio-ffmpeg>=0.4",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.5",
     "mypy>=1.8",
     "types-jsonschema>=4.0",
+    # The conformance suite imports the matplotlib renderer, so dev needs render.
+    "kathai-chithiram[render]",
 ]
 
 [tool.setuptools.packages.find]
