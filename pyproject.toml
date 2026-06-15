@@ -7,7 +7,7 @@ name = "kathai-chithiram"
 version = "0.1.0"
 description = "Turns a parent's written story into a short, calm, captioned animation for a child with special needs."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 dependencies = [
     "jsonschema>=4.0",
@@ -45,7 +45,7 @@ pythonpath = ["src", "."]
 addopts = "-ra"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 100
 src = ["src", "tests"]
 
@@ -55,7 +55,7 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "B", "UP", "BLE"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 packages = ["kathai_chithiram"]
 mypy_path = "src"
 strict = true
