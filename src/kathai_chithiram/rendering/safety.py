@@ -179,7 +179,7 @@ def _flash_rate(luminances: Sequence[float], delta: float, duration_s: float) ->
     ``transitions / 2 / duration``.
     """
     transitions = 0
-    for previous, current in zip(luminances, luminances[1:]):
+    for previous, current in zip(luminances, luminances[1:], strict=False):
         if abs(current - previous) >= delta:
             transitions += 1
     if duration_s <= 0:
@@ -196,7 +196,7 @@ def _max_alternating_run(luminances: Sequence[float], amplitude: float) -> int:
     best = 0
     run = 0
     previous_sign = 0
-    for previous, current in zip(luminances, luminances[1:]):
+    for previous, current in zip(luminances, luminances[1:], strict=False):
         delta = current - previous
         if abs(delta) < amplitude:
             run = 0
