@@ -1,25 +1,18 @@
 """Command-line entry point: a parent's story to a draft animation.
 
-One command wires the whole pipeline behind the contract::
+Two subcommands sit on the same pipeline behind the contract:
 
-    read story -> generate (wegofwd-llm seam) -> validate (KC-3)
-               -> store (story.txt + scene_script.json)
-               -> render a DRAFT animation (KC-4 guards run)
+* ``kc intake`` — the parent-facing flow. Walks a parent through explicit
+  consent, then their child's first name and story, and runs intake
+  (consent gate -> generate -> store -> render a review-gated draft).
+* ``kc generate`` — the operator/non-interactive flow. Takes the story as a
+  file/stdin plus flags; useful for scripting and tests.
 
-Two safety boundaries are enforced here, not assumed:
-
-* **Privacy.** The ``--child-name`` is used only to build the pseudonymization
-  mapping. The raw story (which may name the child) is stored as ``story.txt``;
-  the scene script stores only the ``CHILD`` token; the real name is reinserted
-  into captions *at render time only*, never into the stored script or the
-  console. Sending story text also requires the operator to assert the
-  provider's no-training / zero-retention posture (``--provider-no-train-zdr``),
-  or generation refuses before anything leaves the device.
-* **Human review.** A rendered animation is a *draft*. It is never marked
-  delivered; the operator must review it (and the captioned scene script) before
-  it reaches a child (CLAUDE.md human-in-the-loop gate).
-
-Run ``python -m kathai_chithiram.cli --help`` (or the installed ``kc`` command).
+Both enforce the same boundaries: the child's name builds the pseudonymization
+mapping only (never stored or logged; reinserted into captions at render time),
+and every rendered animation is a *draft* that a human must review before it
+reaches a child (CLAUDE.md). Run ``python -m kathai_chithiram.cli --help`` or the
+installed ``kc`` command.
 """
 
 from __future__ import annotations
@@ -28,13 +21,18 @@ import argparse
 import sys
 import tempfile
 import uuid
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from kathai_chithiram.errors import KathaiChithiramError
 from kathai_chithiram.generation import generate_scene_script
+from kathai_chithiram.intake import (
+    Consent,
+    ParentSubmission,
+    submit_intake,
+)
 from kathai_chithiram.privacy import NameMapping
 from kathai_chithiram.rendering import SceneScriptRenderer
 from kathai_chithiram.storage import StoryArtifactStore
@@ -50,15 +48,40 @@ def build_arg_parser() -> argparse.ArgumentParser:
         prog="kc",
         description="Turn a parent's story into a draft captioned animation.",
     )
-    parser.add_argument(
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    intake = sub.add_parser(
+        "intake", help="Interactive parent flow: consent, name, story -> draft."
+    )
+    _add_common_args(intake)
+
+    generate = sub.add_parser(
+        "generate", help="Non-interactive: generate from a story file/stdin."
+    )
+    generate.add_argument(
         "story",
         help="Path to the parent's story (UTF-8 text). Use '-' to read from stdin.",
     )
-    parser.add_argument(
+    generate.add_argument(
         "--child-name",
         required=True,
         help="The child's name. Used only to strip/reinsert; never stored or logged.",
     )
+    generate.add_argument(
+        "--provider-no-train-zdr",
+        action="store_true",
+        help=(
+            "Assert the provider org is configured for no-training AND "
+            "zero-retention. Required to send story text; generation refuses "
+            "without it."
+        ),
+    )
+    _add_common_args(generate)
+    return parser
+
+
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Add the flags shared by every subcommand."""
     parser.add_argument(
         "--story-id",
         default=None,
@@ -88,15 +111,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Maximum generation attempts including repairs (default: 3).",
     )
     parser.add_argument(
-        "--provider-no-train-zdr",
-        action="store_true",
-        help=(
-            "Assert the provider org is configured for no-training AND "
-            "zero-retention. Required to send story text; generation refuses "
-            "without it."
-        ),
-    )
-    parser.add_argument(
         "--no-render",
         action="store_true",
         help="Stop after producing and storing the scene script (skip rendering).",
@@ -107,99 +121,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Also write a copy of the rendered draft animation to this path.",
     )
-    return parser
-
-
-def _read_story(source: str) -> str:
-    """Read story text from a file path, or from stdin when ``source`` is '-'.
-
-    Args:
-        source: A filesystem path, or ``"-"`` for stdin.
-
-    Returns:
-        The story text.
-
-    Raises:
-        FileNotFoundError: If the path does not exist.
-        ValueError: If the story is empty.
-    """
-    text = sys.stdin.read() if source == "-" else Path(source).read_text(encoding="utf-8")
-    if not text.strip():
-        raise ValueError("story is empty")
-    return text
-
-
-def _load_default_renderer() -> SceneScriptRenderer:
-    """Import and construct the matplotlib reference renderer.
-
-    The reference renderers live at the repo root (not in the package), so this
-    puts the repo root on ``sys.path`` before importing. Requires the optional
-    ``[render]`` dependencies.
-
-    Returns:
-        A ready :class:`SceneScriptRenderer`.
-
-    Raises:
-        RuntimeError: If the renderer or its dependencies cannot be imported.
-    """
-    repo_root = Path(__file__).resolve().parents[2]
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
-    try:
-        from generate_animation import MatplotlibStickFigureRenderer
-    except ImportError as exc:
-        raise RuntimeError(
-            "could not load the matplotlib renderer; install the render extra "
-            "(pip install 'kathai-chithiram[render]') and run from the repo root, "
-            "or pass --no-render"
-        ) from exc
-    renderer: SceneScriptRenderer = MatplotlibStickFigureRenderer()
-    return renderer
-
-
-def _render_draft(
-    *,
-    renderer: SceneScriptRenderer,
-    store: StoryArtifactStore,
-    story_id: str,
-    script: dict[str, Any],
-    mapping: NameMapping,
-    extra_out: Path | None,
-) -> Path:
-    """Render a guarded draft animation and file it under the story's media dir.
-
-    The render-time safety guards (KC-4) run inside ``renderer.render``; an
-    unsafe output raises and leaves nothing behind.
-
-    Returns:
-        The path of the stored media file.
-    """
-    with tempfile.TemporaryDirectory() as tmp:
-        draft = Path(tmp) / "animation.mp4"
-        renderer.render(script, mapping=mapping, output_path=str(draft))
-        data = draft.read_bytes()
-    media_path = store.add_media(story_id, "animation.mp4", data)
-    if extra_out is not None:
-        extra_out.parent.mkdir(parents=True, exist_ok=True)
-        extra_out.write_bytes(data)
-    return media_path
 
 
 def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = None) -> int:
-    """Run the CLI; return a process exit code.
-
-    Args:
-        argv: Argument vector (defaults to ``sys.argv[1:]``).
-        provider: Optional pre-built provider (for tests/embedding). When
-            ``None`` a real :class:`AnthropicProvider` is constructed, which
-            needs ``ANTHROPIC_API_KEY`` in the environment.
-
-    Returns:
-        ``0`` on success; ``2`` on a handled, user-facing error.
-    """
+    """Run the CLI; return a process exit code (``0`` ok, ``2`` handled error)."""
     args = build_arg_parser().parse_args(argv)
-    story_id = args.story_id or uuid.uuid4().hex
+    if args.command == "intake":
+        return _cmd_intake(args, provider=provider)
+    return _cmd_generate(args, provider=provider)
 
+
+def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> int:
+    """The non-interactive generate flow."""
+    story_id = args.story_id or uuid.uuid4().hex
     try:
         story_text = _read_story(args.story)
     except (OSError, ValueError) as exc:
@@ -239,15 +173,140 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return 2
 
     store = StoryArtifactStore(args.store_root)
-    store.create_story(
-        story_id,
-        created_at=datetime.now(timezone.utc),
-        story_text=story_text,
-    )
+    store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
     store.write_scene_script(story_id, result.script)
+    _print_summary(story_id=story_id, store=store, generated=result)
 
-    _print_summary(story_id=story_id, store=store, result=result)
+    return _maybe_render(
+        args, store=store, story_id=story_id, script=result.script, mapping=mapping
+    )
 
+
+def _cmd_intake(
+    args: argparse.Namespace,
+    *,
+    provider: LLMProvider | None,
+    input_fn: Callable[[str], str] = input,
+    story_reader: Callable[[], str] | None = None,
+) -> int:
+    """The interactive parent-facing intake flow.
+
+    ``input_fn`` and ``story_reader`` are injectable so the prompts can be driven
+    deterministically in tests.
+    """
+    read_story = story_reader if story_reader is not None else sys.stdin.read
+
+    submission = _collect_submission(input_fn=input_fn, story_reader=read_story)
+    if submission is None:
+        return 2
+
+    if provider is None:
+        provider = _build_anthropic_provider(model=args.model, effort=args.effort)
+        if provider is None:
+            return 2
+
+    store = StoryArtifactStore(args.store_root)
+    try:
+        result = submit_intake(
+            submission,
+            provider=provider,
+            store=store,
+            story_id=args.story_id,
+            model_id=args.model,
+            max_attempts=args.max_attempts,
+        )
+    except KathaiChithiramError as exc:
+        print(f"error: intake failed: {exc}", file=sys.stderr)
+        return 2
+
+    print("\n✓ Consent recorded.")
+    _print_summary(story_id=result.story_id, store=store, generated=result.generated)
+    if result.warnings:
+        print("\nA note on what you shared (your story was still accepted):")
+        for warning in result.warnings:
+            print(f"  • {warning}")
+
+    mapping = NameMapping.for_child(
+        submission.child_first_name, nickname=submission.child_nickname
+    )
+    return _maybe_render(
+        args, store=store, story_id=result.story_id, script=result.generated.script, mapping=mapping
+    )
+
+
+def _collect_submission(
+    *, input_fn: Callable[[str], str], story_reader: Callable[[], str]
+) -> ParentSubmission | None:
+    """Run the interactive intake prompts; return a submission or ``None``.
+
+    Returns ``None`` (and prints why) if consent is declined or the story is
+    empty — in either case nothing should be processed.
+    """
+    print("Kathai Chithiram — story intake\n")
+    print("Before we begin, please confirm:")
+    consent = Consent(
+        is_guardian=_ask_yes_no(
+            input_fn, "  [1] I am the parent/legal guardian of this child."
+        ),
+        ai_processing=_ask_yes_no(
+            input_fn,
+            "  [2] I consent to my story being sent to an AI provider configured "
+            "for no-training / zero-retention.",
+        ),
+        human_review_ack=_ask_yes_no(
+            input_fn,
+            "  [3] I understand the animation is reviewed by a human before it is "
+            "shown to my child.",
+        ),
+    )
+    if not consent.granted:
+        print(
+            "\nWe can only proceed once all three are confirmed. Nothing was "
+            "submitted. Please run intake again when you're ready.",
+            file=sys.stderr,
+        )
+        return None
+
+    first_name = input_fn("\nChild's first name (used only in captions): ").strip()
+    nickname = input_fn("Optional nickname (press Enter to skip): ").strip() or None
+
+    print("\nPaste the story, then press Ctrl-D (EOF) to finish:")
+    story_text = story_reader()
+
+    try:
+        return ParentSubmission(
+            story_text=story_text,
+            child_first_name=first_name,
+            consent=consent,
+            child_nickname=nickname,
+        )
+    except ValueError as exc:
+        print(f"\nerror: {exc}. Nothing was submitted.", file=sys.stderr)
+        return None
+
+
+def _ask_yes_no(input_fn: Callable[[str], str], prompt: str) -> bool:
+    """Ask a yes/no question; anything but an explicit yes is treated as no.
+
+    Default-deny: a blank answer, EOF, or anything other than y/yes does not
+    grant the consent.
+    """
+    try:
+        answer = input_fn(f"{prompt} (y/n) ").strip().lower()
+    except EOFError:
+        return False
+    return answer in {"y", "yes"}
+
+
+def _maybe_render(
+    args: argparse.Namespace,
+    *,
+    store: StoryArtifactStore,
+    story_id: str,
+    script: dict[str, Any],
+    mapping: NameMapping,
+) -> int:
+    """Render the review-gated draft animation unless ``--no-render`` was set."""
     if args.no_render:
         print("\nScene script stored. Skipped rendering (--no-render).")
         return 0
@@ -258,7 +317,7 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
             renderer=renderer,
             store=store,
             story_id=story_id,
-            script=result.script,
+            script=script,
             mapping=mapping,
             extra_out=args.out,
         )
@@ -277,12 +336,66 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
     return 0
 
 
-def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:
-    """Construct the real provider, printing a friendly error on failure.
+def _read_story(source: str) -> str:
+    """Read story text from a file path, or from stdin when ``source`` is '-'.
 
-    Returns ``None`` (and prints guidance) if the SDK is missing or no API key
-    is configured, so the caller can exit cleanly.
+    Raises:
+        FileNotFoundError: If the path does not exist.
+        ValueError: If the story is empty.
     """
+    text = sys.stdin.read() if source == "-" else Path(source).read_text(encoding="utf-8")
+    if not text.strip():
+        raise ValueError("story is empty")
+    return text
+
+
+def _load_default_renderer() -> SceneScriptRenderer:
+    """Import and construct the matplotlib reference renderer.
+
+    The reference renderers live at the repo root (not in the package), so this
+    puts the repo root on ``sys.path`` before importing.
+
+    Raises:
+        RuntimeError: If the renderer or its dependencies cannot be imported.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    try:
+        from generate_animation import MatplotlibStickFigureRenderer
+    except ImportError as exc:
+        raise RuntimeError(
+            "could not load the matplotlib renderer; install the render extra "
+            "(pip install 'kathai-chithiram[render]') and run from the repo root, "
+            "or pass --no-render"
+        ) from exc
+    renderer: SceneScriptRenderer = MatplotlibStickFigureRenderer()
+    return renderer
+
+
+def _render_draft(
+    *,
+    renderer: SceneScriptRenderer,
+    store: StoryArtifactStore,
+    story_id: str,
+    script: dict[str, Any],
+    mapping: NameMapping,
+    extra_out: Path | None,
+) -> Path:
+    """Render a guarded draft animation and file it under the story's media dir."""
+    with tempfile.TemporaryDirectory() as tmp:
+        draft = Path(tmp) / "animation.mp4"
+        renderer.render(script, mapping=mapping, output_path=str(draft))
+        data = draft.read_bytes()
+    media_path = store.add_media(story_id, "animation.mp4", data)
+    if extra_out is not None:
+        extra_out.parent.mkdir(parents=True, exist_ok=True)
+        extra_out.write_bytes(data)
+    return media_path
+
+
+def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:
+    """Construct the real provider, printing a friendly error on failure."""
     import os
 
     from kathai_chithiram.errors import ProviderUnavailableError
@@ -302,14 +415,12 @@ def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:
         return None
 
 
-def _print_summary(
-    *, story_id: str, store: StoryArtifactStore, result: Any
-) -> None:
+def _print_summary(*, story_id: str, store: StoryArtifactStore, generated: Any) -> None:
     """Print a console summary using the token form (no real name)."""
-    script = result.script
+    script = generated.script
     print(f"story_id: {story_id}")
     print(f"stored under: {store.story_dir(story_id)}")
-    print(f"generation attempts: {result.attempts}")
+    print(f"generation attempts: {generated.attempts}")
     print(
         f"title: {script['title']}  |  scenes: {len(script['scenes'])}  |  "
         f"{script['total_duration_s']}s @ {script['fps']}fps  |  {script['locale']}"
