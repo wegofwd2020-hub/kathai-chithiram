@@ -13,6 +13,11 @@ dependencies = [
     "jsonschema>=4.0",
 ]
 
+[project.scripts]
+# The end-to-end pipeline CLI. Rendering needs the [render] extra; live
+# generation needs the [generation] extra and ANTHROPIC_API_KEY.
+kc = "kathai_chithiram.cli:main"
+
 [project.optional-dependencies]
 # Runtime deps for the matplotlib reference renderer (generate_animation.py).
 # Kept optional because the contract/validation/storage layers don't need them;
@@ -24,6 +29,12 @@ render = [
     "pillow>=9.0",
     "imageio>=2.27",
     "imageio-ffmpeg>=0.4",
+]
+# The concrete AnthropicProvider behind the wegofwd-llm seam. Kept optional so
+# the contract/validation/storage layers (and provider-agnostic seam) don't pull
+# in an SDK; install only when running real generation.
+generation = [
+    "anthropic>=0.69",
 ]
 dev = [
     "pytest>=8.0",
@@ -67,3 +78,18 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 module = ["jsonschema.*"]
 ignore_missing_imports = true
+
+# The anthropic SDK is an optional ([generation]) dependency and ships no stubs
+# we rely on; the AnthropicProvider treats the client structurally. Ignore its
+# import so a strict check never fails purely because the extra isn't installed.
+[[tool.mypy.overrides]]
+module = ["anthropic.*"]
+ignore_missing_imports = true
+
+# The reference renderers live at the repo root (not in the package) and are
+# imported lazily by the CLI. Skip following into them so the matplotlib PoC is
+# not type-checked here (it predates strict typing); treat them as Any.
+[[tool.mypy.overrides]]
+module = ["generate_animation", "blender_animation"]
+ignore_missing_imports = true
+follow_imports = "skip"

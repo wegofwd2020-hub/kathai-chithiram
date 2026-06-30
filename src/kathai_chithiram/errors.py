@@ -14,7 +14,10 @@ __all__ = [
     "IdentifierLeakError",
     "KathaiChithiramError",
     "ProviderConfigError",
+    "ProviderResponseError",
+    "ProviderUnavailableError",
     "RenderSafetyError",
+    "SceneScriptGenerationError",
     "SceneScriptInvalidError",
     "StoryNotFoundError",
     "UnsupportedSchemaVersionError",
@@ -109,6 +112,74 @@ class ProviderConfigError(KathaiChithiramError):
         self.provider_id = provider_id
         self.reason = reason
         super().__init__(f"provider '{provider_id}' rejected: {reason}")
+
+
+class ProviderUnavailableError(KathaiChithiramError):
+    """A concrete provider could not be constructed because a dependency is absent.
+
+    Raised when wiring an optional provider whose SDK is not installed (e.g. the
+    Anthropic provider without the ``[generation]`` extra). The message names the
+    missing dependency and how to install it — never any story text.
+
+    Args:
+        provider_id: Identifier of the provider that could not be built.
+        reason: What is missing and how to resolve it (no raw story text).
+    """
+
+    def __init__(self, provider_id: str, reason: str) -> None:
+        self.provider_id = provider_id
+        self.reason = reason
+        super().__init__(f"provider '{provider_id}' unavailable: {reason}")
+
+
+class ProviderResponseError(KathaiChithiramError):
+    """A provider returned a response that cannot be used as generation output.
+
+    Distinct from :class:`ProviderConfigError` (a *pre-dispatch* refusal): this
+    is raised *after* a call returns, when the reply is a safety refusal or
+    carries no usable text. The message names the provider and the failure mode
+    only — it never echoes the provider's content, which may derive from story
+    text.
+
+    Args:
+        provider_id: Identifier of the provider (model) that produced the reply.
+        reason: Why the reply is unusable (e.g. ``"safety refusal"``). No raw
+            story text.
+    """
+
+    def __init__(self, provider_id: str, reason: str) -> None:
+        self.provider_id = provider_id
+        self.reason = reason
+        super().__init__(f"provider '{provider_id}' returned an unusable response: {reason}")
+
+
+class SceneScriptGenerationError(KathaiChithiramError):
+    """Generation could not produce a contract-valid scene script.
+
+    Raised when a provider reply cannot be parsed as a scene script, or when no
+    attempt produced a script that passes :func:`validate_scene_script` within
+    the allowed number of tries. Like :class:`SceneScriptInvalidError`, it
+    carries a stable ``rule`` id and a log-safe ``detail`` (no captions,
+    narration, or names — only rule ids, counts, and the attempt budget).
+
+    Args:
+        rule: Stable identifier of the failure, e.g.
+            ``"generation.unparseable"`` or ``"generation.exhausted"``.
+        detail: Human-readable explanation that MUST NOT contain raw story text.
+        attempts: How many generation attempts were made, when applicable.
+
+    Raises:
+        ValueError: If ``rule`` is empty.
+    """
+
+    def __init__(self, rule: str, detail: str, *, attempts: int | None = None) -> None:
+        if not rule:
+            raise ValueError("rule must be a non-empty rule identifier")
+        self.rule = rule
+        self.detail = detail
+        self.attempts = attempts
+        suffix = f" after {attempts} attempt(s)" if attempts is not None else ""
+        super().__init__(f"[{rule}]{suffix}: {detail}")
 
 
 class StoryNotFoundError(KathaiChithiramError):
