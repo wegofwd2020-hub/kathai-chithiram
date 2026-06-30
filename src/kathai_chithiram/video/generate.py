@@ -1,0 +1,125 @@
+"""Render a story's video through the shared ``wegofwd-video`` seam.
+
+Orchestrates the ``deterministic-renderer`` path end to end: build the brief from
+the scene script, capability-check it, render via kathai's
+:class:`SceneScriptRenderer` (wrapped as the provider's render_fn), and stamp the
+shared provenance record. Everything runs **in-process** — no vendor, no network —
+so the no-training / zero-retention dispatch gates that guard kathai's LLM path
+(:mod:`kathai_chithiram.wegofwd_llm.gateway`) do not apply here: child content
+never leaves the process (ADR-026 D1).
+"""
+
+from __future__ import annotations
+
+import json
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from wegofwd_video import (
+    VideoRequest,
+    VideoResult,
+    assert_brief_within_capabilities,
+    build_provider,
+    provenance,
+)
+
+from kathai_chithiram.privacy.pseudonymize import NameMapping
+from kathai_chithiram.rendering.pipeline import SceneScriptRenderer
+from kathai_chithiram.storage.store import StoryArtifactStore
+from kathai_chithiram.video.adapter import make_render_fn
+from kathai_chithiram.video.brief import build_video_brief
+
+_PROVIDER_ID = "deterministic-renderer"
+_RESOLUTION = "1080p"
+_ASPECT_RATIO = "16:9"
+_MEDIA_FILENAME = "story.mp4"
+_PROVENANCE_FILE = "video_provenance.json"
+
+
+@dataclass(frozen=True)
+class StoryVideoResult:
+    """The outcome of generating a story's video through the seam.
+
+    Args:
+        result: The ``wegofwd_video.VideoResult`` (``asset_uri`` = the media path).
+        provenance: The shared stamp (provider, model, seed, contract versions).
+        media_path: Where the rendered animation was written.
+    """
+
+    result: VideoResult
+    provenance: dict[str, Any]
+    media_path: Path
+
+
+def generate_story_video(
+    *,
+    renderer: SceneScriptRenderer,
+    script: Mapping[str, Any],
+    store: StoryArtifactStore,
+    story_id: str,
+    mapping: NameMapping | None = None,
+    seed: int | None = None,
+    model: str | None = None,
+    filename: str = _MEDIA_FILENAME,
+) -> StoryVideoResult:
+    """Render ``script`` for ``story_id`` and return the result + provenance.
+
+    ``model`` defaults to the renderer's name (recorded in provenance so a stored
+    video traces back to which renderer produced it). ``mapping`` reinserts the
+    child's real name at render time only; it never reaches the brief or the
+    persisted provenance.
+
+    Args:
+        renderer: The kathai renderer to drive.
+        script: The scene-script document.
+        store: The artifact store the story lives in.
+        story_id: Opaque story id (the media + provenance land under it).
+        mapping: Optional name mapping for render-time name reinsertion.
+        seed: Optional reproducibility seed, recorded in provenance.
+        model: Override the recorded model id (defaults to ``renderer.name``).
+        filename: Output media file name under ``media/``.
+
+    Returns:
+        A :class:`StoryVideoResult`.
+
+    Raises:
+        wegofwd_video.VideoCapabilityError: The brief exceeds the renderer's limits.
+        SceneScriptInvalidError: The script fails contract/safety validation.
+        RenderSafetyError: The produced output trips a render-time guard.
+        StoryNotFoundError: ``story_id`` is not in the store.
+    """
+    model_id = model or renderer.name
+    brief = build_video_brief(script)
+    duration_s = sum(shot.duration_s for shot in brief.shots)
+    assert_brief_within_capabilities(
+        _PROVIDER_ID,
+        resolution=_RESOLUTION,
+        aspect=_ASPECT_RATIO,
+        duration_s=duration_s,
+        ingredients=len(brief.ingredients),
+    )
+
+    media_path = store.story_dir(story_id) / "media" / filename
+    media_path.parent.mkdir(parents=True, exist_ok=True)
+
+    render_fn = make_render_fn(
+        renderer, script, output_path=str(media_path), model=model_id, mapping=mapping
+    )
+    provider = build_provider(_PROVIDER_ID, render_fn=render_fn, model=model_id)
+    result = provider.generate(
+        VideoRequest(
+            brief=brief,
+            resolution=_RESOLUTION,
+            aspect_ratio=_ASPECT_RATIO,
+            target_duration_s=duration_s,
+            seed=seed,
+        )
+    )
+
+    prov = provenance(_PROVIDER_ID, model_id, seed=seed)
+    # Provenance is non-sensitive (provider/model/seed/versions — no story text or
+    # name), so it is safe to persist as a derived cache artifact alongside the media.
+    store.add_cache(story_id, _PROVENANCE_FILE, json.dumps(prov, indent=2).encode("utf-8"))
+    return StoryVideoResult(result=result, provenance=prov, media_path=media_path)
