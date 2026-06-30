@@ -11,6 +11,11 @@ requires-python = ">=3.10"
 license = { file = "LICENSE" }
 dependencies = [
     "jsonschema>=4.0",
+    # Shared video-generation seam (ADR-026): kathai drives the deterministic
+    # renderer through wegofwd-video's registry + provenance. Library, not a
+    # service — runs in-process so child content never leaves the process. The
+    # core seam has zero runtime deps (the AI 'veo' extra is intentionally unused).
+    "wegofwd-video @ git+https://github.com/wegofwd2020-hub/wegofwd-video@v0.1.1",
 ]
 
 [project.optional-dependencies]
