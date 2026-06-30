@@ -50,7 +50,11 @@ A script that fails validation is never rendered. Failures are logged (without r
 
 For the current prototype stage, a person reviews each generated story before it reaches a child. Do not remove the human review gate until automated enforcement (§5) is proven and tested.
 
-## 7. Open items (tracked as tickets)
+## 7. Progress & feedback indicators (non-clinical)
+
+Per-session feedback (`prompt_level`, `completed`, `mood_checkin`) and any progress derived from it are **engagement and independence signals for a therapist's judgment — not clinical measurement**. They are never presented as a diagnosis, an assessment of a disorder, a mastery-of-condition claim, or a therapeutic outcome (§3, "no medical claims, diagnoses, or therapeutic promises"). Any derived measure must be transparent — it shows the sessions and values behind it — and may only *suggest* a change to the therapist who decides; it never auto-authors a story, and a suggested premise still passes through the full safety pipeline (§5) and the human-review gate (§6). See `docs/ADR_002_progress_quantification_premise_suggestion.md` for the full stance; the progress engine is gated behind that ADR's preconditions. What exists today is the capture layer only — it records the raw primitives and computes nothing.
+
+## 8. Open items (tracked as tickets)
 
 - [x] Encode MUST/MUST-NOT rules into the generation system prompt. *(KC-4: `generation/system_prompt.py`)*
 - [x] Implement scene-script safety validation (frame-rate, scene length, banned-content flags). *(KC-3: `scene_script/validation.py`)*
