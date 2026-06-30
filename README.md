@@ -44,19 +44,32 @@ social story, *"Silas Shines His Smile"* — an 11-scene tooth-brushing routine:
 | `silas_shines_his_smile.mp4` | rendered v1 |
 | `silas_shines_his_smile_v2.mp4` | rendered v2 |
 
-These were authored by hand — the scene scripts are written directly in Python. The product
-work ahead is to **lift the scene script into a structured, generated artifact** (produced via
-`wegofwd-llm` from a parent's story) and feed it to the renderers, so a parent never touches code.
+Those two were authored by hand — the scene scripts were written directly in Python. The product
+work since has **lifted the scene script into a structured, generated artifact** (produced via
+`wegofwd-llm` from a parent's story) and fed it to the renderers, so a parent never touches code.
 
-## Roadmap (next)
+## Roadmap
 
-1. **Scene-script schema** — define the structured artifact a renderer consumes (scenes, poses,
-   narration, timing, accessibility hints).
-2. **Generation step** — parent story → scene script via `wegofwd-llm`, with child-appropriate
-   constraints (short sentences, one idea per scene, predictable pacing, calm palette).
-3. **Renderer behind the contract** — make the Blender renderer consume the scene script rather
-   than hard-coded poses.
-4. **Parent-facing intake** — a simple way for a parent to submit a story and receive the animation.
+All four foundational steps are built and on `main`:
+
+1. ✅ **Scene-script schema** — the structured contract a renderer consumes (`scene_script/`:
+   schema + validation; scenes, narration, timing, safety, accessibility).
+2. ✅ **Generation step** — parent story → validated scene script via the `wegofwd-llm` seam,
+   with a concrete provider and a validate-and-repair loop (`generation/`).
+3. ✅ **Renderer behind the contract** — the reference renderers consume the scene script instead
+   of hard-coded poses (`rendering/`).
+4. ✅ **Parent-facing intake** — `kc intake` walks a parent through consent → story → a
+   review-gated draft (`intake/`).
+
+End to end, `kc intake` / `kc generate` take a parent's story to a captioned draft animation,
+with privacy (the name is stripped before the provider, scene scripts hold only a token, consent
+is captured) and a human-review gate enforced in code.
+
+**Next, beyond the foundation:** M1 per-child progress quantification — the capture-track
+primitives are built (`feedback/`; ADR-002 *Accepted*), but the progress **engine** and
+therapist-suggested premise customization stay **gated** behind ADR-002's preconditions
+(professional collaborator, tested therapist-in-the-loop path, DPIA). Plus production hardening:
+encryption-at-rest, a no-training / zero-retention provider key, and a delivery/review workflow.
 
 ## Family
 
