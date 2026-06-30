@@ -5,6 +5,7 @@ Layout, one directory per story::
     <root>/<story_id>/
         story.txt          # raw parent-authored story text (High sensitivity)
         scene_script.json  # derived scene script
+        intake.json        # non-sensitive: consent flags + provider posture
         media/             # rendered animations
         cache/             # derived caches
         _meta.json         # non-sensitive: created_at, delivered flag
@@ -42,6 +43,7 @@ _FILENAME_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 _STORY_TEXT_FILE = "story.txt"
 _SCENE_SCRIPT_FILE = "scene_script.json"
+_INTAKE_FILE = "intake.json"
 _META_FILE = "_meta.json"
 _MEDIA_DIR = "media"
 _CACHE_DIR = "cache"
@@ -171,6 +173,28 @@ class StoryArtifactStore:
         story_dir = self._require(story_id)
         (story_dir / _SCENE_SCRIPT_FILE).write_text(
             json.dumps(script, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    def write_intake_record(self, story_id: str, record: Mapping[str, Any]) -> None:
+        """Persist the non-sensitive intake/consent record for ``story_id``.
+
+        The record captures the parent's consent flags and the provider privacy
+        posture (the legal-basis evidence, PRIVACY.md §8). It MUST NOT contain
+        story text or a child's name. It lives in the story directory, so a
+        hard-delete of the story removes it along with everything else.
+
+        Args:
+            story_id: Opaque story identifier.
+            record: A JSON-serializable, non-sensitive consent record.
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe.
+            OSError: If the file cannot be written.
+        """
+        story_dir = self._require(story_id)
+        (story_dir / _INTAKE_FILE).write_text(
+            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
         )
 
     def add_media(self, story_id: str, filename: str, data: bytes) -> Path:

@@ -10,6 +10,7 @@ text, captions, narration, or a child's real name (see ``PRIVACY.md`` §6 and
 from __future__ import annotations
 
 __all__ = [
+    "ConsentError",
     "DeletionError",
     "IdentifierLeakError",
     "KathaiChithiramError",
@@ -180,6 +181,26 @@ class SceneScriptGenerationError(KathaiChithiramError):
         self.attempts = attempts
         suffix = f" after {attempts} attempt(s)" if attempts is not None else ""
         super().__init__(f"[{rule}]{suffix}: {detail}")
+
+
+class ConsentError(KathaiChithiramError):
+    """A parent's submission lacks a consent required to process it.
+
+    Intake is the legal-basis checkpoint (PRIVACY.md §2 parental control, §8
+    consent capture): a story may only be processed once the parent/guardian has
+    granted every required consent. Raised before any story text is generated,
+    stored, or sent to a provider. The message names which consent is missing —
+    never any story text.
+
+    Args:
+        missing: The consents that were not granted (stable keys, e.g.
+            ``"is_guardian"``).
+    """
+
+    def __init__(self, missing: tuple[str, ...]) -> None:
+        self.missing = missing
+        joined = ", ".join(missing) if missing else "(none)"
+        super().__init__(f"required consent not granted: {joined}")
 
 
 class StoryNotFoundError(KathaiChithiramError):

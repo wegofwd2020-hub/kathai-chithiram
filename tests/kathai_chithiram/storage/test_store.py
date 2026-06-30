@@ -28,6 +28,23 @@ def test_create_and_enumerate_artifacts(tmp_path: Path) -> None:
     assert names == {"story.txt", "scene_script.json", "_meta.json", "out.mp4", "frames.bin"}
 
 
+def test_write_intake_record(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("story-1", created_at=_CREATED, story_text="hi")
+    store.write_intake_record("story-1", {"consent": {"is_guardian": True}})
+
+    intake = store.story_dir("story-1") / "intake.json"
+    assert intake.is_file()
+    # It is enumerated as an artifact (so a hard-delete sweeps it too).
+    assert intake in store.artifact_paths("story-1")
+
+
+def test_write_intake_record_requires_existing_story(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    with pytest.raises(StoryNotFoundError):
+        store.write_intake_record("missing", {"consent": {}})
+
+
 def test_metadata_roundtrip_and_mark_delivered(tmp_path: Path) -> None:
     store = _store(tmp_path)
     store.create_story("story-1", created_at=_CREATED, story_text="hi")

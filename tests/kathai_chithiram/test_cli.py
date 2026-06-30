@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import copy
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from kathai_chithiram.cli import main
+from kathai_chithiram.cli import _cmd_intake, build_arg_parser, main
 from kathai_chithiram.generation import EXAMPLE_SCENE_SCRIPT
 from kathai_chithiram.wegofwd_llm.provider import LLMRequest, LLMResponse
 
@@ -46,6 +47,7 @@ def _write_story(tmp_path: Path) -> Path:
 
 def _argv(story_file: Path, store_root: Path, *extra: str) -> list[str]:
     return [
+        "generate",
         str(story_file),
         "--child-name",
         CHILD,
@@ -115,3 +117,63 @@ def test_empty_story_errors(tmp_path: Path) -> None:
         provider=_provider(),
     )
     assert code == 2
+
+
+# --- intake subcommand ---------------------------------------------------------
+
+
+def _scripted_input(answers: list[str]) -> Callable[[str], str]:
+    it = iter(answers)
+
+    def _input(_prompt: str) -> str:
+        return next(it)
+
+    return _input
+
+
+def _intake_args(store_root: Path) -> object:
+    return build_arg_parser().parse_args(
+        ["intake", "--story-id", "intake-story", "--store-root", str(store_root), "--no-render"]
+    )
+
+
+def test_intake_happy_path_records_consent(tmp_path: Path) -> None:
+    store_root = tmp_path / "store"
+    provider = _provider()
+    code = _cmd_intake(
+        _intake_args(store_root),
+        provider=provider,
+        input_fn=_scripted_input(["y", "y", "y", CHILD, ""]),  # 3 consents, name, no nickname
+        story_reader=lambda: STORY,
+    )
+    assert code == 0
+
+    story_dir = store_root / "intake-story"
+    assert (story_dir / "story.txt").read_text(encoding="utf-8") == STORY
+    # Scene script carries the token only.
+    assert CHILD not in (story_dir / "scene_script.json").read_text(encoding="utf-8")
+    # The intake record proves consent and carries no story text or name.
+    intake = json.loads((story_dir / "intake.json").read_text(encoding="utf-8"))
+    assert intake["consent"] == {
+        "is_guardian": True,
+        "ai_processing": True,
+        "human_review_ack": True,
+    }
+    assert CHILD not in json.dumps(intake)
+    assert "dark" not in json.dumps(intake)  # no story fragment leaked
+    # Name was stripped before the provider saw it.
+    assert CHILD not in provider.requests[0].prompt
+
+
+def test_intake_declined_consent_submits_nothing(tmp_path: Path) -> None:
+    store_root = tmp_path / "store"
+    provider = _provider()
+    code = _cmd_intake(
+        _intake_args(store_root),
+        provider=provider,
+        input_fn=_scripted_input(["y", "n", "y", CHILD, ""]),  # consent #2 declined
+        story_reader=lambda: STORY,
+    )
+    assert code == 2
+    assert provider.requests == []  # nothing was generated
+    assert not (store_root / "intake-story").exists()  # nothing was stored
