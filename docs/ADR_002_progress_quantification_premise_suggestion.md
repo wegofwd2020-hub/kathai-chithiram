@@ -1,7 +1,7 @@
 # ADR-002 — Per-child progress quantification: capture-first, suggestion-only, engine deferred behind preconditions
 
 **Date:** 2026-06-30
-**Status:** Proposed
+**Status:** Accepted (2026-06-30)
 **Branch at decision:** main
 
 ---
@@ -163,6 +163,10 @@ and a child-facing story.
   Decision 6 / Decision 7.1) before the engine is designed — they define the signal, not
   engineering.
 
-Status flips `Proposed → Accepted` only once the capture-track primitive schema lands and
-`PRIVACY.md` / `CONTENT_SAFETY.md` reflect the new data category and its non-clinical framing.
-Do not pre-flip.
+**Accepted 2026-06-30:** the capture-track primitive schema has landed
+(`src/kathai_chithiram/feedback/` — `SessionFeedback` keyed to `goal_id` + `story_id`, the
+store's `feedback.jsonl` log swept by the verifiable hard-delete), and `PRIVACY.md` §3 /
+`CONTENT_SAFETY.md` §7 now record the new data category and its non-clinical framing — the
+conditions this ADR set for acceptance. **The engine track remains gated**: the progress
+measure and premise-suggestion logic may not be built until the Decision 7 preconditions are
+satisfied. Revisit this ADR to record each precondition as it is met before the engine begins.

@@ -39,6 +39,28 @@ def test_delete_removes_every_artifact(tmp_path: Path) -> None:
     assert not (store.story_dir("story-1")).exists()
 
 
+def test_delete_sweeps_session_feedback(tmp_path: Path) -> None:
+    # ADR-002 D5: the verifiable hard-delete must cover captured feedback too.
+    store, purge_log = _seed(tmp_path)
+    store.append_session_feedback(
+        "story-1",
+        {
+            "goal_id": "goal-1",
+            "story_id": "story-1",
+            "prompt_level": "independent",
+            "completed": True,
+            "mood_checkin": 4,
+            "recorded_at": _WHEN.isoformat(),
+        },
+    )
+    assert (store.story_dir("story-1") / "feedback.jsonl").is_file()
+
+    delete_story(store, "story-1", purge_log=purge_log, when=_WHEN)
+
+    assert store.artifact_paths("story-1") == []
+    assert not (store.story_dir("story-1")).exists()
+
+
 def test_delete_leaves_no_tombstoned_raw_text(tmp_path: Path) -> None:
     store, purge_log = _seed(tmp_path)
     delete_story(store, "story-1", purge_log=purge_log, when=_WHEN)

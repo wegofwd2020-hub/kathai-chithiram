@@ -6,6 +6,7 @@ Layout, one directory per story::
         story.txt          # raw parent-authored story text (High sensitivity)
         scene_script.json  # derived scene script
         intake.json        # non-sensitive: consent flags + provider posture
+        feedback.jsonl     # per-session feedback primitives (ADR-002 capture)
         media/             # rendered animations
         cache/             # derived caches
         _meta.json         # non-sensitive: created_at, delivered flag
@@ -44,6 +45,7 @@ _FILENAME_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+$")
 _STORY_TEXT_FILE = "story.txt"
 _SCENE_SCRIPT_FILE = "scene_script.json"
 _INTAKE_FILE = "intake.json"
+_FEEDBACK_FILE = "feedback.jsonl"
 _META_FILE = "_meta.json"
 _MEDIA_DIR = "media"
 _CACHE_DIR = "cache"
@@ -196,6 +198,56 @@ class StoryArtifactStore:
         (story_dir / _INTAKE_FILE).write_text(
             json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
         )
+
+    def append_session_feedback(self, story_id: str, record: Mapping[str, Any]) -> None:
+        """Append one per-session feedback record to the story's feedback log.
+
+        The log (``feedback.jsonl``, one JSON object per line) accrues the
+        capture-track primitives of ADR-002. It lives in the story directory, so
+        a verifiable hard-delete of the story removes it along with everything
+        else. The record carries only opaque ids, enums, and a timestamp — no
+        story text or name.
+
+        Args:
+            story_id: Opaque story identifier.
+            record: A JSON-serializable feedback record (e.g.
+                :meth:`SessionFeedback.to_record`).
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe.
+            OSError: If the log cannot be written.
+        """
+        story_dir = self._require(story_id)
+        with (story_dir / _FEEDBACK_FILE).open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+    def read_session_feedback(self, story_id: str) -> list[dict[str, Any]]:
+        """Return every feedback record for ``story_id``, in append order.
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            The decoded records (empty if none were captured).
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe, or a log line is malformed.
+        """
+        story_dir = self._require(story_id)
+        log_path = story_dir / _FEEDBACK_FILE
+        if not log_path.is_file():
+            return []
+        records: list[dict[str, Any]] = []
+        for line in log_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"malformed feedback record for story {story_id!r}") from exc
+        return records
 
     def add_media(self, story_id: str, filename: str, data: bytes) -> Path:
         """Write a rendered media file under the story's ``media/`` directory.

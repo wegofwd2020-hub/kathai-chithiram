@@ -26,9 +26,10 @@ This policy covers all data handled by Kathai Chithiram: parent-authored story t
 | Optional child first name / nickname | Personalize narration | High |
 | Generated scene script (JSON) | Intermediate artifact for rendering | High (derived from story) |
 | Rendered animation (mp4) | The deliverable | High |
+| Per-session feedback (prompt level, completed, mood check-in) keyed to a goal | Track engagement/independence over time; may inform a therapist's premise suggestions (ADR-002) | High — behavioral data about the child (**profiling**) |
 | Minimal account/contact (if accounts exist) | Deliver output, support | Medium |
 
-**Explicitly out of scope to collect:** child's surname, DOB, address, geolocation, photographs of the child, medical/diagnostic records, biometric data.
+**Explicitly out of scope to collect:** child's surname, DOB, address, geolocation, photographs of the child, medical/diagnostic records, biometric data. Per-session feedback is captured as fixed structured primitives only — no free-text notes — and constitutes profiling of a child, so its use is covered by the §8 DPIA touchpoint (see ADR-002).
 
 ## 4. How story data flows
 
