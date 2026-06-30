@@ -26,6 +26,7 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, ClassVar
 
 from kathai_chithiram.errors import UnsupportedSchemaVersionError
@@ -190,7 +191,11 @@ class SceneScriptRenderer(ABC):
             guard_render(report)
             return RenderResult(plan=plan, safety_report=report, output_path=None)
 
-        draft_path = f"{output_path}.draft"
+        # Keep the original suffix on the draft (``out.draft.mp4``, not
+        # ``out.mp4.draft``): writers like imageio-ffmpeg pick the container from
+        # the file extension, so a clobbered suffix breaks the actual encode.
+        out = Path(output_path)
+        draft_path = str(out.with_name(f"{out.stem}.draft{out.suffix}"))
         try:
             report = self._render(plan, draft_path=draft_path)
             guard_render(report)

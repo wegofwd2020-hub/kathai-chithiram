@@ -8,6 +8,8 @@ alongside a fake one.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from blender_animation import BlenderGreasePencilRenderer
 from fake_renderer import FakeRenderer, tiny_script
@@ -62,6 +64,26 @@ def test_matplotlib_real_render_passes_guard() -> None:
     # 8 title frames + 16 scene frames (2 s at 8 fps).
     assert len(result.safety_report.luminances) == 24
     assert result.safety_report.narration_volume == 0.0
+
+
+def test_matplotlib_writes_real_mp4_file(tmp_path: Path) -> None:
+    # The file-output path through the pipeline (draft -> guard -> promote). This
+    # exercises the real ffmpeg encode, which the guard-only test above skips, so
+    # it catches draft-naming regressions that break extension-based container
+    # inference.
+    pytest.importorskip("imageio")
+    pytest.importorskip("imageio_ffmpeg")
+    out = tmp_path / "out.mp4"
+    result = MatplotlibStickFigureRenderer().render(
+        tiny_script(fps=8, duration_s=2),
+        mapping=NameMapping(identifiers=("Milo",), display_name="Milo"),
+        output_path=str(out),
+    )
+    assert result.output_path == str(out)
+    assert out.exists() and out.stat().st_size > 0
+    # The draft must have been promoted, not left behind, under either name.
+    assert not (tmp_path / "out.draft.mp4").exists()
+    assert not (tmp_path / "out.mp4.draft").exists()
 
 
 def test_blender_requires_bpy_but_validates_first() -> None:
