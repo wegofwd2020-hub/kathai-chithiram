@@ -102,6 +102,87 @@ These change the tone more than the wording does:
 
 ---
 
+## Tailored: pediatric occupational therapist (OT)
+
+OT-specific versions of the three templates above. The hooks that land with an OT:
+our `prompt_level` (refused / prompted / independent) **is** a prompting hierarchy;
+the per-session record mirrors how an OT already tracks an ADL; the ask is framed
+as *when to grade the just-right challenge up vs. hold*; and it names the trap an
+OT would most want guarded — a normal off day or a dysregulated session reading as
+regression. The tooth-brushing story is a concrete ADL hook.
+
+### Email
+
+**Subject:** Defining "ready for the next step" — for a calm-animation tool that supports kids' daily routines
+
+> Hi [Name],
+>
+> [I'm reaching out because / [Mutual contact] suggested you —] you help children
+> build independence in everyday routines, and you think in terms of the
+> *just-right challenge*: when to hold, when to grade up.
+>
+> I'm [your name], [role] at WeGoFwd2020. We build **Kathai Chithiram**: a parent
+> writes a short story about their child, and we turn it into a calm, captioned
+> animation that walks the child through a routine — our first one is a
+> tooth-brushing sequence. After a viewing, the parent records a tiny, fixed
+> check: **how much support the child needed** (refused / prompted / independent),
+> **whether they completed the routine**, and a simple **1–5 mood check-in**.
+> Nothing free-text. You'll notice that first field is essentially a prompting
+> hierarchy, and the whole record is close to what you'd already track for an ADL.
+>
+> We'd like that pattern over repeated sessions to *inform* what routine comes
+> next — grade the challenge up, hold, or ease. But deciding **what a meaningful
+> signal actually is** — how many recent sessions to weigh, what movement toward
+> independence suggests readiness to advance, and how to keep a normal off day or a
+> dysregulated session from reading as regression — is your judgment, not something
+> our engineers should invent. So we've built everything *around* that decision and
+> left the decision itself for an OT.
+>
+> A few things I want to be upfront about, because they're the point:
+> - **You'd decide; the system only ever suggests.** It never edits a story,
+>   generates one, or schedules one on its own — and it's never presented as a
+>   clinical measure or assessment.
+> - **Every suggestion a therapist accepts still passes a full human review**
+>   before it reaches a child.
+> - **The data is treated as special-category child data** — minimized, encrypted,
+>   never used to train any AI, and permanently deletable on request.
+>
+> I've written a short brief (2 pages) covering exactly what we'd need from you —
+> the window, the thresholds, the trend and regulation cut-offs — and the
+> guarantees we make in return. Would you be open to a **[20–30 minute] call** in
+> the next couple of weeks? [This would be an advisory role — happy to discuss
+> what works for your time, including compensation.]
+>
+> Thanks either way for the work you do.
+>
+> Warmly,
+> [Your name]
+> [Title · WeGoFwd2020 · contact]
+
+### Short (LinkedIn / DM / intro)
+
+> Hi [Name] — I'm building Kathai Chithiram, a tool that turns a parent's short
+> story into a calm captioned animation that walks a child through a daily routine
+> (our first is tooth-brushing). Parents log a quick per-session check — support
+> level (refused / prompted / independent), whether the routine was completed, and
+> a 1–5 mood check. We'd like that pattern to *inform* when to grade the challenge
+> up — but defining what a meaningful signal is (and keeping a normal off day from
+> reading as regression) is an OT's judgment, not an engineering call. The system
+> only suggests; a therapist decides, and everything passes human review before a
+> child sees it. Could I send a 2-page brief and grab 20 minutes?
+
+### Referral ask (to a mutual contact)
+
+> Hi [Name] — quick ask: I'm looking for a **pediatric OT** willing to advise on
+> one specific decision for a tool we're building to support kids' daily routines —
+> defining when a child's move toward independence (from simple prompt-level and
+> completion feedback) suggests it's time to grade the task up, so we don't let
+> engineers invent those thresholds. Light, well-scoped, and the privacy/safety
+> groundwork is already done. Anyone come to mind you'd be comfortable introducing
+> me to?
+
+---
+
 ## Follow-up checklist
 
 - [ ] Send `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md` after a positive reply.
