@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from kathai_chithiram.access import GuardedStore, Principal
+from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal
 from kathai_chithiram.errors import KathaiChithiramError
 from kathai_chithiram.generation import generate_scene_script
 from kathai_chithiram.intake import (
@@ -581,6 +581,8 @@ def _open_store(store_root: Path, *, warn_if_plaintext: bool = False) -> StoryAr
 #: Env var naming the acting principal; defaults to a single local operator identity.
 _PRINCIPAL_ENV = "KC_PRINCIPAL"
 _LOCAL_PRINCIPAL_ID = "local-operator"
+#: Cross-story access audit log, kept at the store root (log-safe: opaque ids only).
+_AUDIT_LOG_FILE = "access_audit.jsonl"
 
 
 def _resolve_principal() -> Principal | None:
@@ -613,7 +615,8 @@ def _open_guarded_store(
     principal = _resolve_principal()
     if principal is None:
         return None
-    return GuardedStore(store, principal)
+    audit = JsonlAuditSink(store_root / _AUDIT_LOG_FILE)
+    return GuardedStore(store, principal, audit=audit)
 
 
 def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:

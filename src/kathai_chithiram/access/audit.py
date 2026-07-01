@@ -13,12 +13,21 @@ concretes that land with the store integration and the eventual deployment.
 
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = ["AccessEvent", "AccessOutcome", "AuditSink", "InMemoryAuditSink"]
+__all__ = [
+    "AccessEvent",
+    "AccessOutcome",
+    "AuditSink",
+    "InMemoryAuditSink",
+    "JsonlAuditSink",
+]
 
 
 class AccessOutcome(Enum):
@@ -72,6 +81,29 @@ class AccessEvent:
             "reason": self.reason,
         }
 
+    @classmethod
+    def from_record(cls, record: Mapping[str, Any]) -> AccessEvent:
+        """Parse a record written by :meth:`to_record`.
+
+        Raises:
+            ValueError: If a required field is missing or malformed.
+        """
+        if not isinstance(record, Mapping):
+            raise ValueError(f"audit record must be a mapping, got {type(record).__name__}")
+        try:
+            outcome = AccessOutcome(record["outcome"])
+            recorded_at = datetime.fromisoformat(record["recorded_at"])
+            return cls(
+                principal_id=record["principal_id"],
+                story_id=record["story_id"],
+                action=record["action"],
+                outcome=outcome,
+                recorded_at=recorded_at,
+                reason=record.get("reason"),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("malformed audit record") from exc
+
 
 @runtime_checkable
 class AuditSink(Protocol):
@@ -99,3 +131,55 @@ class InMemoryAuditSink:
     def events(self) -> tuple[AccessEvent, ...]:
         """Return the recorded events, in the order they were recorded."""
         return tuple(self._events)
+
+
+class JsonlAuditSink:
+    """A durable audit sink appending one log-safe JSON line per event.
+
+    This is the "local file" concrete of ADR-004 Decision 5: it survives across
+    process invocations (unlike :class:`InMemoryAuditSink`), so a CLI-driven
+    deployment accrues a real access trail. Each line is one :meth:`AccessEvent.to_record`
+    — opaque ids only, no story content — so the file is safe to retain even after a
+    story is hard-deleted. A tamper-evident central sink is a further concrete for a
+    networked deployment.
+
+    Args:
+        path: The file to append audit lines to. Its parent is created on demand.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self._path = Path(path)
+
+    @property
+    def path(self) -> Path:
+        """The file this sink appends to."""
+        return self._path
+
+    def record(self, event: AccessEvent) -> None:
+        """Append ``event`` as one JSON line.
+
+        Raises:
+            OSError: If the line cannot be written.
+        """
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(event.to_record(), sort_keys=True)
+        with self._path.open("a", encoding="utf-8") as handle:
+            handle.write(line + "\n")
+
+    def read(self) -> list[AccessEvent]:
+        """Return every recorded event in append order (empty if the file is absent).
+
+        Raises:
+            ValueError: If a stored line is malformed.
+        """
+        if not self._path.is_file():
+            return []
+        events: list[AccessEvent] = []
+        for line in self._path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                events.append(AccessEvent.from_record(json.loads(line)))
+            except json.JSONDecodeError as exc:
+                raise ValueError("malformed audit log line") from exc
+        return events

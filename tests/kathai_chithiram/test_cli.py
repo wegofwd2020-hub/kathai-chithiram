@@ -291,6 +291,27 @@ def test_review_denied_for_unrelated_principal(tmp_path: Path, monkeypatch) -> N
     assert code == 2
 
 
+def test_cli_writes_a_log_safe_audit_trail(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.access import AccessOutcome, JsonlAuditSink
+
+    store_root = tmp_path / "store"
+    monkeypatch.setenv("KC_PRINCIPAL", "parent-1")
+    main(
+        _argv(_write_story(tmp_path), store_root, "--provider-no-train-zdr", "--no-render"),
+        provider=_provider(),
+    )
+    monkeypatch.setenv("KC_PRINCIPAL", "intruder")
+    # intruder reviews the story parent-1 created -> denied, recorded.
+    main(["review", "test-story", "--store-root", str(store_root), "--show"])
+
+    events = JsonlAuditSink(store_root / "access_audit.jsonl").read()
+    kinds = {(e.principal_id, e.outcome) for e in events}
+    assert ("parent-1", AccessOutcome.ALLOWED) in kinds  # ownership bootstrap
+    assert ("intruder", AccessOutcome.DENIED) in kinds  # refused browse recorded
+    # The story text never lands in the audit log.
+    assert CHILD not in (store_root / "access_audit.jsonl").read_text(encoding="utf-8")
+
+
 # --- at-rest encryption (KC-5) -------------------------------------------------
 
 
