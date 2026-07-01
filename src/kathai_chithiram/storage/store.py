@@ -57,6 +57,7 @@ _INTAKE_FILE = "intake.json"
 _REVIEW_FILE = "review.json"
 _FEEDBACK_FILE = "feedback.jsonl"
 _SUGGESTIONS_FILE = "suggestions.jsonl"
+_GRANTS_FILE = "grants.json"
 _META_FILE = "_meta.json"
 _MEDIA_DIR = "media"
 _CACHE_DIR = "cache"
@@ -459,6 +460,55 @@ class StoryArtifactStore:
             record: dict[str, Any] = json.loads(plaintext)
         except json.JSONDecodeError as exc:
             raise ValueError(f"malformed review record for story {story_id!r}") from exc
+        return record
+
+    def write_grants(self, story_id: str, record: Mapping[str, Any]) -> None:
+        """Persist the access-control grants (owner + assignments) for ``story_id``.
+
+        The grants are opaque principal ids and role labels only — no names, no story
+        text — so, like ``_meta.json``, they are stored **cleartext** (they are not
+        personal data) and live in the story directory, so a hard-delete removes them
+        with everything else (ADR-004 Decision 4). The mapping of the access model's
+        ``StoryGrants`` to/from this record is the access layer's job, not the store's.
+
+        Args:
+            story_id: Opaque story identifier.
+            record: A JSON-serializable grants record (opaque ids + role labels).
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe.
+            OSError: If the file cannot be written.
+        """
+        story_dir = self._require(story_id)
+        (story_dir / _GRANTS_FILE).write_text(
+            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+    def read_grants(self, story_id: str) -> dict[str, Any] | None:
+        """Return the stored grants record, or ``None`` if none has been written.
+
+        A ``None`` result means the story has no recorded owner; the access layer
+        treats that as deny-by-default (ADR-004).
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            The decoded grants record, or ``None`` if the story is not owned.
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe or the record is malformed.
+        """
+        story_dir = self._require(story_id)
+        path = story_dir / _GRANTS_FILE
+        if not path.is_file():
+            return None
+        try:
+            record: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"malformed grants record for story {story_id!r}") from exc
         return record
 
     def media_paths(self, story_id: str) -> list[Path]:

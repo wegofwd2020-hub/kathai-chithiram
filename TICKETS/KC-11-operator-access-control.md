@@ -1,7 +1,7 @@
 # KC-11 — Operator access control for stored child content
 
 **Labels:** P1, privacy, security
-**Status:** ⏳ Open — DPIA risk **R10** (Medium residual). Design decided in **ADR-004** (Proposed): **full technical enforcement** at the store boundary, identity behind a swappable seam. Implementation pending.
+**Status:** 🔨 In progress — DPIA risk **R10** (Medium residual). Design decided in **ADR-004** (Accepted): full technical enforcement at the store boundary, identity behind a swappable seam. **Model landed** (PR #29: `access/` — principal, policy, identity seam, audit) and **enforcement boundary landed** (`GuardedStore` + store grants, deny-by-default, audited, hard-delete sweeps `grants.json`). **Remaining:** migrate the callers (CLI/intake/review/progress) to hold a `GuardedStore` — until then the guard is built but not wired in, so R10's residual stays Medium.
 **Refs:** `docs/ADR_004_operator_access_control.md`; `docs/DPIA.md` §4 (R10), §5 (launch precondition 4); PRIVACY.md §7
 
 ## Why

@@ -91,7 +91,7 @@ mitigation. Mitigations cite the implementing control and its **status**.
 | R7 | Consent not informed / not demonstrable | Medium | Explicit consent captured at intake; parent shown a plain-language notice, and the notice version is recorded against the consent. **Built — KC-8.** | Low |
 | R8 | Profiling of a child (feedback) misused or over-collected | High | Fixed primitives only, no free text; keyed to opaque ids; inherits retention + hard-delete; engine that would act on it is gated behind ADR-002 preconditions. **Capture built; engine gated — ADR-002.** | Medium |
 | R9 | Sensitive data exposed in application logs | Medium | Errors and logs are constructed to carry no raw story text, captions, or names (lengths/counts only). **Built — errors.py / logging conventions.** | Low |
-| R10 | Operator browses story content | Medium | Access scoped to the owning session; no broad operator browsing (PRIVACY.md §7). Enforcement beyond convention is an **infra control, not yet built — KC-11**. | Medium |
+| R10 | Operator browses story content | Medium | Deny-by-default access control is **designed (ADR-004) and the enforcement boundary is built** — a `GuardedStore` authorizes a principal against per-story grants and audits every access (KC-11). Residual stays Medium until the app's own flows (CLI/intake/review/progress) are migrated to use it; the guard exists but is not yet wired in. | Medium |
 
 ## 5. Residual risk and launch preconditions
 

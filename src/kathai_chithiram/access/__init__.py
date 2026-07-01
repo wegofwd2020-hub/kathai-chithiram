@@ -21,6 +21,7 @@ from kathai_chithiram.access.audit import (
     AuditSink,
     InMemoryAuditSink,
 )
+from kathai_chithiram.access.guarded_store import GuardedStore
 from kathai_chithiram.access.identity import IdentityProvider, LocalIdentityProvider
 from kathai_chithiram.access.policy import AccessPolicy, Action, StoryGrants
 from kathai_chithiram.access.principal import Principal, Role
@@ -31,6 +32,7 @@ __all__ = [
     "AccessPolicy",
     "Action",
     "AuditSink",
+    "GuardedStore",
     "IdentityProvider",
     "InMemoryAuditSink",
     "LocalIdentityProvider",

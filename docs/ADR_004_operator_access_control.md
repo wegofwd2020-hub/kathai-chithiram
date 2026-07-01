@@ -1,7 +1,7 @@
 # ADR-004 — Operator access control: full technical enforcement at the store boundary, identity behind a swappable seam
 
 **Date:** 2026-07-01
-**Status:** Proposed
+**Status:** Accepted (2026-07-01)
 **Branch at decision:** main
 
 ---
@@ -40,14 +40,21 @@ model is real and complete**.
 
 **Decision 1 — Every store access to child content requires a `Principal`; denied by
 default.**
-The content-bearing `StoryArtifactStore` methods (`read_scene_script`,
-`read_session_feedback`, `read_progress_suggestions`, `read_intake_record`,
-`read_review_record`, `read_media`, `media_paths`, `artifact_paths`, and the
-corresponding writes/appends, plus `create_story` and `iter_story_ids`) require a
-`Principal` argument. No principal, or a principal with no authorized relationship to
-the story, yields **nothing** — the call fails closed with a domain-specific
-`AccessDeniedError` (log-safe: principal id + `story_id` + action, never content). This
-is deny-by-default: access is granted only by an explicit rule, never by omission.
+Enforcement lives in a thin **`GuardedStore`** that binds one authenticated
+`Principal` to the underlying `StoryArtifactStore` and exposes the content-bearing
+operations (`read_scene_script`, `read_session_feedback`, `read_progress_suggestions`,
+`read_intake_record`, `read_review_record`, `read_media`, `media_paths`, the
+corresponding writes/appends, `create_story`, and `mark_delivered`) — each
+**authorizes before it delegates**. (This is a refinement of the original phrasing
+"the store methods take a `Principal`": putting the guard in a wrapper keeps the
+persistence layer a pure data store and avoids rewriting it and its whole test suite,
+for the same boundary guarantee.) No principal with an authorized relationship to the
+story — or a story with no recorded owner — yields **nothing**: the call fails closed
+with a domain-specific `AccessDeniedError` (log-safe: principal id + `story_id` +
+action, never content), before any read, decrypt, or write. Deny-by-default: access is
+granted only by an explicit rule, never by omission. Cross-story enumeration
+(`iter_story_ids`, `artifact_paths`) stays a system/operational primitive on the raw
+store, outside the per-story model — an operator-level control, not a per-principal one.
 
 **Decision 2 — A small, explicit role model bound to a story, aligned to the actor
 model.**
@@ -131,9 +138,11 @@ than frozen here.
   some abstractions (credential shape, session lifetime, multi-user concurrency) may
   need revision when a real IdP lands. The `IdentityProvider` seam bounds — but does not
   eliminate — that risk.
-- Threading a `Principal` through every content-bearing store method is a broad,
-  churny change across the store and all its callers (CLI, intake, review, progress),
-  larger than a localized guard.
+- The `GuardedStore` wrapper keeps the persistence layer untouched, but enforcement is
+  only *actually on* once the callers (CLI, intake, review, progress) hold a
+  `GuardedStore` instead of the raw store — until that migration lands, the guard
+  exists but the app flows still reach the store directly, so R10's residual does not
+  drop yet.
 - A local concrete identity provider is genuine enforcement for a *single-machine*
   deployment only; it is not a substitute for real authentication across a network,
   which remains a deployment precondition.
@@ -164,17 +173,19 @@ than frozen here.
 
 ## Migration / rollout
 
-- **Access-control core (now):** add `access/` (or `storage/access.py`) with
-  `Principal`, `Role`, `AccessPolicy`, the `IdentityProvider` protocol + a concrete
-  local provider, and an audit seam; add `errors.AccessDeniedError`. Thread a
-  `Principal` through the content-bearing `StoryArtifactStore` methods; enforce
-  deny-by-default before any read/decrypt or write. Record ownership on `create_story`
-  and add an assignment operation. Extend hard-delete to sweep ownership/assignment
-  metadata (test asserts).
-- **Callers:** update the CLI (`kc intake` establishes the family owner; `kc review`
-  runs as a reviewer principal), intake, review, and progress paths to pass a
-  principal; keep the local provider's default principal ergonomic for single-user CLI
-  use while still going through the checkpoint.
+- **Access-control model (landed):** `access/` holds `Principal`, `Role`, `Action`,
+  `StoryGrants`, `AccessPolicy`, the `IdentityProvider` protocol + a concrete local
+  provider, and the audit seam; `errors.AccessDeniedError` is added. *(PR #29.)*
+- **Enforcement boundary (landed):** a `GuardedStore` binds a principal to the store
+  and enforces deny-by-default before any read/decrypt/write, auditing each
+  allow/deny; ownership is recorded on `create_story`, an `assign_role` operation adds
+  reviewer/therapist grants, and the grants live in a `grants.json` under the story dir
+  that the verifiable hard-delete sweeps (test asserts). The persistence
+  `StoryArtifactStore` is unchanged except for the grants read/write.
+- **Callers (remaining rollout):** update the CLI (`kc intake` establishes the family
+  owner; `kc review` runs as a reviewer principal), intake, review, and progress paths
+  to hold a `GuardedStore` instead of the raw store. Until this lands the guard exists
+  but the app flows still reach the store directly, so **R10's residual stays Medium**.
 - **Tests (mock stories, no real child data):** an unauthorized principal is denied and
   receives no bytes; each role gets exactly its granted actions and nothing more;
   authorized access emits a log-safe audit record; hard-delete removes
@@ -186,9 +197,13 @@ than frozen here.
   management, and a tamper-evident central audit sink land behind the seams when a
   network boundary exists.
 
-Status flips `Proposed → Accepted` once the access-control core lands (principal +
-deny-by-default enforcement at the store boundary + audit + hard-delete coverage) and
-`docs/DPIA.md` / `KC-11` reflect it. A **local** identity provider is genuine
+**Accepted 2026-07-01:** the access-control model (PR #29) and the `GuardedStore`
+enforcement boundary — principal + deny-by-default at the store boundary + audit +
+hard-delete coverage of the grants — have landed, the condition this ADR set for
+acceptance. **Acceptance records that the design is realized and the boundary exists;
+it is not "enforcement is on."** The app's own flows still reach the raw store until the
+caller migration (Migration §"Callers, remaining rollout") lands, so `docs/DPIA.md`
+R10's residual **stays Medium** until then. A **local** identity provider is genuine
 enforcement for a single-machine deployment; it is **not** a substitute for network
 authentication, which stays a launch precondition. Do not read acceptance as clearance
 for a multi-user or networked launch.
