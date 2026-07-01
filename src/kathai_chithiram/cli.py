@@ -184,6 +184,10 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
         print(f"error: cannot read story: {exc}", file=sys.stderr)
         return 2
 
+    store = _open_store(args.store_root, warn_if_plaintext=True)
+    if store is None:
+        return 2
+
     mapping = NameMapping.for_child(args.child_name)
 
     if provider is None:
@@ -216,7 +220,6 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
             )
         return 2
 
-    store = StoryArtifactStore(args.store_root)
     store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
     store.write_scene_script(story_id, result.script)
     _print_summary(story_id=story_id, store=store, generated=result)
@@ -228,7 +231,9 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
 
 def _cmd_review(args: argparse.Namespace) -> int:
     """The reviewer flow: show a draft, or record an approve/reject decision."""
-    store = StoryArtifactStore(args.store_root)
+    store = _open_store(args.store_root)
+    if store is None:
+        return 2
     try:
         bundle = load_review_bundle(store, args.story_id)
     except KathaiChithiramError as exc:
@@ -348,7 +353,9 @@ def _cmd_intake(
         if provider is None:
             return 2
 
-    store = StoryArtifactStore(args.store_root)
+    store = _open_store(args.store_root, warn_if_plaintext=True)
+    if store is None:
+        return 2
     try:
         result = submit_intake(
             submission,
@@ -537,6 +544,34 @@ def _render_draft(
         extra_out.parent.mkdir(parents=True, exist_ok=True)
         extra_out.write_bytes(data)
     return media_path
+
+
+def _open_store(store_root: Path, *, warn_if_plaintext: bool = False) -> StoryArtifactStore | None:
+    """Open the artifact store, enabling at-rest encryption when configured.
+
+    Reads the storage key from the environment (KC-5). Returns ``None`` (after
+    printing why) if a key is set but invalid, so the caller can exit cleanly.
+
+    Args:
+        store_root: Base directory for the store.
+        warn_if_plaintext: If ``True`` and no key is configured, print a note that
+            artifacts will be written unencrypted.
+    """
+    from kathai_chithiram.errors import EncryptionKeyError
+    from kathai_chithiram.storage import STORAGE_KEY_ENV, load_cipher_from_env
+
+    try:
+        cipher = load_cipher_from_env()
+    except EncryptionKeyError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return None
+    if cipher is None and warn_if_plaintext:
+        print(
+            f"note: {STORAGE_KEY_ENV} is not set — stored artifacts will NOT be "
+            "encrypted at rest. Set it for any real data (PRIVACY.md §7).",
+            file=sys.stderr,
+        )
+    return StoryArtifactStore(store_root, cipher=cipher)
 
 
 def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:

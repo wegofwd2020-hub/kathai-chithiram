@@ -57,7 +57,7 @@ Generation runs through the shared `wegofwd-llm` seam. Because story text is sen
 
 ## 7. Security
 
-- Encrypt story text and animations at rest and in transit.
+- Encrypt story text and animations at rest and in transit. *(At rest: **done** — KC-5, AES-256-GCM keyed by `KC_STORAGE_KEY`, see `storage/crypto.py`. In transit: pending a network boundary.)*
 - Access to personal story data is restricted to the owning parent's session; no broad operator browsing of story content.
 - Follow the org `SECURITY.md` conventions once established; until then, the controls in this section are the minimum bar.
 

@@ -1,6 +1,7 @@
 # KC-5 — Encryption at rest for story text, scene scripts, and media
 
 **Labels:** P0, privacy, security
+**Status:** ✅ Done (2026-07-01) — `storage/crypto.py` (`StorageCipher` seam + `AesGcmCipher` AES-256-GCM, `load_cipher_from_env`/`generate_key`), optional `cipher` on `StoryArtifactStore` encrypting story.txt/scene_script.json/intake.json/review.json/feedback.jsonl/media (per-file random nonce; `_meta.json` cleartext); `read_media` decrypts for export; `DecryptionError`/`EncryptionKeyError`; CLI reads `KC_STORAGE_KEY` and warns when writing plaintext. New `[encryption]` extra (`cryptography`). 20 new tests; ruff + mypy clean. Envelope/per-story keys noted as a future enhancement.
 **Refs:** PRIVACY.md §7, §9; `storage/store.py` (NOTE at lines 18–21)
 
 ## Why

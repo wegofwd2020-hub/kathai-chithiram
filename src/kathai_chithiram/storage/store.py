@@ -16,14 +16,19 @@ Layout, one directory per story::
 validated to a safe character set so it cannot escape ``root`` via path
 traversal. ``_meta.json`` deliberately holds **no** story text or name.
 
-NOTE (at-rest encryption): PRIVACY.md §7 requires story text encrypted at rest.
-This reference store writes plaintext files; encryption is a separate control
-that must be added before any production use. It is called out here so the gap
-is explicit, not silent.
+At-rest encryption (KC-5, PRIVACY.md §7): when the store is built with a
+:class:`~kathai_chithiram.storage.crypto.StorageCipher`, every artifact holding
+personal data — ``story.txt``, ``scene_script.json``, ``intake.json``,
+``review.json``, ``feedback.jsonl``, and ``media/`` — is encrypted on disk;
+callers still read and write plaintext, so the ciphertext never crosses the
+store boundary. ``_meta.json`` stays cleartext by design (it holds no story text
+or name). If no cipher is supplied the store writes plaintext, which is the
+documented fallback and must not be used for real data in production.
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import re
 from collections.abc import Iterator, Mapping
@@ -33,6 +38,7 @@ from pathlib import Path
 from typing import Any
 
 from kathai_chithiram.errors import StoryNotFoundError
+from kathai_chithiram.storage.crypto import StorageCipher
 
 __all__ = ["StoryArtifactStore", "StoryMetadata"]
 
@@ -69,6 +75,35 @@ class StoryMetadata:
     delivered: bool
 
 
+def _encode_feedback_line(text: str, cipher: StorageCipher | None) -> str:
+    """Encode one feedback record for the JSONL log.
+
+    Plaintext mode stores the JSON verbatim; encrypted mode stores a base64 of
+    the ciphertext token so each line stays independently appendable and
+    decryptable.
+    """
+    if cipher is None:
+        return text
+    return base64.urlsafe_b64encode(cipher.encrypt(text.encode("utf-8"))).decode("ascii")
+
+
+def _decode_feedback_line(line: str, cipher: StorageCipher | None) -> str:
+    """Decode one feedback JSONL line written by :func:`_encode_feedback_line`.
+
+    Raises:
+        DecryptionError: If a cipher is configured and the line cannot be
+            decrypted.
+        ValueError: If a cipher is configured and the line is not valid base64.
+    """
+    if cipher is None:
+        return line
+    try:
+        token = base64.urlsafe_b64decode(line)
+    except (ValueError, TypeError) as exc:
+        raise ValueError("malformed encrypted feedback line") from exc
+    return cipher.decrypt(token, artifact=_FEEDBACK_FILE).decode("utf-8")
+
+
 def _validate_story_id(story_id: str) -> str:
     """Return ``story_id`` if it is a safe path component, else raise.
 
@@ -92,10 +127,29 @@ class StoryArtifactStore:
     Args:
         root: Base directory under which per-story directories live. Created on
             demand.
+        cipher: Optional at-rest cipher. When supplied, artifacts holding
+            personal data are encrypted on disk (KC-5); when ``None`` the store
+            writes plaintext (the documented, non-production fallback).
     """
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, cipher: StorageCipher | None = None) -> None:
         self._root = Path(root)
+        self._cipher = cipher
+
+    def _seal(self, plaintext: bytes) -> bytes:
+        """Encrypt ``plaintext`` for storage, or pass it through if no cipher."""
+        return self._cipher.encrypt(plaintext) if self._cipher is not None else plaintext
+
+    def _unseal(self, stored: bytes, *, artifact: str) -> bytes:
+        """Decrypt ``stored`` bytes, or pass them through if no cipher.
+
+        Raises:
+            DecryptionError: If a cipher is configured and the bytes cannot be
+                authenticated/decrypted.
+        """
+        if self._cipher is None:
+            return stored
+        return self._cipher.decrypt(stored, artifact=artifact)
 
     @property
     def root(self) -> Path:
@@ -155,7 +209,7 @@ class StoryArtifactStore:
         """
         story_dir = self.story_dir(story_id)
         story_dir.mkdir(parents=True, exist_ok=True)
-        (story_dir / _STORY_TEXT_FILE).write_text(story_text, encoding="utf-8")
+        (story_dir / _STORY_TEXT_FILE).write_bytes(self._seal(story_text.encode("utf-8")))
         metadata = StoryMetadata(
             story_id=story_id, created_at=created_at, delivered=delivered
         )
@@ -175,9 +229,8 @@ class StoryArtifactStore:
             OSError: If the file cannot be written.
         """
         story_dir = self._require(story_id)
-        (story_dir / _SCENE_SCRIPT_FILE).write_text(
-            json.dumps(script, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        payload = json.dumps(script, ensure_ascii=False, indent=2).encode("utf-8")
+        (story_dir / _SCENE_SCRIPT_FILE).write_bytes(self._seal(payload))
 
     def write_intake_record(self, story_id: str, record: Mapping[str, Any]) -> None:
         """Persist the non-sensitive intake/consent record for ``story_id``.
@@ -197,9 +250,8 @@ class StoryArtifactStore:
             OSError: If the file cannot be written.
         """
         story_dir = self._require(story_id)
-        (story_dir / _INTAKE_FILE).write_text(
-            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        payload = json.dumps(record, indent=2, sort_keys=True).encode("utf-8")
+        (story_dir / _INTAKE_FILE).write_bytes(self._seal(payload))
 
     def append_session_feedback(self, story_id: str, record: Mapping[str, Any]) -> None:
         """Append one per-session feedback record to the story's feedback log.
@@ -221,8 +273,9 @@ class StoryArtifactStore:
             OSError: If the log cannot be written.
         """
         story_dir = self._require(story_id)
+        line = _encode_feedback_line(json.dumps(record, sort_keys=True), self._cipher)
         with (story_dir / _FEEDBACK_FILE).open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, sort_keys=True) + "\n")
+            handle.write(line + "\n")
 
     def read_session_feedback(self, story_id: str) -> list[dict[str, Any]]:
         """Return every feedback record for ``story_id``, in append order.
@@ -246,7 +299,7 @@ class StoryArtifactStore:
             if not line.strip():
                 continue
             try:
-                records.append(json.loads(line))
+                records.append(json.loads(_decode_feedback_line(line, self._cipher)))
             except json.JSONDecodeError as exc:
                 raise ValueError(f"malformed feedback record for story {story_id!r}") from exc
         return records
@@ -269,7 +322,8 @@ class StoryArtifactStore:
         if not path.is_file():
             raise StoryNotFoundError(story_id)
         try:
-            script: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            plaintext = self._unseal(path.read_bytes(), artifact=_SCENE_SCRIPT_FILE)
+            script: dict[str, Any] = json.loads(plaintext)
         except json.JSONDecodeError as exc:
             raise ValueError(f"malformed scene script for story {story_id!r}") from exc
         return script
@@ -296,7 +350,8 @@ class StoryArtifactStore:
         if not path.is_file():
             return None
         try:
-            record: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            plaintext = self._unseal(path.read_bytes(), artifact=_INTAKE_FILE)
+            record: dict[str, Any] = json.loads(plaintext)
         except json.JSONDecodeError as exc:
             raise ValueError(f"malformed intake record for story {story_id!r}") from exc
         return record
@@ -321,9 +376,8 @@ class StoryArtifactStore:
             OSError: If the file cannot be written.
         """
         story_dir = self._require(story_id)
-        (story_dir / _REVIEW_FILE).write_text(
-            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        payload = json.dumps(record, indent=2, sort_keys=True).encode("utf-8")
+        (story_dir / _REVIEW_FILE).write_bytes(self._seal(payload))
 
     def read_review_record(self, story_id: str) -> dict[str, Any] | None:
         """Return the stored review decision, or ``None`` if the story is unreviewed.
@@ -343,7 +397,8 @@ class StoryArtifactStore:
         if not path.is_file():
             return None
         try:
-            record: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            plaintext = self._unseal(path.read_bytes(), artifact=_REVIEW_FILE)
+            record: dict[str, Any] = json.loads(plaintext)
         except json.JSONDecodeError as exc:
             raise ValueError(f"malformed review record for story {story_id!r}") from exc
         return record
@@ -370,6 +425,34 @@ class StoryArtifactStore:
         if not media_dir.is_dir():
             return []
         return sorted(p for p in media_dir.iterdir() if p.is_file())
+
+    def read_media(self, story_id: str, filename: str) -> bytes:
+        """Return the decrypted bytes of a stored media file.
+
+        Media is encrypted at rest, so a stored ``.mp4`` is not directly
+        playable on disk; this returns the plaintext bytes for export or
+        playback (e.g. writing a decrypted copy for a reviewer to watch).
+
+        Args:
+            story_id: Opaque story identifier.
+            filename: Bare media file name (no path separators).
+
+        Returns:
+            The decrypted media bytes.
+
+        Raises:
+            StoryNotFoundError: If the story, or the media file, is missing.
+            DecryptionError: If a cipher is configured and the file cannot be
+                decrypted.
+            ValueError: If ``story_id`` or ``filename`` is unsafe.
+        """
+        if filename in {".", ".."} or not _FILENAME_PATTERN.match(filename):
+            raise ValueError("filename must match ^[A-Za-z0-9_.-]+$ and not be '.' or '..'")
+        story_dir = self._require(story_id)
+        path = story_dir / _MEDIA_DIR / filename
+        if not path.is_file():
+            raise StoryNotFoundError(story_id)
+        return self._unseal(path.read_bytes(), artifact=f"{_MEDIA_DIR}/{filename}")
 
     def add_media(self, story_id: str, filename: str, data: bytes) -> Path:
         """Write a rendered media file under the story's ``media/`` directory.
@@ -502,7 +585,7 @@ class StoryArtifactStore:
         target_dir = story_dir / subdir
         target_dir.mkdir(parents=True, exist_ok=True)
         target = target_dir / filename
-        target.write_bytes(data)
+        target.write_bytes(self._seal(data))
         return target
 
     @staticmethod
