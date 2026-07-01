@@ -78,7 +78,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Assert the provider org is configured for no-training AND "
             "zero-retention. Required to send story text; generation refuses "
-            "without it."
+            "without it. Backed by a dedicated key in ANTHROPIC_ZDR_API_KEY."
         ),
     )
     _add_common_args(generate)
@@ -195,8 +195,10 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
         if provider is None:
             return 2
 
+    # The posture is backed by the dedicated ZDR key the provider was built with
+    # (KC-6); the key class is recorded in the audit id.
     config = ProviderConfig(
-        provider_id=f"anthropic:{args.model}",
+        provider_id=f"anthropic:{args.model}:zdr-key",
         no_training=args.provider_no_train_zdr,
         zero_retention=args.provider_no_train_zdr,
     )
@@ -575,22 +577,19 @@ def _open_store(store_root: Path, *, warn_if_plaintext: bool = False) -> StoryAr
 
 
 def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:
-    """Construct the real provider, printing a friendly error on failure."""
-    import os
+    """Construct the ZDR-keyed provider, printing a friendly error on failure.
 
-    from kathai_chithiram.errors import ProviderUnavailableError
-    from kathai_chithiram.wegofwd_llm.anthropic_provider import AnthropicProvider
+    Story text about a child may only be sent with a dedicated no-training /
+    zero-retention credential (KC-6), so this resolves the ZDR key and fails
+    closed if it is absent — it never falls back to the ambient
+    ``ANTHROPIC_API_KEY``.
+    """
+    from kathai_chithiram.errors import KathaiChithiramError
+    from kathai_chithiram.wegofwd_llm.anthropic_provider import build_zdr_provider
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print(
-            "error: ANTHROPIC_API_KEY is not set; export it before running "
-            "(or pass a provider when embedding).",
-            file=sys.stderr,
-        )
-        return None
     try:
-        return AnthropicProvider(model=model, effort=effort)
-    except ProviderUnavailableError as exc:
+        return build_zdr_provider(model=model, effort=effort)
+    except KathaiChithiramError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return None
 

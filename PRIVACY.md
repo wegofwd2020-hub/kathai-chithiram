@@ -51,7 +51,7 @@ At each hop the data stays scoped to the requesting family. The scene script and
 
 Generation runs through the shared `wegofwd-llm` seam. Because story text is sent to an LLM provider:
 
-- Use a provider configuration with **zero data retention / no-training** guarantees where available, and record which provider + setting was used.
+- Use a provider configuration with **zero data retention / no-training** guarantees where available, and record which provider + setting was used. *(KC-6: ZDR is an org-level Anthropic configuration, so it is enforced by a dedicated `ANTHROPIC_ZDR_API_KEY` that fails closed if absent — see `wegofwd_llm/anthropic_provider.py`. The org must be confirmed ZDR by operations; the code cannot verify it.)*
 - Send the **minimum** text necessary; strip or pseudonymize identifiers before the call where the design allows (e.g. replace the child's name with a token, reinsert locally during rendering).
 - Never log raw prompts containing story text in plaintext application logs.
 

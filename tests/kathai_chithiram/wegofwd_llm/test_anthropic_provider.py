@@ -127,3 +127,53 @@ def test_missing_sdk_raises_unavailable(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr(provider_mod, "_load_anthropic_module", _boom)
     with pytest.raises(ProviderUnavailableError, match="anthropic"):
         AnthropicProvider()
+
+
+# --- ZDR / no-training credential (KC-6) ----------------------------------------
+
+
+def test_build_zdr_provider_fails_closed_without_key() -> None:
+    from kathai_chithiram.errors import ProviderConfigError
+    from kathai_chithiram.wegofwd_llm.anthropic_provider import build_zdr_provider
+
+    with pytest.raises(ProviderConfigError, match="ANTHROPIC_ZDR_API_KEY"):
+        build_zdr_provider(env={})
+
+
+def test_build_zdr_provider_uses_the_dedicated_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    from kathai_chithiram.wegofwd_llm.anthropic_provider import (
+        ZDR_API_KEY_ENV,
+        build_zdr_provider,
+    )
+
+    built_with: list[dict[str, Any]] = []
+
+    class _FakeModule:
+        def Anthropic(self, **kwargs: Any) -> FakeClient:
+            built_with.append(kwargs)
+            return FakeClient(FakeMessage(content=[FakeBlock("text", "ok")]))
+
+    monkeypatch.setattr(provider_mod, "_load_anthropic_module", lambda: _FakeModule())
+    # An ambient general key must NOT be the one used.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ambient-should-not-be-used")
+
+    provider = build_zdr_provider(env={ZDR_API_KEY_ENV: "sk-zdr-dedicated"})
+
+    assert isinstance(provider, AnthropicProvider)
+    assert built_with == [{"api_key": "sk-zdr-dedicated"}]
+
+
+def test_build_zdr_provider_missing_sdk_raises_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from kathai_chithiram.wegofwd_llm.anthropic_provider import (
+        ZDR_API_KEY_ENV,
+        build_zdr_provider,
+    )
+
+    def _boom() -> object:
+        raise ImportError("no module named 'anthropic'")
+
+    monkeypatch.setattr(provider_mod, "_load_anthropic_module", _boom)
+    with pytest.raises(ProviderUnavailableError, match="anthropic"):
+        build_zdr_provider(env={ZDR_API_KEY_ENV: "sk-zdr"})

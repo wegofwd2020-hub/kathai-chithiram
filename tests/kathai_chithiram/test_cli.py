@@ -295,3 +295,20 @@ def test_generate_bad_storage_key_exits(tmp_path: Path, monkeypatch) -> None:
         provider=_provider(),
     )
     assert code == 2
+
+
+# --- ZDR / no-training credential (KC-6) ---------------------------------------
+
+
+def test_generate_fails_closed_without_zdr_key(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.wegofwd_llm.anthropic_provider import ZDR_API_KEY_ENV
+
+    monkeypatch.delenv(ZDR_API_KEY_ENV, raising=False)
+    store_root = tmp_path / "store"
+    # No provider injected -> the CLI must resolve the dedicated ZDR key and,
+    # finding none, refuse rather than fall back to a general key.
+    code = main(
+        _argv(_write_story(tmp_path), store_root, "--provider-no-train-zdr", "--no-render")
+    )
+    assert code == 2
+    assert not (store_root / "test-story").exists()  # nothing generated or stored

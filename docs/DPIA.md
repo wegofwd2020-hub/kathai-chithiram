@@ -83,7 +83,7 @@ mitigation. Mitigations cite the implementing control and its **status**.
 | # | Risk | Inherent | Mitigation (status) | Residual |
 |---|---|---|---|---|
 | R1 | Child's name/identifiers leak to the LLM provider | High | Name stripped + pseudonymized before send; residual match is a hard stop (`IdentifierLeakError`). **Built — KC-2.** | Low |
-| R2 | Story text retained or used for training by the provider | High | Provider must be no-training / zero-retention; seam refuses dispatch otherwise; posture recorded per request. Posture is **self-asserted only today** — the dedicated ZDR credential/headers are **not yet wired**. **Partial — KC-6 open.** | **Medium** |
+| R2 | Story text retained or used for training by the provider | High | Provider must be no-training / zero-retention (an org-level configuration of the account the key belongs to); the seam refuses dispatch otherwise and records the posture per request. Backed by a **dedicated, isolated ZDR credential** (`ANTHROPIC_ZDR_API_KEY`) that fails closed if absent — no fallback to a general key. **Built — KC-6.** (Residual assumes the key is provisioned against an org Anthropic has confirmed as no-training / zero-retention — an operational precondition, not something the client can verify.) | Low |
 | R3 | Personal story data readable at rest (disk/backup theft) | High | Artifacts encrypted at rest with AES-256-GCM, key supplied from config (`KC_STORAGE_KEY`), distinct from the LLM key; a stolen disk/backup is ciphertext without the key. **Built — KC-5.** (Residual assumes the key is stored separately from the data/backups; envelope per-story keys for crypto-shredding on delete remain a future enhancement.) | Low |
 | R4 | Data kept longer than needed | Medium | 30-day retention sweep of undelivered content; hard-delete on request. **Built — KC-1.** | Low |
 | R5 | Incomplete deletion leaves recoverable personal content | High | Verifiable hard-delete asserts no artifact remains; backup-cascade log. **Built — KC-1.** | Low |
@@ -95,18 +95,18 @@ mitigation. Mitigations cite the implementing control and its **status**.
 
 ## 5. Residual risk and launch preconditions
 
-At-rest encryption (R3) is now built (KC-5). The highest remaining residual risk
-is **R2 (dedicated ZDR provider credential, KC-6)** — still documented but **not
-yet wired**, so the no-training / zero-retention posture must not be represented
-as enforced. **This DPIA cannot be signed off for an EU/UK launch until, at
-minimum:**
+The two highest-inherent-risk controls are now built in code: at-rest encryption
+(R3, KC-5) and the dedicated ZDR / no-training credential (R2, KC-6). What
+remains before an EU/UK launch is **operational and human**, not unwritten code.
+**This DPIA cannot be signed off until, at minimum:**
 
-1. **KC-6** a real no-training / zero-retention provider credential is wired and
-   fails closed (closes R2).
-2. A **DPO/counsel review** of this document and the parent-facing notice.
-3. Key management for KC-5 is operationalized: `KC_STORAGE_KEY` is stored in a
-   secret manager separate from the data/backups, with a documented rotation
-   plan (the R3 residual assumes this).
+1. A **DPO/counsel review** of this document and the parent-facing notice.
+2. **R2 operational precondition:** `ANTHROPIC_ZDR_API_KEY` is provisioned
+   against an Anthropic organization **confirmed** to be no-training /
+   zero-retention (the code fails closed without the key, but cannot itself
+   verify the org's posture).
+3. **R3 key management:** `KC_STORAGE_KEY` is stored in a secret manager separate
+   from the data/backups, with a documented rotation plan.
 4. R10 access-control enforcement is decided (technical control vs. documented
    operational limit) for the intended deployment.
 5. If the ADR-002 progress **engine** is enabled, its own DPIA touchpoint (R8) is
