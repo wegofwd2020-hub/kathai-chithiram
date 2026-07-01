@@ -1,7 +1,7 @@
 # ADR-003 — Progress-engine design: a deterministic, policy-driven measure + suggestion seam, clinical parameters owned by the collaborator
 
 **Date:** 2026-07-01
-**Status:** Proposed
+**Status:** Accepted (2026-07-01)
 **Branch at decision:** main
 
 ---
@@ -200,12 +200,13 @@ Tracked honestly; the engine cannot be enabled until every row is **Met**.
 
 ## Migration / rollout
 
-- **Mechanics track (buildable now, still gated off):** add a `ProgressPolicy` schema
-  with validation, the deterministic `measure` and `suggest` interpreter over
+- **Mechanics track (landed, still gated off):** the `ProgressPolicy` schema with
+  validation, the deterministic `measure` and `suggest` interpreter over
   `EvidenceBundle`, and the `ProgressIndicator` type carrying its evidence and fired
-  rule (Decisions 1–4). Unit-test against **synthetic** policies only. Ship no default
-  policy values; the engine has no production policy to run. The producer wires to the
-  existing `record_suggestion` (Decision 5) but is not invoked in any real flow.
+  rule (Decisions 1–4) are built (`progress/policy.py`, `progress/engine.py`),
+  unit-tested against **synthetic** policies only. No default policy values ship; the
+  engine has no production policy to run, and nothing wires the result to
+  `record_suggestion` in a real flow (Decision 5).
 - **Enablement track (gated):** loading a collaborator-authored policy and running the
   engine against real data is blocked until every §Precondition-status row is Met.
   Revisit this ADR and ADR-002 to record each precondition as it is met before any
@@ -216,8 +217,12 @@ Tracked honestly; the engine cannot be enabled until every row is **Met**.
 - **Doc updates:** point `docs/BACKLOG.md` M1 at this ADR; note in the brief that the
   policy is the artifact we need from the collaborator.
 
-Status flips `Proposed → Accepted` only once the engine-mechanics design here is
-reflected in code (the policy schema + interpreter land, inert and default-free) and
-this ADR is referenced from the backlog. Enabling the engine is a *separate* event
-gated on the §Precondition status, not on this ADR's acceptance. Do not pre-flip, and
-do not read acceptance of this design as permission to load a policy.
+**Accepted 2026-07-01:** the engine-mechanics design has landed in code — the
+`ProgressPolicy` schema (`progress/policy.py`) and the deterministic `measure` /
+`suggest` interpreter (`progress/engine.py`), inert and default-free — and this ADR is
+referenced from `docs/BACKLOG.md`, the conditions this ADR set for acceptance.
+**Enabling the engine is a *separate* event** gated on the §Precondition status, not
+on this acceptance: acceptance of this design is **not** permission to load a policy.
+The engine may not run against real data until every §Precondition-status row is Met —
+7.1 (collaborator authors the policy), 7.4 (clinical-language review), and 7.6 (DPIA
+touchpoint) remain open. Revisit this ADR and ADR-002 to record each as it is met.
