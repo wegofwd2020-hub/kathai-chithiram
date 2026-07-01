@@ -91,11 +91,18 @@ the ZDR organization, and secret-manager key management.
 - ✅ **Engine-track scaffolding (inert)** — a read-only *evidence view* over the raw captured
   primitives and the therapist *accept / edit / dismiss* review plumbing (`progress/`). By design it
   computes **no progress measure** and **generates no suggestion**.
-- ⏳ **Gated** — the progress **measure** and the suggestion logic stay unbuilt until ADR-002
-  Decision 7's non-engineering preconditions are met: a professional collaborator defines the signal
-  (window K, thresholds, trends — see `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`), a
-  clinical-language review, and a DPIA progress-profiling touchpoint. The system will only ever
-  *suggest*; a therapist decides, and every accepted premise still re-enters the full safety pipeline.
+- ✅ **Engine mechanics (built, gated off)** — ADR-003 designs the engine as a deterministic,
+  policy-driven interpreter, and its mechanics now exist (`progress/policy.py`, `progress/engine.py`):
+  a `ProgressPolicy` **schema** plus pure `measure` / `suggest` functions over the evidence view.
+  Every clinical parameter (window K, thresholds, trends, per-goal on/off) is collaborator-authored
+  **configuration** — the code ships **no thresholds and no defaults**, so it cannot run until a
+  policy is supplied.
+- ⏳ **Gated** — enabling the engine (loading a real policy and wiring suggestions to the review
+  plumbing) stays blocked until ADR-002 Decision 7's non-engineering preconditions are met: a
+  professional collaborator authors the `ProgressPolicy` — the signal itself: window K, thresholds,
+  trends (see `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`) — a clinical-language review, and a DPIA
+  progress-profiling touchpoint. The system will only ever *suggest*; a therapist decides, and every
+  accepted premise still re-enters the full safety pipeline.
 
 ## Family
 
