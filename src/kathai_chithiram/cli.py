@@ -34,6 +34,7 @@ from kathai_chithiram.generation import generate_scene_script
 from kathai_chithiram.intake import (
     Consent,
     ParentSubmission,
+    format_notice_preamble,
     submit_intake,
 )
 from kathai_chithiram.privacy import NameMapping
@@ -385,7 +386,8 @@ def _collect_submission(
     empty — in either case nothing should be processed.
     """
     print("Kathai Chithiram — story intake\n")
-    print("Before we begin, please confirm:")
+    print(format_notice_preamble())
+    print("\nBefore we begin, please confirm:")
     consent = Consent(
         is_guardian=_ask_yes_no(
             input_fn, "  [1] I am the parent/legal guardian of this child."
