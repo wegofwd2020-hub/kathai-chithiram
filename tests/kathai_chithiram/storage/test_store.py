@@ -94,3 +94,43 @@ def test_unsafe_media_filename_rejected(tmp_path: Path, bad_name: str) -> None:
     store.create_story("story-1", created_at=_CREATED, story_text="x")
     with pytest.raises(ValueError, match="filename"):
         store.add_media("story-1", bad_name, b"data")
+
+
+def test_read_scene_script_roundtrip(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("s1", created_at=_CREATED, story_text="hi")
+    script = {"schema_version": "1.0", "title": "Calm", "scenes": []}
+    store.write_scene_script("s1", script)
+    assert store.read_scene_script("s1") == script
+
+
+def test_read_scene_script_missing_raises(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("s1", created_at=_CREATED, story_text="hi")  # no scene script yet
+    with pytest.raises(StoryNotFoundError):
+        store.read_scene_script("s1")
+
+
+def test_read_intake_record_absent_is_none(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("s1", created_at=_CREATED, story_text="hi")
+    assert store.read_intake_record("s1") is None
+
+
+def test_review_record_roundtrip_and_enumerated(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("s1", created_at=_CREATED, story_text="hi")
+    assert store.read_review_record("s1") is None
+
+    store.write_review_record("s1", {"decision": "approved", "reviewer": "alex"})
+    assert store.read_review_record("s1") == {"decision": "approved", "reviewer": "alex"}
+    # Enumerated as an artifact, so a hard-delete sweeps it too.
+    assert store.story_dir("s1") / "review.json" in store.artifact_paths("s1")
+
+
+def test_media_paths_lists_rendered_files(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("s1", created_at=_CREATED, story_text="hi")
+    assert store.media_paths("s1") == []
+    store.add_media("s1", "animation.mp4", b"\x00")
+    assert [p.name for p in store.media_paths("s1")] == ["animation.mp4"]

@@ -6,6 +6,7 @@ Layout, one directory per story::
         story.txt          # raw parent-authored story text (High sensitivity)
         scene_script.json  # derived scene script
         intake.json        # non-sensitive: consent flags + provider posture
+        review.json        # non-sensitive: human-review decision (KC-7)
         feedback.jsonl     # per-session feedback primitives (ADR-002 capture)
         media/             # rendered animations
         cache/             # derived caches
@@ -45,6 +46,7 @@ _FILENAME_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+$")
 _STORY_TEXT_FILE = "story.txt"
 _SCENE_SCRIPT_FILE = "scene_script.json"
 _INTAKE_FILE = "intake.json"
+_REVIEW_FILE = "review.json"
 _FEEDBACK_FILE = "feedback.jsonl"
 _META_FILE = "_meta.json"
 _MEDIA_DIR = "media"
@@ -248,6 +250,126 @@ class StoryArtifactStore:
             except json.JSONDecodeError as exc:
                 raise ValueError(f"malformed feedback record for story {story_id!r}") from exc
         return records
+
+    def read_scene_script(self, story_id: str) -> dict[str, Any]:
+        """Return the stored scene script for ``story_id``.
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            The decoded scene-script document.
+
+        Raises:
+            StoryNotFoundError: If the story, or its scene script, is missing.
+            ValueError: If ``story_id`` is unsafe or the scene script is malformed.
+        """
+        story_dir = self._require(story_id)
+        path = story_dir / _SCENE_SCRIPT_FILE
+        if not path.is_file():
+            raise StoryNotFoundError(story_id)
+        try:
+            script: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"malformed scene script for story {story_id!r}") from exc
+        return script
+
+    def read_intake_record(self, story_id: str) -> dict[str, Any] | None:
+        """Return the stored intake/consent record, or ``None`` if there is none.
+
+        A story created by the non-interactive ``generate`` path has no intake
+        record; only the parent ``intake`` flow writes one. Callers must treat
+        ``None`` as "no consent record on file", not as an error.
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            The decoded intake record, or ``None`` if absent.
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe or the record is malformed.
+        """
+        story_dir = self._require(story_id)
+        path = story_dir / _INTAKE_FILE
+        if not path.is_file():
+            return None
+        try:
+            record: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"malformed intake record for story {story_id!r}") from exc
+        return record
+
+    def write_review_record(self, story_id: str, record: Mapping[str, Any]) -> None:
+        """Persist the non-sensitive human-review decision for ``story_id``.
+
+        The record captures who reviewed the draft, the decision, when, an
+        optional operator-authored reason, and a non-sensitive fingerprint of
+        what was reviewed (KC-7 / CONTENT_SAFETY.md §6). Like ``intake.json`` it
+        MUST NOT contain story text or a child's name, and it lives in the story
+        directory so a hard-delete removes it along with everything else.
+
+        Args:
+            story_id: Opaque story identifier.
+            record: A JSON-serializable, non-sensitive review record (e.g.
+                :meth:`ReviewRecord.to_record`).
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe.
+            OSError: If the file cannot be written.
+        """
+        story_dir = self._require(story_id)
+        (story_dir / _REVIEW_FILE).write_text(
+            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+    def read_review_record(self, story_id: str) -> dict[str, Any] | None:
+        """Return the stored review decision, or ``None`` if the story is unreviewed.
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            The decoded review record, or ``None`` if no decision has been made.
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe or the record is malformed.
+        """
+        story_dir = self._require(story_id)
+        path = story_dir / _REVIEW_FILE
+        if not path.is_file():
+            return None
+        try:
+            record: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"malformed review record for story {story_id!r}") from exc
+        return record
+
+    def media_paths(self, story_id: str) -> list[Path]:
+        """Return the rendered media files for ``story_id``, sorted.
+
+        A non-empty result means at least one guard-passing draft has been
+        rendered (the pipeline only files media after the render-time safety
+        guard succeeds), which is the precondition the review step checks before
+        an approval is allowed.
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            A sorted list of media file paths (empty if none, or if the story
+            does not exist).
+
+        Raises:
+            ValueError: If ``story_id`` is unsafe.
+        """
+        media_dir = self.story_dir(story_id) / _MEDIA_DIR
+        if not media_dir.is_dir():
+            return []
+        return sorted(p for p in media_dir.iterdir() if p.is_file())
 
     def add_media(self, story_id: str, filename: str, data: bytes) -> Path:
         """Write a rendered media file under the story's ``media/`` directory.

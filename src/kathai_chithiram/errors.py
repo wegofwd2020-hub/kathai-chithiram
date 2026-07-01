@@ -18,6 +18,7 @@ __all__ = [
     "ProviderResponseError",
     "ProviderUnavailableError",
     "RenderSafetyError",
+    "ReviewError",
     "SceneScriptGenerationError",
     "SceneScriptInvalidError",
     "StoryNotFoundError",
@@ -232,6 +233,28 @@ class DeletionError(KathaiChithiramError):
         self.story_id = story_id
         self.reason = reason
         super().__init__(f"deletion of story {story_id!r} failed: {reason}")
+
+
+class ReviewError(KathaiChithiramError):
+    """A human-review decision could not be recorded, or is not permitted.
+
+    The review step is the gate between a rendered *draft* and a *delivered*
+    animation (CONTENT_SAFETY.md §6): a person inspects the draft and either
+    approves it (which marks it delivered) or rejects it (which leaves it for the
+    retention sweep). Raised when a decision is malformed (no reviewer, a
+    rejection with no reason) or not allowed yet (approving a story that has no
+    rendered draft to review). The message names the story (safe opaque id) and
+    the reason — never any story text.
+
+    Args:
+        story_id: The story whose review failed (safe opaque id).
+        reason: What was wrong with the decision, with no raw story text.
+    """
+
+    def __init__(self, story_id: str, reason: str) -> None:
+        self.story_id = story_id
+        self.reason = reason
+        super().__init__(f"review of story {story_id!r} failed: {reason}")
 
 
 class RenderSafetyError(KathaiChithiramError):

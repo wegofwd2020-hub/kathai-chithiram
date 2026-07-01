@@ -7,11 +7,14 @@ Two subcommands sit on the same pipeline behind the contract:
   (consent gate -> generate -> store -> render a review-gated draft).
 * ``kc generate`` — the operator/non-interactive flow. Takes the story as a
   file/stdin plus flags; useful for scripting and tests.
+* ``kc review`` — the reviewer flow (KC-7). Shows a stored draft and records an
+  approve (which marks it delivered) or reject decision.
 
-Both enforce the same boundaries: the child's name builds the pseudonymization
-mapping only (never stored or logged; reinserted into captions at render time),
-and every rendered animation is a *draft* that a human must review before it
-reaches a child (CLAUDE.md). Run ``python -m kathai_chithiram.cli --help`` or the
+The first two enforce the same boundaries: the child's name builds the
+pseudonymization mapping only (never stored or logged; reinserted into captions
+at render time), and every rendered animation is a *draft* that a human must
+review before it reaches a child (CLAUDE.md) — ``kc review`` is where that human
+decision is recorded. Run ``python -m kathai_chithiram.cli --help`` or the
 installed ``kc`` command.
 """
 
@@ -35,6 +38,7 @@ from kathai_chithiram.intake import (
 )
 from kathai_chithiram.privacy import NameMapping
 from kathai_chithiram.rendering import SceneScriptRenderer
+from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
 from kathai_chithiram.storage import StoryArtifactStore
 from kathai_chithiram.wegofwd_llm.anthropic_provider import DEFAULT_MODEL
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
@@ -77,6 +81,43 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     _add_common_args(generate)
+
+    review = sub.add_parser(
+        "review", help="Review a stored draft: show, approve, or reject."
+    )
+    review.add_argument("story_id", help="Opaque id of the story to review.")
+    review.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the story's artifacts live under (default: ./kc_store).",
+    )
+    action = review.add_mutually_exclusive_group(required=True)
+    action.add_argument(
+        "--show",
+        action="store_true",
+        help="Show the draft, scene-script summary, and consent record.",
+    )
+    action.add_argument(
+        "--approve",
+        action="store_true",
+        help="Approve the draft and mark the story delivered.",
+    )
+    action.add_argument(
+        "--reject",
+        action="store_true",
+        help="Reject the draft; it stays undelivered (retention will reclaim it).",
+    )
+    review.add_argument(
+        "--reviewer",
+        default=None,
+        help="Reviewer identity recorded in the decision (required to approve/reject).",
+    )
+    review.add_argument(
+        "--reason",
+        default=None,
+        help="Reason for the decision (required when rejecting).",
+    )
     return parser
 
 
@@ -128,6 +169,8 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
     args = build_arg_parser().parse_args(argv)
     if args.command == "intake":
         return _cmd_intake(args, provider=provider)
+    if args.command == "review":
+        return _cmd_review(args)
     return _cmd_generate(args, provider=provider)
 
 
@@ -179,6 +222,105 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
 
     return _maybe_render(
         args, store=store, story_id=story_id, script=result.script, mapping=mapping
+    )
+
+
+def _cmd_review(args: argparse.Namespace) -> int:
+    """The reviewer flow: show a draft, or record an approve/reject decision."""
+    store = StoryArtifactStore(args.store_root)
+    try:
+        bundle = load_review_bundle(store, args.story_id)
+    except KathaiChithiramError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"error: cannot load story for review: {exc}", file=sys.stderr)
+        return 2
+
+    if args.show:
+        _print_review_bundle(bundle)
+        return 0
+
+    if not args.reviewer:
+        print("error: --reviewer is required to approve or reject.", file=sys.stderr)
+        return 2
+
+    decision = ReviewDecision.APPROVED if args.approve else ReviewDecision.REJECTED
+    try:
+        record = review_story(
+            store,
+            args.story_id,
+            decision=decision,
+            reviewer=args.reviewer,
+            reason=args.reason,
+        )
+    except KathaiChithiramError as exc:
+        print(f"error: review failed: {exc}", file=sys.stderr)
+        return 2
+
+    if record.approved:
+        print(
+            f"\n✓ Approved by {record.reviewer}. Story {args.story_id} is marked "
+            "delivered and will no longer be purged by the retention sweep."
+        )
+    else:
+        print(
+            f"\n✗ Rejected by {record.reviewer}. Story {args.story_id} stays "
+            "undelivered and will be reclaimed by the retention sweep."
+        )
+    return 0
+
+
+def _print_review_bundle(bundle: Any) -> None:
+    """Print the materials a reviewer needs to judge a draft."""
+    print(f"story_id: {bundle.story_id}")
+    print(f"delivered: {bundle.metadata.delivered}")
+    if bundle.existing_review is not None:
+        prior = bundle.existing_review
+        print(
+            f"prior decision: {prior.get('decision')} by {prior.get('reviewer')} "
+            f"at {prior.get('decided_at')}"
+        )
+
+    script = bundle.scene_script
+    print(
+        f"\ntitle: {script['title']}  |  scenes: {len(script['scenes'])}  |  "
+        f"{script['total_duration_s']}s @ {script['fps']}fps  |  {script['locale']}"
+    )
+    print("scenes (child shown as token; the real name appears only in the video):")
+    for scene in script["scenes"]:
+        print(f"  {scene['index']}. [{scene['duration_s']}s] {scene['narration']}")
+
+    if bundle.media_paths:
+        print("\nrendered draft(s) to watch before deciding:")
+        for path in bundle.media_paths:
+            print(f"  {path}")
+    else:
+        print("\n⚠  No rendered draft yet — approval is blocked until one is rendered.")
+
+    if bundle.intake_record is not None:
+        consent = bundle.intake_record.get("consent", {})
+        posture = bundle.intake_record.get("provider_posture", {})
+        print("\nconsent on file:")
+        for key, value in consent.items():
+            print(f"  {key}: {value}")
+        print(
+            f"provider posture: {posture.get('provider_id')} "
+            f"(no_training={posture.get('no_training')}, "
+            f"zero_retention={posture.get('zero_retention')})"
+        )
+        warnings = bundle.intake_record.get("minimization_warnings") or []
+        if warnings:
+            print("minimization warnings raised at intake:")
+            for warning in warnings:
+                print(f"  • {warning}")
+    else:
+        print("\nconsent on file: (none — story was created via `generate`)")
+
+    print(
+        "\nTo record a decision:\n"
+        f"  kc review {bundle.story_id} --approve --reviewer NAME\n"
+        f"  kc review {bundle.story_id} --reject  --reviewer NAME --reason \"...\""
     )
 
 
@@ -333,6 +475,7 @@ def _maybe_render(
         "\n⚠  DRAFT — a human must review this animation (and the captioned "
         "scene script) before it is shown to a child. It is NOT marked delivered."
     )
+    print(f"   Review it with:  kc review {story_id} --show")
     return 0
 
 
