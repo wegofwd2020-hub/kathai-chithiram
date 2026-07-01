@@ -1,6 +1,7 @@
 # KC-6 — Zero-retention / no-training provider key + request enforcement
 
 **Labels:** P0, privacy, security
+**Status:** ✅ Done (2026-07-01) — Confirmed via the claude-api reference that Anthropic's no-training / zero-retention posture is an **organization-level** configuration of the account a key belongs to, **not a per-request header** (a ZDR-misconfigured org simply gets 400s). So the enforcement surface is the *credential*: `anthropic_provider.py` gains an isolated `api_key` param + `build_zdr_provider()` that reads a dedicated `ANTHROPIC_ZDR_API_KEY` and **fails closed** (`ProviderConfigError`) if absent — never falling back to the ambient `ANTHROPIC_API_KEY`. CLI resolves the ZDR key for every real run and records the key class in the audit id (`anthropic:<model>:zdr-key`). 4 new tests; ruff + mypy clean.
 **Refs:** PRIVACY.md §6, §9; `wegofwd_llm/provider.py`, `anthropic_provider.py`, `gateway.py`
 
 ## Why
