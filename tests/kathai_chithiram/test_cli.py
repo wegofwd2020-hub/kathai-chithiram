@@ -179,6 +179,23 @@ def test_intake_declined_consent_submits_nothing(tmp_path: Path) -> None:
     assert not (store_root / "intake-story").exists()  # nothing was stored
 
 
+def test_intake_shows_privacy_notice_before_consent(tmp_path: Path, capsys) -> None:
+    from kathai_chithiram.intake import PRIVACY_NOTICE_DOC, PRIVACY_NOTICE_VERSION
+
+    store_root = tmp_path / "store"
+    _cmd_intake(
+        _intake_args(store_root),
+        provider=_provider(),
+        input_fn=_scripted_input(["y", "y", "y", CHILD, ""]),
+        story_reader=lambda: STORY,
+    )
+    out = capsys.readouterr().out
+    # The notice (version + doc pointer) is shown, and before the consent prompt.
+    assert PRIVACY_NOTICE_VERSION in out
+    assert PRIVACY_NOTICE_DOC in out
+    assert out.index(PRIVACY_NOTICE_DOC) < out.index("please confirm")
+
+
 # --- review subcommand ---------------------------------------------------------
 
 

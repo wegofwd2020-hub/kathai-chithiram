@@ -74,7 +74,7 @@ This product concerns children, frequently children with disabilities. Depending
 - [x] Implement verifiable hard-delete of story + script + media. *(KC-1: `storage/deletion.py` + 30-day `retention.py`)*
 - [x] Implement identifier minimization/pseudonymization before LLM calls. *(KC-2: `privacy/pseudonymize.py`, enforced by the `wegofwd-llm` seam)*
 - [x] Record provider no-training/zero-retention configuration. *(KC-2: `ProviderConfig` + `ProviderRequestRecord`)*
-- [ ] Draft parent-facing privacy notice + consent capture.
-- [ ] DPIA before EU launch.
+- [x] Draft parent-facing privacy notice + consent capture. *(KC-8: `docs/PARENT_PRIVACY_NOTICE.md` + versioned `intake/privacy_notice.py`, shown before consent; `intake.json` records the `privacy_notice_version`. Consent capture: intake flow.)*
+- [ ] DPIA before EU launch. *(KC-9)*
 
 *This is a draft for internal alignment and is not legal advice. Have counsel review before relying on it for a public launch.*

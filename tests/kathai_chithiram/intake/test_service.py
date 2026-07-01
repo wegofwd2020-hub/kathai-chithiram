@@ -12,7 +12,12 @@ import pytest
 
 from kathai_chithiram.errors import ConsentError
 from kathai_chithiram.generation import EXAMPLE_SCENE_SCRIPT
-from kathai_chithiram.intake import Consent, ParentSubmission, submit_intake
+from kathai_chithiram.intake import (
+    PRIVACY_NOTICE_VERSION,
+    Consent,
+    ParentSubmission,
+    submit_intake,
+)
 from kathai_chithiram.storage import StoryArtifactStore
 from kathai_chithiram.wegofwd_llm.provider import LLMRequest, LLMResponse
 
@@ -76,6 +81,8 @@ def test_happy_path_stores_story_script_and_consent(tmp_path: Path) -> None:
     assert intake["recorded_at"] == _clock().isoformat()
     assert intake["provider_posture"]["no_training"] is True
     assert intake["provider_posture"]["zero_retention"] is True
+    # The consent is tied to the privacy-notice version in effect (KC-8).
+    assert intake["privacy_notice_version"] == PRIVACY_NOTICE_VERSION
     # The consent record carries no story text or name.
     assert CHILD not in json.dumps(intake)
     assert "dark" not in json.dumps(intake)

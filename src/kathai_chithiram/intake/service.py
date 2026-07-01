@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 
 from kathai_chithiram.errors import ConsentError
 from kathai_chithiram.generation import GeneratedSceneScript, generate_scene_script
+from kathai_chithiram.intake.privacy_notice import PRIVACY_NOTICE_VERSION
 from kathai_chithiram.intake.submission import ParentSubmission, minimization_warnings
 from kathai_chithiram.privacy import NameMapping
 from kathai_chithiram.storage import StoryArtifactStore
@@ -116,6 +117,7 @@ def submit_intake(
         story_id,
         {
             "consent": submission.consent.as_record(),
+            "privacy_notice_version": PRIVACY_NOTICE_VERSION,
             "recorded_at": now.isoformat(),
             "provider_posture": {
                 "provider_id": config.provider_id,
