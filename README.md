@@ -50,7 +50,7 @@ work since has **lifted the scene script into a structured, generated artifact**
 
 ## Roadmap
 
-All four foundational steps are built and on `main`:
+### Foundation — all four steps built and on `main`
 
 1. ✅ **Scene-script schema** — the structured contract a renderer consumes (`scene_script/`:
    schema + validation; scenes, narration, timing, safety, accessibility).
@@ -65,11 +65,37 @@ End to end, `kc intake` / `kc generate` take a parent's story to a captioned dra
 with privacy (the name is stripped before the provider, scene scripts hold only a token, consent
 is captured) and a human-review gate enforced in code.
 
-**Next, beyond the foundation:** M1 per-child progress quantification — the capture-track
-primitives are built (`feedback/`; ADR-002 *Accepted*), but the progress **engine** and
-therapist-suggested premise customization stay **gated** behind ADR-002's preconditions
-(professional collaborator, tested therapist-in-the-loop path, DPIA). Plus production hardening:
-encryption-at-rest, a no-training / zero-retention provider key, and a delivery/review workflow.
+### Production hardening — built and on `main`
+
+All five hardening tickets are implemented (`TICKETS/KC-5`…`KC-9`):
+
+- ✅ **Encryption at rest** (KC-5) — AES-256-GCM for every stored artifact, keyed by
+  `KC_STORAGE_KEY` (`storage/crypto.py`); reads/writes stay plaintext, ciphertext never crosses
+  the store boundary.
+- ✅ **Zero-retention / no-training provider key** (KC-6) — a dedicated `ANTHROPIC_ZDR_API_KEY`
+  that **fails closed**; a child's story text never goes out on a general developer key.
+- ✅ **Review → approve → deliver workflow** (KC-7) — `kc review` records an explicit human
+  accept / reject; nothing is marked delivered without it.
+- ✅ **Parent-facing privacy notice** (KC-8) — a plain-language notice shown *before* consent, with
+  the notice version recorded against each consent (`docs/PARENT_PRIVACY_NOTICE.md`).
+- ✅ **DPIA** (KC-9) — a Data Protection Impact Assessment whose risk register maps to the controls
+  above (`docs/DPIA.md`; draft, pending DPO/counsel sign-off).
+
+What remains before an EU/UK launch is **operational, not code**: DPO/counsel sign-off, confirming
+the ZDR organization, and secret-manager key management.
+
+### M1 — per-child progress → therapist-suggested premises (engine **gated**)
+
+- ✅ **Capture track** — fixed, minimal feedback primitives per session (`feedback/`; ADR-002
+  *Accepted*), keyed to a therapist-owned goal.
+- ✅ **Engine-track scaffolding (inert)** — a read-only *evidence view* over the raw captured
+  primitives and the therapist *accept / edit / dismiss* review plumbing (`progress/`). By design it
+  computes **no progress measure** and **generates no suggestion**.
+- ⏳ **Gated** — the progress **measure** and the suggestion logic stay unbuilt until ADR-002
+  Decision 7's non-engineering preconditions are met: a professional collaborator defines the signal
+  (window K, thresholds, trends — see `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`), a
+  clinical-language review, and a DPIA progress-profiling touchpoint. The system will only ever
+  *suggest*; a therapist decides, and every accepted premise still re-enters the full safety pipeline.
 
 ## Family
 
