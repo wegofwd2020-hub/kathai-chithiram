@@ -200,9 +200,14 @@ def test_intake_shows_privacy_notice_before_consent(tmp_path: Path, capsys) -> N
 
 
 def _seed_rendered_story(store_root: Path, story_id: str = "review-story") -> None:
-    """Create a story with a scene script and a rendered draft, ready to review."""
+    """Create a story with a scene script and a rendered draft, ready to review.
+
+    Grants ownership to the CLI's default local principal so the migrated,
+    access-controlled ``kc review`` flow is authorized (ADR-004 / KC-11).
+    """
     from datetime import datetime, timezone
 
+    from kathai_chithiram.cli import _LOCAL_PRINCIPAL_ID
     from kathai_chithiram.storage import StoryArtifactStore
 
     store = StoryArtifactStore(store_root)
@@ -211,6 +216,7 @@ def _seed_rendered_story(store_root: Path, story_id: str = "review-story") -> No
     )
     store.write_scene_script(story_id, copy.deepcopy(EXAMPLE_SCENE_SCRIPT))
     store.add_media(story_id, "animation.mp4", b"\x00mp4\x01")
+    store.write_grants(story_id, {"owner_id": _LOCAL_PRINCIPAL_ID, "assignments": {}})
 
 
 def _review_argv(store_root: Path, *extra: str) -> list[str]:
@@ -257,6 +263,31 @@ def test_review_reject_without_reason_errors(tmp_path: Path) -> None:
 def test_review_missing_story_errors(tmp_path: Path) -> None:
     store_root = tmp_path / "store"
     code = main(["review", "ghost", "--store-root", str(store_root), "--show"])
+    assert code == 2
+
+
+# --- access control (KC-11 / ADR-004) ------------------------------------------
+
+
+def test_generate_records_owner_from_principal_env(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("KC_PRINCIPAL", "parent-1")
+    store_root = tmp_path / "store"
+    code = main(
+        _argv(_write_story(tmp_path), store_root, "--provider-no-train-zdr", "--no-render"),
+        provider=_provider(),
+    )
+    assert code == 0
+    grants = json.loads((store_root / "test-story" / "grants.json").read_text(encoding="utf-8"))
+    assert grants["owner_id"] == "parent-1"  # the acting principal owns what it creates
+
+
+def test_review_denied_for_unrelated_principal(tmp_path: Path, monkeypatch) -> None:
+    # A story owned by the default local principal is not readable by a stranger:
+    # enforcement is on, not merely available (deny-by-default).
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)
+    monkeypatch.setenv("KC_PRINCIPAL", "intruder")
+    code = main(_review_argv(store_root, "--show"))
     assert code == 2
 
 

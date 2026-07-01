@@ -21,6 +21,7 @@ installed ``kc`` command.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import tempfile
 import uuid
@@ -29,6 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from kathai_chithiram.access import GuardedStore, Principal
 from kathai_chithiram.errors import KathaiChithiramError
 from kathai_chithiram.generation import generate_scene_script
 from kathai_chithiram.intake import (
@@ -40,7 +42,7 @@ from kathai_chithiram.intake import (
 from kathai_chithiram.privacy import NameMapping
 from kathai_chithiram.rendering import SceneScriptRenderer
 from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
-from kathai_chithiram.storage import StoryArtifactStore
+from kathai_chithiram.storage import StoryArtifactStore, StoryStore
 from kathai_chithiram.wegofwd_llm.anthropic_provider import DEFAULT_MODEL
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
 
@@ -184,7 +186,7 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
         print(f"error: cannot read story: {exc}", file=sys.stderr)
         return 2
 
-    store = _open_store(args.store_root, warn_if_plaintext=True)
+    store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
     if store is None:
         return 2
 
@@ -233,7 +235,7 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
 
 def _cmd_review(args: argparse.Namespace) -> int:
     """The reviewer flow: show a draft, or record an approve/reject decision."""
-    store = _open_store(args.store_root)
+    store = _open_guarded_store(args.store_root)
     if store is None:
         return 2
     try:
@@ -355,7 +357,7 @@ def _cmd_intake(
         if provider is None:
             return 2
 
-    store = _open_store(args.store_root, warn_if_plaintext=True)
+    store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
     if store is None:
         return 2
     try:
@@ -454,7 +456,7 @@ def _ask_yes_no(input_fn: Callable[[str], str], prompt: str) -> bool:
 def _maybe_render(
     args: argparse.Namespace,
     *,
-    store: StoryArtifactStore,
+    store: StoryStore,
     story_id: str,
     script: dict[str, Any],
     mapping: NameMapping,
@@ -530,7 +532,7 @@ def _load_default_renderer() -> SceneScriptRenderer:
 def _render_draft(
     *,
     renderer: SceneScriptRenderer,
-    store: StoryArtifactStore,
+    store: StoryStore,
     story_id: str,
     script: dict[str, Any],
     mapping: NameMapping,
@@ -576,6 +578,44 @@ def _open_store(store_root: Path, *, warn_if_plaintext: bool = False) -> StoryAr
     return StoryArtifactStore(store_root, cipher=cipher)
 
 
+#: Env var naming the acting principal; defaults to a single local operator identity.
+_PRINCIPAL_ENV = "KC_PRINCIPAL"
+_LOCAL_PRINCIPAL_ID = "local-operator"
+
+
+def _resolve_principal() -> Principal | None:
+    """Resolve the acting principal for access control (ADR-004, KC-11).
+
+    Reads ``KC_PRINCIPAL`` (an opaque id) and defaults to a single local operator
+    identity, so single-user CLI use works without configuration while every store
+    access still goes through the authorization checkpoint. Returns ``None`` (after
+    printing why) if the configured id is invalid.
+    """
+    raw = os.environ.get(_PRINCIPAL_ENV, "").strip() or _LOCAL_PRINCIPAL_ID
+    try:
+        return Principal(raw)
+    except ValueError as exc:
+        print(f"error: invalid {_PRINCIPAL_ENV}: {exc}", file=sys.stderr)
+        return None
+
+
+def _open_guarded_store(
+    store_root: Path, *, warn_if_plaintext: bool = False
+) -> GuardedStore | None:
+    """Open the store and bind the acting principal, enforcing access (ADR-004).
+
+    Returns ``None`` (after printing why) if the store key or the principal is
+    misconfigured, so the caller can exit cleanly.
+    """
+    store = _open_store(store_root, warn_if_plaintext=warn_if_plaintext)
+    if store is None:
+        return None
+    principal = _resolve_principal()
+    if principal is None:
+        return None
+    return GuardedStore(store, principal)
+
+
 def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:
     """Construct the ZDR-keyed provider, printing a friendly error on failure.
 
@@ -594,7 +634,7 @@ def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:
         return None
 
 
-def _print_summary(*, story_id: str, store: StoryArtifactStore, generated: Any) -> None:
+def _print_summary(*, story_id: str, store: StoryStore, generated: Any) -> None:
     """Print a console summary using the token form (no real name)."""
     script = generated.script
     print(f"story_id: {story_id}")

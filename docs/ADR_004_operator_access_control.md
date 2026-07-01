@@ -138,11 +138,10 @@ than frozen here.
   some abstractions (credential shape, session lifetime, multi-user concurrency) may
   need revision when a real IdP lands. The `IdentityProvider` seam bounds — but does not
   eliminate — that risk.
-- The `GuardedStore` wrapper keeps the persistence layer untouched, but enforcement is
-  only *actually on* once the callers (CLI, intake, review, progress) hold a
-  `GuardedStore` instead of the raw store — until that migration lands, the guard
-  exists but the app flows still reach the store directly, so R10's residual does not
-  drop yet.
+- Enforcement is now on in the app's flows (CLI + intake/review), but a **local**
+  operator can still bypass it via direct filesystem access to the store, so R10's
+  residual stays Medium until a deployment boundary removes that bypass. The wrapper
+  also leaves the durable audit sink and a progress-path guard as follow-ups.
 - A local concrete identity provider is genuine enforcement for a *single-machine*
   deployment only; it is not a substitute for real authentication across a network,
   which remains a deployment precondition.
@@ -182,10 +181,18 @@ than frozen here.
   reviewer/therapist grants, and the grants live in a `grants.json` under the story dir
   that the verifiable hard-delete sweeps (test asserts). The persistence
   `StoryArtifactStore` is unchanged except for the grants read/write.
-- **Callers (remaining rollout):** update the CLI (`kc intake` establishes the family
-  owner; `kc review` runs as a reviewer principal), intake, review, and progress paths
-  to hold a `GuardedStore` instead of the raw store. Until this lands the guard exists
-  but the app flows still reach the store directly, so **R10's residual stays Medium**.
+- **Callers (landed):** the intake and review services type against a `StoryStore`
+  protocol that both the raw store and `GuardedStore` satisfy, and the CLI now binds a
+  principal (from `KC_PRINCIPAL`, defaulting to a single local operator) and passes a
+  `GuardedStore` — so `kc generate`/`kc intake` establish ownership and `kc review`
+  runs authorized. Deny-by-default is now enforced in the app's own flows (a test shows
+  an unrelated principal is refused). *(PR for this change.)*
+- **Remaining:** wire a **durable audit sink** (the CLI currently enforces without
+  persisting audit events); add a `kc assign` for reviewer/therapist grants and a
+  progress-path guard. **R10's residual stays Medium** regardless until a *deployment*
+  boundary removes the local bypass — an operator on the single machine still has direct
+  filesystem access to the store (bounded only by KC-5 encryption + OS permissions), so
+  in-app enforcement fully pays off only where operators cannot reach the files directly.
 - **Tests (mock stories, no real child data):** an unauthorized principal is denied and
   receives no bytes; each role gets exactly its granted actions and nothing more;
   authorized access emits a log-safe audit record; hard-delete removes
