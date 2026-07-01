@@ -141,7 +141,8 @@ than frozen here.
 - Enforcement is now on in the app's flows (CLI + intake/review) with a durable audit
   trail, but a **local** operator can still bypass it via direct filesystem access to
   the store, so R10's residual stays Medium until a deployment boundary removes that
-  bypass. Routing the progress/feedback path through the guard remains as a follow-up.
+  bypass. All app paths (CLI, intake, review, progress/feedback) now route through the
+  guard; a deployment boundary is the only remaining item for R10.
 - A local concrete identity provider is genuine enforcement for a *single-machine*
   deployment only; it is not a substitute for real authentication across a network,
   which remains a deployment precondition.
@@ -194,11 +195,16 @@ than frozen here.
 - **Role assignment (landed):** `kc assign <story> --principal <id> --role
   reviewer|therapist` lets an owner grant a scoped role; a granted reviewer can then
   read the draft a stranger cannot (end-to-end test).
-- **Remaining:** routing the progress/feedback path through the guard. **R10's residual
-  stays Medium** regardless until a *deployment* boundary removes the local bypass — an
-  operator on the single machine still has direct filesystem access to the store
-  (bounded only by KC-5 encryption + OS permissions), so in-app enforcement fully pays
-  off only where operators cannot reach the files directly.
+- **Progress/feedback path (landed):** the per-story feedback and suggestion functions
+  accept the `StoryStore` protocol, so passing a `GuardedStore` makes them
+  deny-by-default and role-scoped (owner captures feedback; therapist reads it and
+  decides on suggestions). Cross-story aggregation (`build_goal_evidence` /
+  `iter_story_ids`) stays on the raw store as a privileged system operation, outside
+  the per-story model.
+- **Remaining (not code):** **R10's residual stays Medium** until a *deployment*
+  boundary removes the local bypass — an operator on the single machine still has direct
+  filesystem access to the store (bounded only by KC-5 encryption + OS permissions), so
+  in-app enforcement fully pays off only where operators cannot reach the files directly.
 - **Tests (mock stories, no real child data):** an unauthorized principal is denied and
   receives no bytes; each role gets exactly its granted actions and nothing more;
   authorized access emits a log-safe audit record; hard-delete removes
