@@ -134,3 +134,16 @@ def test_media_paths_lists_rendered_files(tmp_path: Path) -> None:
     assert store.media_paths("s1") == []
     store.add_media("s1", "animation.mp4", b"\x00")
     assert [p.name for p in store.media_paths("s1")] == ["animation.mp4"]
+
+
+def test_progress_suggestions_log_roundtrip_and_enumerated(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    store.create_story("s1", created_at=_CREATED, story_text="hi")
+    assert store.read_progress_suggestions("s1") == []
+
+    store.append_progress_suggestion("s1", {"kind": "suggestion", "suggestion_id": "sg1"})
+    store.append_progress_suggestion("s1", {"kind": "decision", "suggestion_id": "sg1"})
+    records = store.read_progress_suggestions("s1")
+    assert [r["kind"] for r in records] == ["suggestion", "decision"]
+    # Enumerated as an artifact, so a hard-delete sweeps it too.
+    assert store.story_dir("s1") / "suggestions.jsonl" in store.artifact_paths("s1")

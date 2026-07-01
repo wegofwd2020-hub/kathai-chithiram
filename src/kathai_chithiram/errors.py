@@ -21,6 +21,7 @@ __all__ = [
     "ProviderUnavailableError",
     "RenderSafetyError",
     "ReviewError",
+    "SuggestionError",
     "SceneScriptGenerationError",
     "SceneScriptInvalidError",
     "StoryNotFoundError",
@@ -296,6 +297,26 @@ class ReviewError(KathaiChithiramError):
         self.story_id = story_id
         self.reason = reason
         super().__init__(f"review of story {story_id!r} failed: {reason}")
+
+
+class SuggestionError(KathaiChithiramError):
+    """A premise-suggestion review action is malformed or not permitted.
+
+    The M1 progress track keeps a therapist in the loop (ADR-002 Decision 7.3): a
+    suggestion is recorded, then a reviewer explicitly accepts / edits / dismisses
+    it. Raised when a decision targets an unknown suggestion or one already
+    decided. The message names the suggestion (opaque id) and the reason — never
+    any child data.
+
+    Args:
+        suggestion_id: The suggestion the action targeted (safe opaque id).
+        reason: What was wrong with the action, with no child data.
+    """
+
+    def __init__(self, suggestion_id: str, reason: str) -> None:
+        self.suggestion_id = suggestion_id
+        self.reason = reason
+        super().__init__(f"suggestion {suggestion_id!r}: {reason}")
 
 
 class RenderSafetyError(KathaiChithiramError):
