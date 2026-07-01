@@ -141,7 +141,7 @@ than frozen here.
 - Enforcement is now on in the app's flows (CLI + intake/review) with a durable audit
   trail, but a **local** operator can still bypass it via direct filesystem access to
   the store, so R10's residual stays Medium until a deployment boundary removes that
-  bypass. A `kc assign` command and a progress-path guard remain as follow-ups.
+  bypass. Routing the progress/feedback path through the guard remains as a follow-up.
 - A local concrete identity provider is genuine enforcement for a *single-machine*
   deployment only; it is not a substitute for real authentication across a network,
   which remains a deployment precondition.
@@ -191,12 +191,14 @@ than frozen here.
   (`<store-root>/access_audit.jsonl`, log-safe opaque ids), so every allowed and denied
   access is persisted across invocations (a test shows both an ownership-bootstrap
   ALLOW and a cross-principal DENY on disk).
-- **Remaining:** a `kc assign` command for reviewer/therapist grants, and routing the
-  progress/feedback path through the guard. **R10's residual stays Medium** regardless
-  until a *deployment* boundary removes the local bypass — an operator on the single
-  machine still has direct filesystem access to the store (bounded only by KC-5
-  encryption + OS permissions), so in-app enforcement fully pays off only where
-  operators cannot reach the files directly.
+- **Role assignment (landed):** `kc assign <story> --principal <id> --role
+  reviewer|therapist` lets an owner grant a scoped role; a granted reviewer can then
+  read the draft a stranger cannot (end-to-end test).
+- **Remaining:** routing the progress/feedback path through the guard. **R10's residual
+  stays Medium** regardless until a *deployment* boundary removes the local bypass — an
+  operator on the single machine still has direct filesystem access to the store
+  (bounded only by KC-5 encryption + OS permissions), so in-app enforcement fully pays
+  off only where operators cannot reach the files directly.
 - **Tests (mock stories, no real child data):** an unauthorized principal is denied and
   receives no bytes; each role gets exactly its granted actions and nothing more;
   authorized access emits a log-safe audit record; hard-delete removes
