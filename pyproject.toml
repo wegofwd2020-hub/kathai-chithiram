@@ -41,6 +41,12 @@ render = [
 generation = [
     "anthropic>=0.69",
 ]
+# At-rest encryption of stored artifacts (KC-5). Kept optional so the core
+# contract/validation layers stay dependency-light; install it (and set
+# KC_STORAGE_KEY) for any deployment that persists real story data.
+encryption = [
+    "cryptography>=42",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.5",
@@ -48,6 +54,8 @@ dev = [
     "types-jsonschema>=4.0",
     # The conformance suite imports the matplotlib renderer, so dev needs render.
     "kathai-chithiram[render]",
+    # The storage-encryption tests need the cipher backend.
+    "kathai-chithiram[encryption]",
 ]
 
 [tool.setuptools.packages.find]

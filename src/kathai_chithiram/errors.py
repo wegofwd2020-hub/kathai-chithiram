@@ -11,7 +11,9 @@ from __future__ import annotations
 
 __all__ = [
     "ConsentError",
+    "DecryptionError",
     "DeletionError",
+    "EncryptionKeyError",
     "IdentifierLeakError",
     "KathaiChithiramError",
     "ProviderConfigError",
@@ -215,6 +217,45 @@ class StoryNotFoundError(KathaiChithiramError):
     def __init__(self, story_id: str) -> None:
         self.story_id = story_id
         super().__init__(f"no story found for id {story_id!r}")
+
+
+class EncryptionKeyError(KathaiChithiramError):
+    """The at-rest encryption key is missing, malformed, or the wrong size.
+
+    Raised when building the storage cipher from configuration (KC-5,
+    PRIVACY.md §7): a deployment that opts into encryption must supply a valid
+    key. The message describes the problem — never the key material or any story
+    text.
+
+    Args:
+        reason: What is wrong with the configured key (no secret material).
+    """
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(f"storage encryption key error: {reason}")
+
+
+class DecryptionError(KathaiChithiramError):
+    """A stored artifact could not be decrypted or failed authentication.
+
+    Raised when reading an encrypted artifact whose ciphertext is corrupt, was
+    tampered with, or was written under a different key (KC-5). Decryption
+    **fails closed**: it never returns partial/garbled bytes and never falls
+    back to treating ciphertext as plaintext. The message names the artifact
+    (safe relative path) only — never the key or any decrypted content.
+
+    Args:
+        artifact: A safe identifier for the artifact that failed (e.g. a file
+            name), with no secret or story content.
+    """
+
+    def __init__(self, artifact: str) -> None:
+        self.artifact = artifact
+        super().__init__(
+            f"could not decrypt stored artifact {artifact!r}: wrong key or corrupt/"
+            "tampered ciphertext"
+        )
 
 
 class DeletionError(KathaiChithiramError):

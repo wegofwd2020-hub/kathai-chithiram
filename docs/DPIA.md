@@ -84,7 +84,7 @@ mitigation. Mitigations cite the implementing control and its **status**.
 |---|---|---|---|---|
 | R1 | Child's name/identifiers leak to the LLM provider | High | Name stripped + pseudonymized before send; residual match is a hard stop (`IdentifierLeakError`). **Built — KC-2.** | Low |
 | R2 | Story text retained or used for training by the provider | High | Provider must be no-training / zero-retention; seam refuses dispatch otherwise; posture recorded per request. Posture is **self-asserted only today** — the dedicated ZDR credential/headers are **not yet wired**. **Partial — KC-6 open.** | **Medium** |
-| R3 | Personal story data readable at rest (disk/backup theft) | High | PRIVACY.md §7 requires at-rest encryption; store currently writes **plaintext**. **Not built — KC-5 open.** | **High** |
+| R3 | Personal story data readable at rest (disk/backup theft) | High | Artifacts encrypted at rest with AES-256-GCM, key supplied from config (`KC_STORAGE_KEY`), distinct from the LLM key; a stolen disk/backup is ciphertext without the key. **Built — KC-5.** (Residual assumes the key is stored separately from the data/backups; envelope per-story keys for crypto-shredding on delete remain a future enhancement.) | Low |
 | R4 | Data kept longer than needed | Medium | 30-day retention sweep of undelivered content; hard-delete on request. **Built — KC-1.** | Low |
 | R5 | Incomplete deletion leaves recoverable personal content | High | Verifiable hard-delete asserts no artifact remains; backup-cascade log. **Built — KC-1.** | Low |
 | R6 | Unsafe/inappropriate output reaches a child | High | Content-safety generation rules + scene-script validation + render-time seizure/flash guards + a human-review gate before delivery. **Built — KC-3/KC-4/KC-7.** | Low |
@@ -95,15 +95,18 @@ mitigation. Mitigations cite the implementing control and its **status**.
 
 ## 5. Residual risk and launch preconditions
 
-Highest residual risks are **R3 (at-rest encryption, KC-5)** and **R2 (dedicated
-ZDR provider credential, KC-6)** — both are documented but **not yet built**, so
-they must not be represented as in place. **This DPIA cannot be signed off for an
-EU/UK launch until, at minimum:**
+At-rest encryption (R3) is now built (KC-5). The highest remaining residual risk
+is **R2 (dedicated ZDR provider credential, KC-6)** — still documented but **not
+yet wired**, so the no-training / zero-retention posture must not be represented
+as enforced. **This DPIA cannot be signed off for an EU/UK launch until, at
+minimum:**
 
-1. **KC-5** at-rest encryption is implemented and tested (closes R3).
-2. **KC-6** a real no-training / zero-retention provider credential is wired and
+1. **KC-6** a real no-training / zero-retention provider credential is wired and
    fails closed (closes R2).
-3. A **DPO/counsel review** of this document and the parent-facing notice.
+2. A **DPO/counsel review** of this document and the parent-facing notice.
+3. Key management for KC-5 is operationalized: `KC_STORAGE_KEY` is stored in a
+   secret manager separate from the data/backups, with a documented rotation
+   plan (the R3 residual assumes this).
 4. R10 access-control enforcement is decided (technical control vs. documented
    operational limit) for the intended deployment.
 5. If the ADR-002 progress **engine** is enabled, its own DPIA touchpoint (R8) is

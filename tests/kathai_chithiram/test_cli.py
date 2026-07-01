@@ -258,3 +258,40 @@ def test_review_missing_story_errors(tmp_path: Path) -> None:
     store_root = tmp_path / "store"
     code = main(["review", "ghost", "--store-root", str(store_root), "--show"])
     assert code == 2
+
+
+# --- at-rest encryption (KC-5) -------------------------------------------------
+
+
+def test_generate_encrypts_at_rest_when_key_set(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.storage import STORAGE_KEY_ENV, generate_key, load_cipher_from_env
+
+    key = generate_key()
+    monkeypatch.setenv(STORAGE_KEY_ENV, key)
+    store_root = tmp_path / "store"
+    code = main(
+        _argv(_write_story(tmp_path), store_root, "--provider-no-train-zdr", "--no-render"),
+        provider=_provider(),
+    )
+    assert code == 0
+
+    # Raw story on disk is ciphertext, not the plaintext story.
+    raw = (store_root / "test-story" / "story.txt").read_bytes()
+    assert STORY.encode() not in raw
+    # ...but it decrypts back with the key.
+    cipher = load_cipher_from_env({STORAGE_KEY_ENV: key})
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    encrypted = StoryArtifactStore(store_root, cipher=cipher)
+    assert encrypted.read_scene_script("test-story")["title"]
+
+
+def test_generate_bad_storage_key_exits(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.storage import STORAGE_KEY_ENV
+
+    monkeypatch.setenv(STORAGE_KEY_ENV, "not-valid-base64 !!!")
+    code = main(
+        _argv(_write_story(tmp_path), tmp_path / "store", "--provider-no-train-zdr", "--no-render"),
+        provider=_provider(),
+    )
+    assert code == 2
