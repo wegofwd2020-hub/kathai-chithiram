@@ -1,8 +1,8 @@
 # KC-11 — Operator access control for stored child content
 
 **Labels:** P1, privacy, security
-**Status:** ⏳ Open — DPIA risk **R10** (Medium residual); the only tracked DPIA risk without a ticket.
-**Refs:** `docs/DPIA.md` §4 (R10), §5 (launch precondition 4); PRIVACY.md §7
+**Status:** ⏳ Open — DPIA risk **R10** (Medium residual). Design decided in **ADR-004** (Proposed): **full technical enforcement** at the store boundary, identity behind a swappable seam. Implementation pending.
+**Refs:** `docs/ADR_004_operator_access_control.md`; `docs/DPIA.md` §4 (R10), §5 (launch precondition 4); PRIVACY.md §7
 
 ## Why
 The store keeps a family's story content — `story.txt`, `scene_script.json`,
