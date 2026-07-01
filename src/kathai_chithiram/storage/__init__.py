@@ -23,6 +23,7 @@ from kathai_chithiram.storage.deletion import (
     DeletionReceipt,
     delete_story,
 )
+from kathai_chithiram.storage.protocol import StoryStore
 from kathai_chithiram.storage.retention import (
     DEFAULT_RETENTION,
     purge_undelivered_stories,
@@ -38,6 +39,7 @@ __all__ = [
     "StorageCipher",
     "StoryArtifactStore",
     "StoryMetadata",
+    "StoryStore",
     "delete_story",
     "generate_key",
     "load_cipher_from_env",

@@ -165,6 +165,20 @@ class GuardedStore:
         self._guard(story_id, Action.READ_SUGGESTIONS)
         return self._store.read_progress_suggestions(story_id)
 
+    def read_metadata(self, story_id: str) -> StoryMetadata:
+        """Read the story's non-sensitive metadata, if authorized for content."""
+        self._guard(story_id, Action.READ_CONTENT)
+        return self._store.read_metadata(story_id)
+
+    def story_dir(self, story_id: str) -> Path:
+        """Return the story's directory path (for display/output; reads no content).
+
+        This exposes only a path, not artifact bytes — every content read/write still
+        goes through the guarded methods — so it is a validating passthrough, not an
+        authorization bypass.
+        """
+        return self._store.story_dir(story_id)
+
     # --- content writes -----------------------------------------------------
 
     def write_scene_script(self, story_id: str, script: Mapping[str, Any]) -> None:

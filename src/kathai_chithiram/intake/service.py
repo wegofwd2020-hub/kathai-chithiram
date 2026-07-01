@@ -26,7 +26,7 @@ from kathai_chithiram.generation import GeneratedSceneScript, generate_scene_scr
 from kathai_chithiram.intake.privacy_notice import PRIVACY_NOTICE_VERSION
 from kathai_chithiram.intake.submission import ParentSubmission, minimization_warnings
 from kathai_chithiram.privacy import NameMapping
-from kathai_chithiram.storage import StoryArtifactStore
+from kathai_chithiram.storage import StoryStore
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
 
 __all__ = ["IntakeResult", "submit_intake"]
@@ -52,7 +52,7 @@ def submit_intake(
     submission: ParentSubmission,
     *,
     provider: LLMProvider,
-    store: StoryArtifactStore,
+    store: StoryStore,
     story_id: str | None = None,
     model_id: str = "anthropic",
     max_attempts: int = 3,

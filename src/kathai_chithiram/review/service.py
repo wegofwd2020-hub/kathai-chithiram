@@ -29,7 +29,7 @@ from typing import Any
 
 from kathai_chithiram.errors import ReviewError
 from kathai_chithiram.review.schema import ReviewDecision, ReviewRecord
-from kathai_chithiram.storage import StoryArtifactStore, StoryMetadata
+from kathai_chithiram.storage import StoryMetadata, StoryStore
 
 __all__ = ["ReviewBundle", "load_review_bundle", "review_story"]
 
@@ -56,7 +56,7 @@ class ReviewBundle:
     existing_review: dict[str, Any] | None
 
 
-def load_review_bundle(store: StoryArtifactStore, story_id: str) -> ReviewBundle:
+def load_review_bundle(store: StoryStore, story_id: str) -> ReviewBundle:
     """Gather the artifacts a reviewer needs to judge ``story_id``.
 
     Args:
@@ -83,7 +83,7 @@ def load_review_bundle(store: StoryArtifactStore, story_id: str) -> ReviewBundle
 
 
 def review_story(
-    store: StoryArtifactStore,
+    store: StoryStore,
     story_id: str,
     *,
     decision: ReviewDecision,
