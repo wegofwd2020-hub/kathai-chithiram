@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 
@@ -11,6 +13,7 @@ from kathai_chithiram.access import (
     AccessOutcome,
     AuditSink,
     InMemoryAuditSink,
+    JsonlAuditSink,
 )
 
 _AT = datetime(2026, 6, 1, tzinfo=timezone.utc)
@@ -56,3 +59,40 @@ def test_in_memory_sink_keeps_order() -> None:
     sink.record(_event(action="a2", outcome=AccessOutcome.DENIED))
     assert [e.action for e in sink.events()] == ["a1", "a2"]
     assert isinstance(sink, AuditSink)
+
+
+def test_event_from_record_round_trips() -> None:
+    event = _event(principal_id=None, outcome=AccessOutcome.DENIED, reason="no role")
+    assert AccessEvent.from_record(event.to_record()) == event
+
+
+def test_jsonl_sink_persists_across_instances(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    JsonlAuditSink(path).record(_event(action="a1"))
+    JsonlAuditSink(path).record(_event(action="a2", outcome=AccessOutcome.DENIED))
+    # A fresh sink (new process, same file) sees the whole append-only trail.
+    events = JsonlAuditSink(path).read()
+    assert [(e.action, e.outcome) for e in events] == [
+        ("a1", AccessOutcome.ALLOWED),
+        ("a2", AccessOutcome.DENIED),
+    ]
+    assert isinstance(JsonlAuditSink(path), AuditSink)
+
+
+def test_jsonl_sink_read_empty_when_absent(tmp_path: Path) -> None:
+    assert JsonlAuditSink(tmp_path / "missing.jsonl").read() == []
+
+
+def test_jsonl_sink_lines_are_log_safe(tmp_path: Path) -> None:
+    path = tmp_path / "audit.jsonl"
+    JsonlAuditSink(path).record(_event())
+    text = path.read_text(encoding="utf-8")
+    # Only opaque ids/actions on disk — a record carries no content fields at all.
+    assert set(json.loads(text)) == {
+        "principal_id",
+        "story_id",
+        "action",
+        "outcome",
+        "recorded_at",
+        "reason",
+    }

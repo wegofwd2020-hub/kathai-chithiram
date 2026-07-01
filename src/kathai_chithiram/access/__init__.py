@@ -20,6 +20,7 @@ from kathai_chithiram.access.audit import (
     AccessOutcome,
     AuditSink,
     InMemoryAuditSink,
+    JsonlAuditSink,
 )
 from kathai_chithiram.access.guarded_store import GuardedStore
 from kathai_chithiram.access.identity import IdentityProvider, LocalIdentityProvider
@@ -35,6 +36,7 @@ __all__ = [
     "GuardedStore",
     "IdentityProvider",
     "InMemoryAuditSink",
+    "JsonlAuditSink",
     "LocalIdentityProvider",
     "Principal",
     "Role",
