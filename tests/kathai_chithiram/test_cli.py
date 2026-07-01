@@ -177,3 +177,67 @@ def test_intake_declined_consent_submits_nothing(tmp_path: Path) -> None:
     assert code == 2
     assert provider.requests == []  # nothing was generated
     assert not (store_root / "intake-story").exists()  # nothing was stored
+
+
+# --- review subcommand ---------------------------------------------------------
+
+
+def _seed_rendered_story(store_root: Path, story_id: str = "review-story") -> None:
+    """Create a story with a scene script and a rendered draft, ready to review."""
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store = StoryArtifactStore(store_root)
+    store.create_story(
+        story_id, created_at=datetime(2026, 6, 1, tzinfo=timezone.utc), story_text=STORY
+    )
+    store.write_scene_script(story_id, copy.deepcopy(EXAMPLE_SCENE_SCRIPT))
+    store.add_media(story_id, "animation.mp4", b"\x00mp4\x01")
+
+
+def _review_argv(store_root: Path, *extra: str) -> list[str]:
+    return ["review", "review-story", "--store-root", str(store_root), *extra]
+
+
+def test_review_show_lists_the_draft(tmp_path: Path, capsys) -> None:
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)
+    code = main(_review_argv(store_root, "--show"))
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "animation.mp4" in out
+    assert "delivered: False" in out
+
+
+def test_review_approve_marks_delivered(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)
+    code = main(_review_argv(store_root, "--approve", "--reviewer", "alex"))
+    assert code == 0
+    assert StoryArtifactStore(store_root).read_metadata("review-story").delivered is True
+
+
+def test_review_approve_requires_reviewer(tmp_path: Path) -> None:
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)
+    code = main(_review_argv(store_root, "--approve"))
+    assert code == 2
+
+
+def test_review_reject_without_reason_errors(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)
+    code = main(_review_argv(store_root, "--reject", "--reviewer", "alex"))
+    assert code == 2
+    assert StoryArtifactStore(store_root).read_metadata("review-story").delivered is False
+
+
+def test_review_missing_story_errors(tmp_path: Path) -> None:
+    store_root = tmp_path / "store"
+    code = main(["review", "ghost", "--store-root", str(store_root), "--show"])
+    assert code == 2
