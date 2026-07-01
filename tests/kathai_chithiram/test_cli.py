@@ -291,6 +291,40 @@ def test_review_denied_for_unrelated_principal(tmp_path: Path, monkeypatch) -> N
     assert code == 2
 
 
+def _assign_argv(store_root: Path, principal: str, role: str) -> list[str]:
+    return [
+        "assign",
+        "review-story",
+        "--principal",
+        principal,
+        "--role",
+        role,
+        "--store-root",
+        str(store_root),
+    ]
+
+
+def test_assign_lets_the_owner_grant_a_reviewer(tmp_path: Path, monkeypatch) -> None:
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)  # owned by the default local principal
+
+    # The owner (default principal) grants the reviewer role...
+    assert main(_assign_argv(store_root, "rev-1", "reviewer")) == 0
+    grants = json.loads((store_root / "review-story" / "grants.json").read_text(encoding="utf-8"))
+    assert grants["assignments"] == {"rev-1": "reviewer"}
+
+    # ...and that reviewer can now read the draft, which a stranger could not.
+    monkeypatch.setenv("KC_PRINCIPAL", "rev-1")
+    assert main(_review_argv(store_root, "--show")) == 0
+
+
+def test_assign_denied_for_non_owner(tmp_path: Path, monkeypatch) -> None:
+    store_root = tmp_path / "store"
+    _seed_rendered_story(store_root)
+    monkeypatch.setenv("KC_PRINCIPAL", "intruder")
+    assert main(_assign_argv(store_root, "rev-1", "reviewer")) == 2
+
+
 def test_cli_writes_a_log_safe_audit_trail(tmp_path: Path, monkeypatch) -> None:
     from kathai_chithiram.access import AccessOutcome, JsonlAuditSink
 

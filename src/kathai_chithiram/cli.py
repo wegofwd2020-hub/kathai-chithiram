@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal
+from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal, Role
 from kathai_chithiram.errors import KathaiChithiramError
 from kathai_chithiram.generation import generate_scene_script
 from kathai_chithiram.intake import (
@@ -121,6 +121,28 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Reason for the decision (required when rejecting).",
     )
+
+    assign = sub.add_parser(
+        "assign", help="Grant a reviewer/therapist role on a story (owner only)."
+    )
+    assign.add_argument("story_id", help="Opaque id of the story to grant a role on.")
+    assign.add_argument(
+        "--principal",
+        required=True,
+        help="Opaque id of the principal to grant the role to.",
+    )
+    assign.add_argument(
+        "--role",
+        required=True,
+        choices=[Role.REVIEWER.value, Role.THERAPIST.value],
+        help="Role to grant (reviewer or therapist).",
+    )
+    assign.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the story's artifacts live under (default: ./kc_store).",
+    )
     return parser
 
 
@@ -174,6 +196,8 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_intake(args, provider=provider)
     if args.command == "review":
         return _cmd_review(args)
+    if args.command == "assign":
+        return _cmd_assign(args)
     return _cmd_generate(args, provider=provider)
 
 
@@ -278,6 +302,24 @@ def _cmd_review(args: argparse.Namespace) -> int:
             f"\n✗ Rejected by {record.reviewer}. Story {args.story_id} stays "
             "undelivered and will be reclaimed by the retention sweep."
         )
+    return 0
+
+
+def _cmd_assign(args: argparse.Namespace) -> int:
+    """Grant a reviewer/therapist role on a story (owner-only; ADR-004 / KC-11)."""
+    store = _open_guarded_store(args.store_root)
+    if store is None:
+        return 2
+    role = Role(args.role)  # argparse restricts to assignable role values
+    try:
+        store.assign_role(args.story_id, args.principal, role)
+    except KathaiChithiramError as exc:
+        print(f"error: assign failed: {exc}", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"✓ Granted {role.value} on {args.story_id} to {args.principal}.")
     return 0
 
 
