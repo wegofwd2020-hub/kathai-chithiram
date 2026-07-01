@@ -10,6 +10,7 @@ text, captions, narration, or a child's real name (see ``PRIVACY.md`` §6 and
 from __future__ import annotations
 
 __all__ = [
+    "AccessDeniedError",
     "ConsentError",
     "DecryptionError",
     "DeletionError",
@@ -318,6 +319,40 @@ class SuggestionError(KathaiChithiramError):
         self.suggestion_id = suggestion_id
         self.reason = reason
         super().__init__(f"suggestion {suggestion_id!r}: {reason}")
+
+
+class AccessDeniedError(KathaiChithiramError):
+    """A principal was denied access to child content, or could not be authenticated.
+
+    The access-control layer (ADR-004, KC-11) is deny-by-default: a principal with no
+    authorized relationship to a story — or a credential that authenticates to no
+    principal — is refused before any artifact is read, decrypted, or written. It
+    **fails closed**: a denied access never returns partial content. The message names
+    the principal (opaque id), the story (opaque id), and the action — never any story
+    text, caption, or name (PRIVACY.md §6).
+
+    Args:
+        action: The attempted action (e.g. ``"read_content"``, ``"authenticate"``).
+        reason: Why it was denied, with no child data.
+        principal_id: The principal that was refused, if known (safe opaque id).
+        story_id: The story involved, if applicable (safe opaque id).
+    """
+
+    def __init__(
+        self,
+        action: str,
+        reason: str,
+        *,
+        principal_id: str | None = None,
+        story_id: str | None = None,
+    ) -> None:
+        self.action = action
+        self.reason = reason
+        self.principal_id = principal_id
+        self.story_id = story_id
+        who = repr(principal_id) if principal_id is not None else "(unauthenticated)"
+        where = f" story={story_id!r}" if story_id is not None else ""
+        super().__init__(f"access denied for {who} action={action!r}{where}: {reason}")
 
 
 class PolicyError(KathaiChithiramError):
