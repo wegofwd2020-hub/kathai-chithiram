@@ -16,6 +16,7 @@ __all__ = [
     "EncryptionKeyError",
     "IdentifierLeakError",
     "KathaiChithiramError",
+    "PolicyError",
     "ProviderConfigError",
     "ProviderResponseError",
     "ProviderUnavailableError",
@@ -317,6 +318,27 @@ class SuggestionError(KathaiChithiramError):
         self.suggestion_id = suggestion_id
         self.reason = reason
         super().__init__(f"suggestion {suggestion_id!r}: {reason}")
+
+
+class PolicyError(KathaiChithiramError):
+    """A progress policy could not be applied to the given evidence.
+
+    The M1 progress engine (ADR-003) interprets a collaborator-authored
+    :class:`~kathai_chithiram.progress.policy.ProgressPolicy` over an evidence
+    bundle. Raised when the two are mismatched — e.g. the evidence was gathered
+    over a different window than the policy calibrates for, so its thresholds would
+    be applied to the wrong number of sessions. The message names the policy
+    (opaque id) and the mismatch — never any child data.
+
+    Args:
+        policy_id: The policy that could not be applied (safe opaque id).
+        reason: Why it could not be applied, with no child data.
+    """
+
+    def __init__(self, policy_id: str, reason: str) -> None:
+        self.policy_id = policy_id
+        self.reason = reason
+        super().__init__(f"progress policy {policy_id!r} cannot be applied: {reason}")
 
 
 class RenderSafetyError(KathaiChithiramError):
