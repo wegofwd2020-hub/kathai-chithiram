@@ -75,6 +75,9 @@ This product concerns children, frequently children with disabilities. Depending
 - [x] Implement identifier minimization/pseudonymization before LLM calls. *(KC-2: `privacy/pseudonymize.py`, enforced by the `wegofwd-llm` seam)*
 - [x] Record provider no-training/zero-retention configuration. *(KC-2: `ProviderConfig` + `ProviderRequestRecord`)*
 - [x] Draft parent-facing privacy notice + consent capture. *(KC-8: `docs/PARENT_PRIVACY_NOTICE.md` + versioned `intake/privacy_notice.py`, shown before consent; `intake.json` records the `privacy_notice_version`. Consent capture: intake flow.)*
-- [ ] DPIA before EU launch. *(KC-9: assessment drafted in `docs/DPIA.md`; **not signed off** — launch blocked on KC-5 at-rest encryption, KC-6 ZDR provider key, and DPO/counsel review.)*
+- [x] Encrypt story text, scene scripts, and media at rest. *(KC-5: `storage/crypto.py`, AES-256-GCM keyed by `KC_STORAGE_KEY`. In transit: pending a network boundary. Envelope/per-story crypto-shred keys tracked as KC-10.)*
+- [x] Back the provider no-training/zero-retention posture with an isolated credential. *(KC-6: dedicated `ANTHROPIC_ZDR_API_KEY`, fails closed if absent.)*
+- [x] Human review→approve→deliver gate before any output reaches a child. *(KC-7: `review/` + `kc review`.)*
+- [ ] DPIA before EU launch. *(KC-9: assessment drafted in `docs/DPIA.md`; **not signed off**. The code controls it depended on — KC-5 at-rest encryption and KC-6 ZDR key — are **done**; the remaining blockers are operational/human, not code: DPO/counsel review, confirming the ZDR org posture (R2), secret-manager key management for `KC_STORAGE_KEY` (R3), and deciding operator access-control enforcement (R10, KC-11). See `docs/DPIA.md` §5.)*
 
 *This is a draft for internal alignment and is not legal advice. Have counsel review before relying on it for a public launch.*
