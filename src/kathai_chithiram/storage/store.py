@@ -8,6 +8,7 @@ Layout, one directory per story::
         intake.json        # non-sensitive: consent flags + provider posture
         review.json        # non-sensitive: human-review decision (KC-7)
         feedback.jsonl     # per-session feedback primitives (ADR-002 capture)
+        suggestions.jsonl  # premise-suggestion review records (ADR-002 M1 track)
         media/             # rendered animations
         cache/             # derived caches
         _meta.json         # non-sensitive: created_at, delivered flag
@@ -19,7 +20,8 @@ traversal. ``_meta.json`` deliberately holds **no** story text or name.
 At-rest encryption (KC-5, PRIVACY.md §7): when the store is built with a
 :class:`~kathai_chithiram.storage.crypto.StorageCipher`, every artifact holding
 personal data — ``story.txt``, ``scene_script.json``, ``intake.json``,
-``review.json``, ``feedback.jsonl``, and ``media/`` — is encrypted on disk;
+``review.json``, ``feedback.jsonl``, ``suggestions.jsonl``, and ``media/`` — is
+encrypted on disk;
 callers still read and write plaintext, so the ciphertext never crosses the
 store boundary. ``_meta.json`` stays cleartext by design (it holds no story text
 or name). If no cipher is supplied the store writes plaintext, which is the
@@ -54,6 +56,7 @@ _SCENE_SCRIPT_FILE = "scene_script.json"
 _INTAKE_FILE = "intake.json"
 _REVIEW_FILE = "review.json"
 _FEEDBACK_FILE = "feedback.jsonl"
+_SUGGESTIONS_FILE = "suggestions.jsonl"
 _META_FILE = "_meta.json"
 _MEDIA_DIR = "media"
 _CACHE_DIR = "cache"
@@ -75,8 +78,8 @@ class StoryMetadata:
     delivered: bool
 
 
-def _encode_feedback_line(text: str, cipher: StorageCipher | None) -> str:
-    """Encode one feedback record for the JSONL log.
+def _encode_jsonl_line(text: str, cipher: StorageCipher | None) -> str:
+    """Encode one JSONL record line.
 
     Plaintext mode stores the JSON verbatim; encrypted mode stores a base64 of
     the ciphertext token so each line stays independently appendable and
@@ -87,8 +90,8 @@ def _encode_feedback_line(text: str, cipher: StorageCipher | None) -> str:
     return base64.urlsafe_b64encode(cipher.encrypt(text.encode("utf-8"))).decode("ascii")
 
 
-def _decode_feedback_line(line: str, cipher: StorageCipher | None) -> str:
-    """Decode one feedback JSONL line written by :func:`_encode_feedback_line`.
+def _decode_jsonl_line(line: str, cipher: StorageCipher | None, *, artifact: str) -> str:
+    """Decode one JSONL line written by :func:`_encode_jsonl_line`.
 
     Raises:
         DecryptionError: If a cipher is configured and the line cannot be
@@ -100,8 +103,8 @@ def _decode_feedback_line(line: str, cipher: StorageCipher | None) -> str:
     try:
         token = base64.urlsafe_b64decode(line)
     except (ValueError, TypeError) as exc:
-        raise ValueError("malformed encrypted feedback line") from exc
-    return cipher.decrypt(token, artifact=_FEEDBACK_FILE).decode("utf-8")
+        raise ValueError(f"malformed encrypted line in {artifact}") from exc
+    return cipher.decrypt(token, artifact=artifact).decode("utf-8")
 
 
 def _validate_story_id(story_id: str) -> str:
@@ -273,7 +276,7 @@ class StoryArtifactStore:
             OSError: If the log cannot be written.
         """
         story_dir = self._require(story_id)
-        line = _encode_feedback_line(json.dumps(record, sort_keys=True), self._cipher)
+        line = _encode_jsonl_line(json.dumps(record, sort_keys=True), self._cipher)
         with (story_dir / _FEEDBACK_FILE).open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
 
@@ -299,9 +302,64 @@ class StoryArtifactStore:
             if not line.strip():
                 continue
             try:
-                records.append(json.loads(_decode_feedback_line(line, self._cipher)))
+                decoded = _decode_jsonl_line(line, self._cipher, artifact=_FEEDBACK_FILE)
+                records.append(json.loads(decoded))
             except json.JSONDecodeError as exc:
                 raise ValueError(f"malformed feedback record for story {story_id!r}") from exc
+        return records
+
+    def append_progress_suggestion(self, story_id: str, record: Mapping[str, Any]) -> None:
+        """Append one premise-suggestion or decision record to the story's log.
+
+        The log (``suggestions.jsonl``, one JSON object per line) holds the
+        therapist-in-the-loop review records of the M1 progress track (ADR-002
+        Decision 7.3). It lives in the story directory, so it is encrypted at rest
+        (KC-5) and a verifiable hard-delete removes it with everything else (KC-1,
+        ADR-002 Decision 5). Suggestion text is operator/therapist-authored, not a
+        child's words.
+
+        Args:
+            story_id: Opaque story identifier.
+            record: A JSON-serializable record (e.g.
+                :meth:`PremiseSuggestion.to_record` or
+                :meth:`SuggestionDecision.to_record`).
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe.
+            OSError: If the log cannot be written.
+        """
+        story_dir = self._require(story_id)
+        line = _encode_jsonl_line(json.dumps(record, sort_keys=True), self._cipher)
+        with (story_dir / _SUGGESTIONS_FILE).open("a", encoding="utf-8") as handle:
+            handle.write(line + "\n")
+
+    def read_progress_suggestions(self, story_id: str) -> list[dict[str, Any]]:
+        """Return every suggestion/decision record for ``story_id``, in append order.
+
+        Args:
+            story_id: Opaque story identifier.
+
+        Returns:
+            The decoded records (empty if none were recorded).
+
+        Raises:
+            StoryNotFoundError: If the story does not exist.
+            ValueError: If ``story_id`` is unsafe, or a log line is malformed.
+        """
+        story_dir = self._require(story_id)
+        log_path = story_dir / _SUGGESTIONS_FILE
+        if not log_path.is_file():
+            return []
+        records: list[dict[str, Any]] = []
+        for line in log_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                decoded = _decode_jsonl_line(line, self._cipher, artifact=_SUGGESTIONS_FILE)
+                records.append(json.loads(decoded))
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"malformed suggestion record for story {story_id!r}") from exc
         return records
 
     def read_scene_script(self, story_id: str) -> dict[str, Any]:

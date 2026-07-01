@@ -10,14 +10,13 @@ import json
 from datetime import datetime, timezone
 
 import pytest
+from tests.kathai_chithiram.rendering.fake_renderer import FakeRenderer
+from tests.kathai_chithiram.scene_script.mock_scripts import valid_scene_script
 from wegofwd_video.errors import VideoCapabilityError
 
 from kathai_chithiram.storage.store import StoryArtifactStore
 from kathai_chithiram.video import build_video_brief, generate_story_video
 from kathai_chithiram.video.adapter import render_result_to_video_result
-
-from tests.kathai_chithiram.rendering.fake_renderer import FakeRenderer
-from tests.kathai_chithiram.scene_script.mock_scripts import valid_scene_script
 
 
 def _long_script(n_scenes: int = 16, per_s: int = 8) -> dict:
