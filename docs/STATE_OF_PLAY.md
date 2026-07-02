@@ -17,7 +17,7 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **569
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **574
 tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
 template below). **Both** reference renderers now carry the content-aware art: the
 matplotlib default (`generate_animation.py`) and the **Blender v2** renderer
@@ -27,7 +27,7 @@ verified on a real Blender 4.0.2 render.
 
 ## TL;DR
 
-The **product pipeline is built and green** (569 tests): a parent's story becomes a
+The **product pipeline is built and green** (574 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -42,7 +42,7 @@ provisioning.
 - **Core pipeline** — scene-script contract + validation, generation behind the
   `wegofwd-llm` seam (Anthropic provider), both reference renderers consume the contract,
   parent intake with consent capture. `kc intake` / `kc generate` / `kc review` /
-  `kc assign` / `kc progress` / `kc author` / **`kc delete`** / **`kc retention-sweep`** CLI.
+  `kc assign` / `kc progress` / `kc suggestions` / `kc decide` / `kc author` / **`kc delete`** / **`kc retention-sweep`** CLI.
 - **Erasure + retention are CLI-invokable** — `kc delete <story>` (owner-only, guarded +
   audited, verifiable KC-1 hard-delete + KC-10 crypto-shred, confirms unless `--yes`) and
   `kc retention-sweep` (purge undelivered older than the window; `--dry-run` reports only).
@@ -98,14 +98,22 @@ provisioning.
   --story <id>`. It stays **default-free and gated off**: no policy ships, `--policy` is
   required, recording a suggestion needs the therapist role (fails closed), and the
   suggestion is inert (a therapist decides). Collaborator brief is at v0.2.
-- **The engineering track is now COMPLETE** — there is no code left to write; the engine
-  runs the moment a reviewed policy file exists. What remains is the policy itself and its
-  clearances:
-- **Blocked on — a professional collaborator (therapist/OT):** authoring the real
-  `ProgressPolicy` file — the window K, thresholds, and trend definitions (ADR-002 D7.1),
-  and the framing/copy sign-off (D7.4). *Engineering cannot pick these — they are clinical
-  judgment.*
+- **The engineering track is COMPLETE end to end** — the therapist loop is now
+  CLI-complete: `kc progress <goal> --policy <file> --story <id>` (run the engine) →
+  `kc suggestions <story>` (list) → `kc decide <story> <sug> --accept|--edit|--dismiss`
+  (therapist decision, D7.3). The collaborator has a concrete file to author from —
+  `docs/PROGRESS_POLICY.md` + the inert starter `docs/examples/progress_policy.template.json`
+  (`enabled: false`, PLACEHOLDER copy). Verified end to end: a filled + enabled policy fires
+  its rule and records a suggestion. **The engine runs the moment a reviewed policy file
+  exists — no code left.**
+- **Blocked on — a professional collaborator (therapist/OT):** filling the template with the
+  real window K, thresholds, trend definitions (ADR-002 D7.1) + framing/copy sign-off (D7.4).
+  *Engineering cannot pick these — they are clinical judgment.*
 - **Also blocked on — DPO/counsel:** the progress-profiling DPIA touchpoint (D7.6).
+- **Note (2026-07-02):** owner reports the external gates (DPO sign-off + addendum, collaborator,
+  ops) **cleared** — awaiting the concrete artifacts to act on: the OT's **filled `ProgressPolicy`
+  file** (→ M1 live, no build), and the DPO's **DOB-granularity + lawful-basis rulings + auth
+  approach** (→ build platform b/c per ADR-005 + `RETENTION_ERASURE_DESIGN.md`).
 
 ### 2. KC-11 — operator access control (DPIA R10)
 
