@@ -10,6 +10,7 @@ output reaches a child; output that trips a guard is not delivered.
 from __future__ import annotations
 
 from kathai_chithiram.rendering.audio_mux import mux_wav_into_mp4
+from kathai_chithiram.rendering.captions import Cue, build_captions, to_srt, to_vtt
 from kathai_chithiram.rendering.narration import (
     DEFAULT_SAMPLE_RATE,
     NarrationSynthesizer,
@@ -72,11 +73,15 @@ __all__ = [
     "SoundBankSfxSynthesizer",
     "TRANSITION_SECONDS",
     "BlendSource",
+    "Cue",
     "FrameComposite",
+    "build_captions",
     "build_narration_track",
     "build_render_plan",
     "build_sfx_bed",
     "composite_plan",
+    "to_srt",
+    "to_vtt",
     "guard_audio_levels",
     "guard_flashes",
     "guard_frame_rate",

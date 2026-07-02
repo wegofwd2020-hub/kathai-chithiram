@@ -592,6 +592,76 @@ def test_invalid_sfx_dir_exits_cleanly(tmp_path: Path) -> None:
     assert code == 2
 
 
+# --- caption sidecar (--captions) ----------------------------------------------
+
+
+def test_write_captions_helper_builds_a_named_sidecar(tmp_path: Path):
+    from kathai_chithiram.cli import _write_captions
+    from kathai_chithiram.rendering.silas_story import SILAS_SCENE_SCRIPT, silas_mapping
+
+    out = tmp_path / "v.mp4"
+    path = _write_captions(SILAS_SCENE_SCRIPT, silas_mapping(), out, "vtt")
+    assert path == tmp_path / "v.vtt"
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith("WEBVTT")
+    assert "Silas" in text and "CHILD" not in text  # display name, not the token
+
+
+def _capture_seam_storing(monkeypatch) -> None:
+    """Replace the render seam with a fake that actually stores media bytes.
+
+    Needed for --out/--captions tests: the CLI reads the stored media back to write
+    the --out copy, so the fake must persist something.
+    """
+    import kathai_chithiram.cli as cli
+
+    class _Result:
+        media_path = Path("unused/animation.mp4")
+
+    def _fake_seam(*, renderer, script, store, story_id, mapping, narration, sfx, filename):
+        store.add_media(story_id, filename, b"\x00\x00fake-mp4-bytes")
+        return _Result()
+
+    monkeypatch.setattr(cli, "_load_default_renderer", lambda: object())
+    monkeypatch.setattr(cli, "generate_story_video", _fake_seam)
+
+
+def test_captions_srt_written_next_to_out(tmp_path: Path, monkeypatch) -> None:
+    _capture_seam_storing(monkeypatch)
+    out = tmp_path / "vid.mp4"
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--out",
+            str(out),
+            "--captions",
+            "srt",
+        ),
+        provider=_provider(),
+    )
+    assert code == 0
+    sidecar = out.with_suffix(".srt")
+    assert sidecar.exists()
+    assert "-->" in sidecar.read_text(encoding="utf-8")
+
+
+def test_captions_requires_out(tmp_path: Path) -> None:
+    # --captions without --out is a usage error: exit 2, no sidecar, no render.
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--captions",
+            "vtt",
+        ),
+        provider=_provider(),
+    )
+    assert code == 2
+
+
 # --- ZDR / no-training credential (KC-6) ---------------------------------------
 
 
