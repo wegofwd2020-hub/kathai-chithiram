@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import sys
 import uuid
 from collections.abc import Callable, Sequence
@@ -41,7 +42,7 @@ from kathai_chithiram.intake import (
     submit_intake,
 )
 from kathai_chithiram.privacy import NameMapping
-from kathai_chithiram.rendering import SceneScriptRenderer
+from kathai_chithiram.rendering import CliTtsSynthesizer, NarrationSynthesizer, SceneScriptRenderer
 from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
 from kathai_chithiram.storage import StoryArtifactStore, StoryStore
 from kathai_chithiram.video import generate_story_video
@@ -191,6 +192,18 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         type=Path,
         default=None,
         help="Also write a copy of the rendered draft animation to this path.",
+    )
+    parser.add_argument(
+        "--voice",
+        default=None,
+        metavar="CMD_TEMPLATE",
+        help=(
+            "Add narration audio using a local command-line TTS engine. Pass the "
+            "command with '{out}' and '{text}' tokens, e.g. "
+            "--voice 'espeak-ng -w {out} {text}'. Runs locally — the child's name "
+            "stays on this machine — and needs the render extra plus the engine "
+            "installed. Omit for a silent (video-only) draft."
+        ),
     )
 
 
@@ -514,6 +527,12 @@ def _maybe_render(
         return 0
 
     try:
+        narration = _load_voice(args.voice)
+    except ValueError as exc:
+        print(f"error: invalid --voice template: {exc}", file=sys.stderr)
+        return 2
+
+    try:
         renderer = _load_default_renderer()
         media_path = _render_draft(
             renderer=renderer,
@@ -522,6 +541,7 @@ def _maybe_render(
             script=script,
             mapping=mapping,
             extra_out=args.out,
+            narration=narration,
         )
     except (RuntimeError, KathaiChithiramError, VideoError) as exc:
         print(f"error: render failed: {exc}", file=sys.stderr)
@@ -529,6 +549,8 @@ def _maybe_render(
         return 2
 
     print(f"\nDraft animation: {media_path}")
+    if narration is not None:
+        print("(with local narration audio)")
     if args.out is not None:
         print(f"Copy written to: {args.out}")
     print(
@@ -576,6 +598,26 @@ def _load_default_renderer() -> SceneScriptRenderer:
     return renderer
 
 
+def _load_voice(spec: str | None) -> NarrationSynthesizer | None:
+    """Build a local narration voice from a ``--voice`` command template.
+
+    Args:
+        spec: The command template (with ``{out}``/``{text}`` tokens), or ``None``
+            for a silent render.
+
+    Returns:
+        A :class:`CliTtsSynthesizer` for ``spec``, or ``None`` when no voice was
+        requested.
+
+    Raises:
+        ValueError: If ``spec`` is empty/blank or omits the required ``{out}`` token
+            (surfaced to the user as a usage error).
+    """
+    if spec is None:
+        return None
+    return CliTtsSynthesizer(shlex.split(spec))
+
+
 def _render_draft(
     *,
     renderer: SceneScriptRenderer,
@@ -584,6 +626,7 @@ def _render_draft(
     script: dict[str, Any],
     mapping: NameMapping,
     extra_out: Path | None,
+    narration: NarrationSynthesizer | None = None,
 ) -> Path:
     """Render a guarded draft animation through the shared video seam and file it.
 
@@ -591,8 +634,9 @@ def _render_draft(
     same wegofwd-video path as every other consumer: the brief is capability-checked
     against the renderer's limits, the media is sealed at rest through the store
     (KC-5), and a provenance stamp (provider/model/seed/contract versions) is
-    persisted alongside it. The optional ``--out`` copy is the decrypted, playable
-    bytes read back from the store, not the sealed on-disk file.
+    persisted alongside it. When ``narration`` is given, its track is synthesized
+    in-process and muxed into the media. The optional ``--out`` copy is the
+    decrypted, playable bytes read back from the store, not the sealed on-disk file.
     """
     result = generate_story_video(
         renderer=renderer,
@@ -600,6 +644,7 @@ def _render_draft(
         store=store,
         story_id=story_id,
         mapping=mapping,
+        narration=narration,
         filename=_DRAFT_MEDIA_FILENAME,
     )
     if extra_out is not None:
