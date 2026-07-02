@@ -7,6 +7,12 @@ never ambiguous.
 > This is a status snapshot, not a spec. The authoritative detail lives in the ADRs,
 > `docs/DPIA.md`, `PRIVACY.md`, and the `TICKETS/`. Update it when a track changes state.
 
+**Final status (2026-07-02):** the next-session queue is fully closed (4/4), all merged to
+`main` (PRs #37–#40); the tree is green — **345 tests pass, ruff + mypy clean**. **No
+engineering-ownable work remains open.** Everything left to reach launch is
+external/operational (DPO/counsel, professional collaborator, ops provisioning), each with
+a decision-ready artifact and a named owner below.
+
 ## TL;DR
 
 The **product pipeline is built and green** (345 tests): a parent's story becomes a
@@ -35,6 +41,11 @@ is external: a professional collaborator, a DPO sign-off, and operational provis
   stored wrapped by the master; hard-delete crypto-shreds the wrapped key (undecryptable
   even from a stale backup), and `rewrap_story` rotates the master without re-encrypting
   bodies. Backward-compatible with legacy KC-5 stores.
+- **Decision-ready artifacts for the external blockers** — `docs/R10_DEPLOYMENT_BOUNDARY.md`
+  (the boundary + acceptance checklist that drops R10 → Low), `docs/M1_OUTREACH_SEND_READY.md`
+  (send-ready collaborator email, three fill-ins, *not sent*), and `docs/DPO_REVIEW_PACKAGE.md`
+  (one entry point for DPO/counsel sign-off, with the open gaps named). These don't unblock
+  the work themselves — they make each external step actionable.
 
 ## Open tracks — status and who they are blocked on
 
