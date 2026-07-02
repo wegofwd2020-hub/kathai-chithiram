@@ -189,3 +189,34 @@ def test_audit_records_allow_and_deny_log_safely(tmp_path: Path) -> None:
     for event in audit.events():
         assert "calm story" not in (event.to_record().get("reason") or "")
         assert event.recorded_at == _AT
+
+
+# --- guarded hard-delete (kc delete) ---------------------------------------
+
+
+def test_owner_can_delete_own_story(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import BackupPurgeLog
+
+    store = _store(tmp_path)
+    owner = _owned_story(store)
+    log = BackupPurgeLog(tmp_path / "purge.jsonl")
+
+    receipt = owner.delete_story("s1", purge_log=log)
+    assert receipt.story_id == "s1"
+    assert not store.exists("s1")  # verifiably gone
+    assert "s1" in log.pending_story_ids()  # backup-cascade recorded
+
+
+def test_non_owner_cannot_delete(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import BackupPurgeLog
+
+    store = _store(tmp_path)
+    owner = _owned_story(store)
+    owner.assign_role("s1", _THERAPIST.principal_id, Role.THERAPIST)
+    owner.assign_role("s1", _REVIEWER.principal_id, Role.REVIEWER)
+    log = BackupPurgeLog(tmp_path / "purge.jsonl")
+
+    for principal in (_THERAPIST, _REVIEWER, _STRANGER):
+        with pytest.raises(AccessDeniedError):
+            GuardedStore(store, principal).delete_story("s1", purge_log=log)
+    assert store.exists("s1")  # deletion is owner-only; nothing was removed
