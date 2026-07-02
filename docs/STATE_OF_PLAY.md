@@ -13,15 +13,18 @@ everything left to reach launch is external/operational (DPO/counsel, profession
 collaborator, ops provisioning), each with a decision-ready artifact and a named owner below.
 
 **Rendering/offline status (2026-07-02):** a follow-on session hardened the **render and
-authoring** side (PRs #47–#57, all merged): in-process narration voice + sound-effects
-(mixed into the mp4), rendered scene transitions, an accessibility caption sidecar
-(`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline` — story→video
-with no LLM/API key), and content-aware scene art (per-scene inferred setting, backdrop,
-props, and character pose/expression). Tree is green — **505 tests pass, ruff + mypy clean**.
+authoring** side (PRs #47–#59, all merged): in-process narration with **per-character
+voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
+caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
+— story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **511
+tests pass, ruff + mypy clean**. The matplotlib reference renderer (`generate_animation.py`)
+carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
+path (a heavier bpy lift, lower value than the default matplotlib flow).
 
 ## TL;DR
 
-The **product pipeline is built and green** (505 tests): a parent's story becomes a
+The **product pipeline is built and green** (511 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -51,9 +54,11 @@ provisioning.
   bodies. Backward-compatible with legacy KC-5 stores.
 - **Rendering & offline authoring (PRs #47–#57)** — the render/authoring side, all
   in-process and behind the scene-script contract:
-  - *Audio* — an in-process narration voice (`--voice`, a local CLI-TTS seam) and a local
-    sound-effects bank (`--sfx`), each safety-guarded and mixed into the sealed mp4; the
-    child's name/audio never leaves the machine (ADR-026 D1).
+  - *Audio* — an in-process narration voice (`--voice`, a local CLI-TTS seam) with optional
+    **per-character voices** (`--character-voice ID=CMD` → a `VoiceCast`, each scene narrated
+    in its foreground character's voice) and a local sound-effects bank (`--sfx`), each
+    safety-guarded and mixed into the sealed mp4; the child's name/audio never leaves the
+    machine (ADR-026 D1).
   - *Motion & accessibility* — scene transitions (fade/dissolve) actually rendered, and a
     caption sidecar (`kc … --captions srt|vtt`) written beside the `--out` video.
   - *Offline generation* — `kc generate --offline` / `kc intake --offline` turn a story into
