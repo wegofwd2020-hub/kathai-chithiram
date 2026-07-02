@@ -58,7 +58,9 @@ is external: a professional collaborator, a DPO sign-off, and operational provis
 - **Blocked on — a deployment boundary (operational):** R10's residual drops from Medium to
   Low only where an operator cannot bypass the app via direct filesystem access to the store
   (a network boundary / no shared filesystem). In-app enforcement is done; the boundary is
-  infrastructure, not code.
+  infrastructure, not code. The required boundary — properties, threat-model delta, and the
+  §5 acceptance checklist for reassessing R10 → Low — is now specified in
+  `docs/R10_DEPLOYMENT_BOUNDARY.md`.
 
 ### 3. KC-10 — envelope / per-story keys (crypto-shredding)
 
@@ -78,7 +80,7 @@ The DPIA is **Draft v0.1, not signed off**. Before any EU/UK launch, all of:
 | 1 | DPO / counsel review + sign-off of the DPIA and parent notice | **DPO / counsel** | external |
 | 2 | Confirm the Anthropic org is genuinely no-training / ZDR (R2) | **Owner (ops)** | operational |
 | 3 | `KC_STORAGE_KEY` in a secret manager, separate from data/backups, with rotation (R3) | **Owner (ops)** | operational |
-| 4 | Deployment boundary that removes the local filesystem bypass (R10) | **Owner (ops)** | operational |
+| 4 | Deployment boundary that removes the local filesystem bypass (R10) — spec + checklist in `docs/R10_DEPLOYMENT_BOUNDARY.md` | **Owner (ops)** | operational |
 | 5 | Progress-engine DPIA touchpoint, if the engine is enabled (R8) | **Collaborator + DPO** | external |
 
 Code side of the two highest-inherent risks (R2 ZDR, R3 at-rest) is already done; what
@@ -103,10 +105,10 @@ self-contained engineering item is left after KC-10.
 1. ~~**Build KC-10 — envelope / per-story keys (crypto-shredding).**~~ **Done 2026-07-02.**
    Per-story data keys wrapped by the master; crypto-shred on delete; incremental
    master-key rotation. Spec + rotation procedure: `TICKETS/KC-10-envelope-per-story-keys.md`.
-2. **Write the R10 deployment-boundary design note.** Document what boundary drops R10
-   from Medium to Low (network/service boundary so operators reach content only through the
-   `GuardedStore`-enforced API, never the filesystem; networked `IdentityProvider` behind
-   the ADR-004 D3 seam; server-side key + audit handling). Unblocks the ops conversation.
+2. ~~**Write the R10 deployment-boundary design note.**~~ **Done 2026-07-02.**
+   `docs/R10_DEPLOYMENT_BOUNDARY.md`: the gap, the target properties, the threat-model
+   delta (before/after), and a §5 acceptance checklist for reassessing R10 Medium → Low.
+   Linked from DPIA R10 + §5 precondition 4. Unblocks the ops conversation.
 3. **Prepare the M1 collaborator outreach.** Tailor a send-ready message from
    `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md` (v0.2) + the outreach templates. Draft only —
    confirm before sending (outward-facing).
