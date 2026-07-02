@@ -3,8 +3,16 @@
 Consumes the scene-script contract through
 :class:`kathai_chithiram.rendering.SceneScriptRenderer`: the script is validated,
 the child's display name is reinserted at render time, and captions / timing /
-title come from the plan. The render-time safety report is structural (this
-renderer is calm by construction — fades only, fixed palette, no audio).
+title come from the plan.
+
+Like the matplotlib reference renderer, art is **content-driven**: the
+hand-authored demo ("…Shines His Smile") keeps its bespoke per-scene builders, and
+every other story is drawn from an art hint (setting → backdrop, caption →
+props/figure expression/gesture) shared with the matplotlib path
+(:mod:`kathai_chithiram.rendering.scene_art_hints`). The render-time safety report
+is structural (calm by construction — fixed palette, no audio); scene *transitions*
+(fade/dissolve, opacity keyframes) are a follow-up, so this renderer still cuts
+between scenes.
 
 ``bpy`` is only available inside Blender, so it is imported lazily; this module
 imports fine anywhere, but actually rendering requires Blender::
@@ -19,6 +27,13 @@ from typing import Any
 
 from kathai_chithiram.rendering.pipeline import RenderPlan, SceneScriptRenderer
 from kathai_chithiram.rendering.safety import RenderSafetyReport
+from kathai_chithiram.rendering.scene_art_hints import (
+    Background,
+    Expression,
+    Gesture,
+    art_hint_for,
+    resolve_figure_cues,
+)
 
 #: Lazily-bound Blender module; ``None`` until :func:`_load_bpy` runs.
 bpy: Any = None
@@ -71,6 +86,9 @@ COL_SHIRT = rgb(74, 144, 217)
 COL_WHITE = rgb(255, 255, 255)
 COL_GREY = rgb(180, 180, 180)
 COL_PASTE = rgb(86, 180, 211)
+COL_BROWN = rgb(139, 94, 60)
+COL_RED = rgb(217, 83, 79)
+COL_BOARD = rgb(62, 107, 87)
 
 
 # ── scene / render setup ───────────────────────────────────────────────────────
@@ -575,6 +593,135 @@ def build_scene_done(fs, fe, caption):
     subtitle_card(caption, fs, fe)
 
 
+# ── content-driven scene art (for arbitrary stories) ─────────────────────────
+# The bespoke SCENE_BUILDERS below are hand-authored for the demo. Any other story
+# is drawn from an art hint (background + expression + gesture) derived from the
+# scene's setting and caption — the same content vocabulary the matplotlib renderer
+# uses — so an arbitrary scene gets a roughly-appropriate backdrop rather than the
+# demo's bathroom frames.
+
+
+def _bd_calm(fs, fe):
+    show_between(gp_rect("bd_sky", -6, 1.6, 12, 2.0, fill_color=(*COL_LBLUE[:3], 0.25),
+                         stroke_color=(*COL_LBLUE[:3], 0.0), frame=fs), fs, fe)
+
+
+def _bd_bathroom(fs, fe):
+    show_between(gp_rect("bd_wall", -6, -1.2, 12, 5.0, fill_color=(*COL_LBLUE[:3], 0.18),
+                         stroke_color=(*COL_GREY[:3], 0.0), frame=fs), fs, fe)
+    show_between(gp_rect("bd_sink", -1.3, -3.4, 2.6, 0.9, fill_color=COL_LBLUE,
+                         stroke_color=COL_GREY, frame=fs), fs, fe)
+
+
+def _bd_bedroom(fs, fe):
+    show_between(gp_rect("bd_floor", -6, -3.5, 12, 1.4, fill_color=(*COL_HAIR[:3], 0.35),
+                         stroke_color=(*COL_HAIR[:3], 0.0), frame=fs), fs, fe)
+    show_between(gp_rect("bd_bed", 1.4, -3.2, 3.6, 1.2, fill_color=COL_LBLUE,
+                         stroke_color=COL_GREY, frame=fs), fs, fe)
+    show_between(gp_circle("bd_moon", -3.6, 2.4, 0.5, fill_color=COL_YELLOW,
+                           stroke_color=COL_YELLOW, frame=fs), fs, fe)
+
+
+def _bd_kitchen(fs, fe):
+    show_between(gp_rect("bd_counter", -6, -2.6, 12, 0.7, fill_color=(*COL_BROWN[:3], 0.7),
+                         stroke_color=COL_DARK, frame=fs), fs, fe)
+    show_between(gp_rect("bd_cupboard", -4.2, 1.0, 2.2, 2.0, fill_color=COL_LBLUE,
+                         stroke_color=COL_GREY, frame=fs), fs, fe)
+
+
+def _bd_classroom(fs, fe):
+    show_between(gp_rect("bd_board", -3.6, 0.4, 4.2, 2.6, fill_color=COL_BOARD,
+                         stroke_color=COL_BROWN, frame=fs), fs, fe)
+    show_between(gp_rect("bd_desk", 1.8, -3.2, 2.6, 1.1, fill_color=(*COL_BROWN[:3], 0.7),
+                         stroke_color=COL_DARK, frame=fs), fs, fe)
+
+
+def _bd_outdoors(fs, fe):
+    show_between(gp_rect("bd_grass", -6, -3.5, 12, 1.8, fill_color=(*COL_GREEN[:3], 0.5),
+                         stroke_color=(*COL_GREEN[:3], 0.0), frame=fs), fs, fe)
+    show_between(gp_circle("bd_sun", 4.2, 2.6, 0.6, fill_color=COL_YELLOW,
+                           stroke_color=COL_YELLOW, frame=fs), fs, fe)
+    show_between(gp_rect("bd_trunk", -4.2, -1.6, 0.3, 1.6, fill_color=COL_BROWN,
+                         stroke_color=COL_BROWN, frame=fs), fs, fe)
+    show_between(gp_circle("bd_canopy", -4.05, 0.4, 0.9, fill_color=COL_GREEN,
+                           stroke_color=COL_GREEN, frame=fs), fs, fe)
+
+
+_BACKDROP = {
+    Background.CALM: _bd_calm,
+    Background.BATHROOM: _bd_bathroom,
+    Background.BEDROOM: _bd_bedroom,
+    Background.KITCHEN: _bd_kitchen,
+    Background.CLASSROOM: _bd_classroom,
+    Background.OUTDOORS: _bd_outdoors,
+}
+
+
+def _prop_shape(name, canonical, x, y, fs, fe):
+    """Draw one recognized prop as a small GP shape; skip unknown props."""
+    if canonical in ("ball",):
+        show_between(gp_circle(name, x, y, 0.35, COL_BLUE, frame=fs), fs, fe)
+    elif canonical in ("book",):
+        show_between(gp_rect(name, x - 0.4, y - 0.3, 0.8, 0.6, COL_GREEN, frame=fs), fs, fe)
+    elif canonical in ("cup", "drink"):
+        show_between(gp_rect(name, x - 0.25, y - 0.35, 0.5, 0.7, COL_LBLUE, frame=fs), fs, fe)
+    elif canonical in ("plate", "food"):
+        show_between(gp_circle(name, x, y, 0.4, COL_WHITE, stroke_color=COL_GREY, frame=fs), fs, fe)
+    elif canonical in ("apple", "fruit"):
+        show_between(gp_circle(name, x, y, 0.32, COL_RED, frame=fs), fs, fe)
+    elif canonical in ("backpack", "bag"):
+        show_between(gp_rect(name, x - 0.35, y - 0.4, 0.7, 0.85, COL_BLUE, frame=fs), fs, fe)
+    elif canonical in ("block",):
+        for i, col in enumerate((COL_BLUE, COL_GREEN, COL_YELLOW)):
+            show_between(gp_rect(f"{name}_{i}", x - 0.25, y - 0.4 + i * 0.28, 0.5, 0.25,
+                                 col, frame=fs), fs, fe)
+    elif canonical in ("toy", "teddy", "bear", "doll"):
+        show_between(gp_circle(name, x, y, 0.35, COL_HAIR, frame=fs), fs, fe)
+    # unrecognized props are silently skipped
+
+
+def _canonical_prop(prop):
+    """Map a scene prop label to the canonical key drawn above (or None)."""
+    low = prop.lower()
+    for key in ("toothbrush", "toothpaste", "backpack", "bag", "apple", "fruit", "spoon",
+                "shoe", "ball", "book", "cup", "drink", "block", "toy", "teddy", "bear",
+                "doll", "plate", "food"):
+        if key in low:
+            return key
+    return None
+
+
+def build_scene_content(fs, fe, scene):
+    """Draw a scene from its setting/caption/props/character — content-driven."""
+    hint = art_hint_for(scene.setting, scene.caption)
+    expr, gesture = resolve_figure_cues(scene.pose, scene.expression, scene.caption)
+    _BACKDROP[hint.background](fs, fe)
+    smile = expr in (Expression.SMILE, Expression.CALM)
+    show_between(figure_at(f"Fig_{fs}", 0, -3.2, scale=1.0, smile=smile, frame=fs), fs, fe)
+    if gesture is Gesture.WAVE:
+        gp_obj, gp_data = new_gp(f"Wave_{fs}")
+        gp_data.materials.append(gp_material(f"WaveMat_{fs}", COL_DARK))
+        layer = gp_data.layers.new("l", set_active=True)
+        add_stroke(layer, fs, [(0.33, -2.4), (1.1, -1.4), (1.0, -0.7)], line_width=45, mat_index=0)
+        show_between(gp_obj, fs, fe)
+    drawn = 0
+    for prop in scene.props:
+        canonical = _canonical_prop(prop)
+        if canonical is None:
+            continue
+        x = -3.6 if drawn == 0 else 3.6
+        _prop_shape(f"Prop_{fs}_{drawn}", canonical, x, -1.2, fs, fe)
+        drawn += 1
+        if drawn >= 2:
+            break
+    subtitle_card(scene.caption, fs, fe)
+
+
+def _is_demo_story(plan: RenderPlan) -> bool:
+    """Whether this is the hand-authored demo (keeps its bespoke per-scene art)."""
+    return "Shines His Smile" in plan.title
+
+
 # Bespoke scene builders for the 10 narrated scenes, keyed by 1-based index.
 SCENE_BUILDERS = {
     1: build_scene_mirror,
@@ -612,7 +759,7 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
 
         Returns:
             A structural :class:`RenderSafetyReport`: this renderer is calm by
-            construction (fades only, fixed palette, silent), so a constant
+            construction (fixed palette, silent, no fast motion), so a constant
             luminance signal is reported. Pixel-accurate analysis is a follow-up.
 
         Raises:
@@ -629,11 +776,14 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
         scene.frame_end = title_frames + plan.total_frames
 
         build_scene_title(1, title_frames, plan.title)
+        demo = _is_demo_story(plan)
         cursor = title_frames + 1
         for prepared in plan.scenes:
             start, end = cursor, cursor + prepared.frame_count
-            builder = SCENE_BUILDERS.get(prepared.index, build_scene_generic)
-            builder(start, end, prepared.caption)
+            if demo and prepared.index in SCENE_BUILDERS:
+                SCENE_BUILDERS[prepared.index](start, end, prepared.caption)
+            else:
+                build_scene_content(start, end, prepared)
             cursor = end
 
         if draft_path is not None:
