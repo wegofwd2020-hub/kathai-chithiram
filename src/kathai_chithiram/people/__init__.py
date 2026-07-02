@@ -7,6 +7,7 @@ birth, and every identity is an opaque id, never a name (DPIA addendum A8).
 
 from __future__ import annotations
 
+from kathai_chithiram.people.grants import child_grants
 from kathai_chithiram.people.models import (
     AgeBand,
     Child,
@@ -16,4 +17,12 @@ from kathai_chithiram.people.models import (
     Therapist,
 )
 
-__all__ = ["AgeBand", "Child", "Family", "ParentalConsent", "Parent", "Therapist"]
+__all__ = [
+    "AgeBand",
+    "Child",
+    "Family",
+    "ParentalConsent",
+    "Parent",
+    "Therapist",
+    "child_grants",
+]

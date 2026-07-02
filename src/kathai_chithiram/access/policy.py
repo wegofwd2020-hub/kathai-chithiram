@@ -19,11 +19,12 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
+from typing import Protocol, runtime_checkable
 
 from kathai_chithiram.access.principal import Principal, Role
 from kathai_chithiram.errors import AccessDeniedError
 
-__all__ = ["Action", "AccessPolicy", "StoryGrants"]
+__all__ = ["Action", "AccessPolicy", "ChildGrants", "Grants", "StoryGrants"]
 
 _ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
@@ -71,6 +72,73 @@ _ROLE_ACTIONS: dict[Role, frozenset[Action]] = {
         }
     ),
 }
+
+
+@runtime_checkable
+class Grants(Protocol):
+    """The one thing an :class:`AccessPolicy` decision needs: a principal → role map.
+
+    Both :class:`StoryGrants` (per-story, ADR-004) and :class:`ChildGrants`
+    (child-scoped, ADR-005 D3) satisfy this, so the pure policy works against either
+    without knowing whether authority is granted at the story or the child level.
+    """
+
+    def role_of(self, principal: Principal) -> Role | None:
+        """Return the principal's role for this resource, or ``None`` if it has none."""
+        ...
+
+
+@dataclass(frozen=True)
+class ChildGrants:
+    """Who may act on a child's content: family members plus child-scoped assignments.
+
+    ADR-005 Decision 3 lifts the grant unit from a single story to the **child** — a
+    child's stories and program inherit these grants. Every parent in the child's
+    family is an owner of the child's content (``FAMILY_OWNER``); therapists/reviewers
+    are assigned to the *child*, so one assignment covers all of that child's stories.
+
+    Args:
+        child_id: The child this binding is for (log-safe context).
+        family_member_ids: Opaque principal ids of the child's family parents (at
+            least one); each holds ``FAMILY_OWNER``.
+        assignments: Map of principal id to an **assignable** role
+            (``REVIEWER`` / ``THERAPIST``) assigned to this child. May be empty.
+
+    Raises:
+        ValueError: If an id is empty/unsafe, ``family_member_ids`` is empty, an
+            assignment uses a non-assignable role, or a family member also appears as
+            an assignee (a role conflict on the same child).
+    """
+
+    child_id: str
+    family_member_ids: frozenset[str]
+    assignments: Mapping[str, Role]
+
+    def __post_init__(self) -> None:
+        if not _ID_PATTERN.match(self.child_id):
+            raise ValueError("child_id must be a non-empty opaque id (^[A-Za-z0-9_-]+$)")
+        if not self.family_member_ids:
+            raise ValueError("a child must have at least one family member")
+        for member in self.family_member_ids:
+            if not _ID_PATTERN.match(member):
+                raise ValueError("family member id must be a non-empty opaque id")
+        if not isinstance(self.assignments, Mapping):
+            raise ValueError("assignments must be a mapping of principal id to Role")
+        for principal_id, role in self.assignments.items():
+            if not _ID_PATTERN.match(principal_id):
+                raise ValueError("assignment principal id must be a non-empty opaque id")
+            if not isinstance(role, Role):
+                raise ValueError("assignment role must be a Role")
+            if not role.is_assignable:
+                raise ValueError("family_owner is granted by family membership, not assignment")
+            if principal_id in self.family_member_ids:
+                raise ValueError("a family member must not also be an assignee for the same child")
+
+    def role_of(self, principal: Principal) -> Role | None:
+        """Return the principal's role for this child, or ``None`` if it has none."""
+        if principal.principal_id in self.family_member_ids:
+            return Role.FAMILY_OWNER
+        return self.assignments.get(principal.principal_id)
 
 
 @dataclass(frozen=True)
@@ -125,11 +193,11 @@ class AccessPolicy:
     at the enforcement boundary does that.
     """
 
-    def role_for(self, principal: Principal, grants: StoryGrants) -> Role | None:
+    def role_for(self, principal: Principal, grants: Grants) -> Role | None:
         """Return the principal's role for the story, or ``None`` if unrelated."""
         return grants.role_of(principal)
 
-    def is_allowed(self, principal: Principal, grants: StoryGrants, action: Action) -> bool:
+    def is_allowed(self, principal: Principal, grants: Grants, action: Action) -> bool:
         """Return whether ``principal`` may perform ``action`` on the story.
 
         Args:
@@ -149,7 +217,7 @@ class AccessPolicy:
     def authorize(
         self,
         principal: Principal,
-        grants: StoryGrants,
+        grants: Grants,
         action: Action,
         *,
         story_id: str,

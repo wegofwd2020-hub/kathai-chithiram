@@ -24,7 +24,13 @@ from kathai_chithiram.access.audit import (
 )
 from kathai_chithiram.access.guarded_store import GuardedStore
 from kathai_chithiram.access.identity import IdentityProvider, LocalIdentityProvider
-from kathai_chithiram.access.policy import AccessPolicy, Action, StoryGrants
+from kathai_chithiram.access.policy import (
+    AccessPolicy,
+    Action,
+    ChildGrants,
+    Grants,
+    StoryGrants,
+)
 from kathai_chithiram.access.principal import Principal, Role
 
 __all__ = [
@@ -40,5 +46,7 @@ __all__ = [
     "LocalIdentityProvider",
     "Principal",
     "Role",
+    "ChildGrants",
+    "Grants",
     "StoryGrants",
 ]
