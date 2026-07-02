@@ -23,8 +23,8 @@ from __future__ import annotations
 import io
 import wave
 from array import array
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from kathai_chithiram.rendering.safety import guard_audio_levels
@@ -37,6 +37,7 @@ __all__ = [
     "NarrationSynthesizer",
     "NarrationTrack",
     "SilentNarrationSynthesizer",
+    "VoiceCast",
     "build_narration_track",
     "guard_narration_track",
     "mono_wav_bytes",
@@ -124,6 +125,29 @@ class SilentNarrationSynthesizer:
 
 
 @dataclass(frozen=True)
+class VoiceCast:
+    """Narration voices keyed by character id, with a narrator fallback.
+
+    A multi-voice narration draws each scene in the voice of that scene's foreground
+    character (``PreparedScene.speaker_id``): a scene whose speaker has a mapped
+    voice uses it, and any other scene uses the ``narrator``. This is the mechanism
+    for per-character voices — a single-character story simply maps nothing and
+    every scene uses the narrator.
+
+    Args:
+        narrator: The default voice for any character without a specific one.
+        by_character: A mapping of character id → its voice.
+    """
+
+    narrator: NarrationSynthesizer
+    by_character: Mapping[str, NarrationSynthesizer] = field(default_factory=dict)
+
+    def voice_for(self, speaker_id: str) -> NarrationSynthesizer:
+        """Return the voice for ``speaker_id`` (its own, else the narrator)."""
+        return self.by_character.get(speaker_id, self.narrator)
+
+
+@dataclass(frozen=True)
 class NarrationTrack:
     """A mono narration track timed to a render plan.
 
@@ -160,7 +184,7 @@ class NarrationTrack:
 
 def build_narration_track(
     plan: RenderPlan,
-    synthesizer: NarrationSynthesizer | None = None,
+    voice: NarrationSynthesizer | VoiceCast | None = None,
     *,
     sample_rate: int = DEFAULT_SAMPLE_RATE,
 ) -> NarrationTrack:
@@ -173,26 +197,28 @@ def build_narration_track(
 
     Args:
         plan: The validated render plan; its scene durations define the timeline.
-        synthesizer: The in-process voice; defaults to
-            :class:`SilentNarrationSynthesizer` (a silent, correctly-timed track).
+        voice: The narration voice. A single
+            :class:`NarrationSynthesizer` narrates every scene; a :class:`VoiceCast`
+            narrates each scene in its ``speaker_id``'s voice (per-character voices);
+            ``None`` defaults to :class:`SilentNarrationSynthesizer`.
         sample_rate: Output sample rate in Hz.
 
     Returns:
         A :class:`NarrationTrack` whose duration matches the plan's total.
 
     Raises:
-        ValueError: If ``sample_rate`` is not positive, or the synthesizer returns
+        ValueError: If ``sample_rate`` is not positive, or a synthesizer returns
             a sample outside ``[-1, 1]``.
     """
     if sample_rate <= 0:
         raise ValueError("sample_rate must be positive")
-    synth = synthesizer if synthesizer is not None else SilentNarrationSynthesizer()
+    voice_for = _voice_selector(voice)
 
     samples = array("f")
     peak = 0.0
     for scene in plan.scenes:
         budget = _sample_count(scene.duration_s, sample_rate)
-        raw = synth.synthesize(
+        raw = voice_for(scene.speaker_id).synthesize(
             scene.narration, sample_rate=sample_rate, duration_s=scene.duration_s
         )
         volume = scene.narration_volume
@@ -223,6 +249,20 @@ def guard_narration_track(track: NarrationTrack) -> None:
         RenderSafetyError: If the track's peak exceeds ``MAX_NARRATION_VOLUME``.
     """
     guard_audio_levels(track.peak, ())
+
+
+def _voice_selector(
+    voice: NarrationSynthesizer | VoiceCast | None,
+) -> Callable[[str], NarrationSynthesizer]:
+    """Return a ``speaker_id -> synthesizer`` selector for any voice form.
+
+    A :class:`VoiceCast` selects per character; a single synthesizer is used for
+    every scene; ``None`` yields a shared silent voice.
+    """
+    if isinstance(voice, VoiceCast):
+        return voice.voice_for
+    synth = voice if voice is not None else SilentNarrationSynthesizer()
+    return lambda _speaker_id: synth
 
 
 def _sample_count(duration_s: float, sample_rate: int) -> int:

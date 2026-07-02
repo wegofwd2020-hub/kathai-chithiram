@@ -36,6 +36,7 @@ from kathai_chithiram.rendering.audio_mux import mux_wav_into_mp4
 from kathai_chithiram.rendering.narration import (
     NarrationSynthesizer,
     NarrationTrack,
+    VoiceCast,
     build_narration_track,
     mono_wav_bytes,
 )
@@ -74,6 +75,9 @@ class PreparedScene:
             renderer may drive the figure's gesture from it.
         expression: The child character's ``expression`` string (from
             ``characters``); a renderer may drive the figure's face from it.
+        speaker_id: The id of the scene's foreground character (the first entry in
+            ``characters``, else ``"child"``); a multi-voice narration uses it to
+            pick which character's voice narrates this scene.
         setting: The scene setting (e.g. ``"bathroom"``).
         transition_in: Incoming transition (``cut`` / ``fade`` / ``dissolve``).
         transition_out: Outgoing transition.
@@ -89,6 +93,7 @@ class PreparedScene:
     props: tuple[str, ...]
     pose: str
     expression: str
+    speaker_id: str
     setting: str
     transition_in: str
     transition_out: str
@@ -149,6 +154,12 @@ def _child_expression(raw: Mapping[str, Any]) -> str:
     return str(_child_character(raw).get("expression", "calm"))
 
 
+def _scene_speaker(raw: Mapping[str, Any]) -> str:
+    """The scene's foreground character id (first listed), defaulting to ``"child"``."""
+    characters = list(raw.get("characters") or ())
+    return str(characters[0]["id"]) if characters else "child"
+
+
 def build_render_plan(
     script: Mapping[str, Any], *, mapping: NameMapping | None = None
 ) -> RenderPlan:
@@ -185,6 +196,7 @@ def build_render_plan(
             props=tuple(raw["props"]),
             pose=_child_pose(raw),
             expression=_child_expression(raw),
+            speaker_id=_scene_speaker(raw),
             setting=raw["setting"],
             transition_in=raw["transition_in"],
             transition_out=raw["transition_out"],
@@ -246,7 +258,7 @@ class SceneScriptRenderer(ABC):
         *,
         mapping: NameMapping | None = None,
         output_path: str | None = None,
-        narration: NarrationSynthesizer | None = None,
+        narration: NarrationSynthesizer | VoiceCast | None = None,
         sfx: SfxSynthesizer | None = None,
     ) -> RenderResult:
         """Render ``script`` safely; return a :class:`RenderResult`.

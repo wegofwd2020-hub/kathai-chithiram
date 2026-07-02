@@ -31,7 +31,7 @@ from wegofwd_video import (
 )
 
 from kathai_chithiram.privacy.pseudonymize import NameMapping
-from kathai_chithiram.rendering.narration import NarrationSynthesizer
+from kathai_chithiram.rendering.narration import NarrationSynthesizer, VoiceCast
 from kathai_chithiram.rendering.pipeline import SceneScriptRenderer
 from kathai_chithiram.rendering.sfx import SfxSynthesizer
 from kathai_chithiram.storage.protocol import StoryStore
@@ -67,7 +67,7 @@ def generate_story_video(
     store: StoryStore,
     story_id: str,
     mapping: NameMapping | None = None,
-    narration: NarrationSynthesizer | None = None,
+    narration: NarrationSynthesizer | VoiceCast | None = None,
     sfx: SfxSynthesizer | None = None,
     seed: int | None = None,
     model: str | None = None,

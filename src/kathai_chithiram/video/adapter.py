@@ -17,7 +17,7 @@ from wegofwd_video import VideoRequest, VideoResult
 from wegofwd_video.errors import VideoResponseError
 
 from kathai_chithiram.privacy.pseudonymize import NameMapping
-from kathai_chithiram.rendering.narration import NarrationSynthesizer
+from kathai_chithiram.rendering.narration import NarrationSynthesizer, VoiceCast
 from kathai_chithiram.rendering.pipeline import RenderResult, SceneScriptRenderer
 from kathai_chithiram.rendering.sfx import SfxSynthesizer
 
@@ -59,7 +59,7 @@ def make_render_fn(
     output_path: str,
     model: str,
     mapping: NameMapping | None = None,
-    narration: NarrationSynthesizer | None = None,
+    narration: NarrationSynthesizer | VoiceCast | None = None,
     sfx: SfxSynthesizer | None = None,
 ) -> Callable[[VideoRequest], VideoResult]:
     """Return a ``wegofwd_video`` render_fn that drives ``renderer``.

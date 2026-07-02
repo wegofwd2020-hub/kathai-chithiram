@@ -20,6 +20,7 @@ from kathai_chithiram.rendering.narration import (
     DEFAULT_SAMPLE_RATE,
     NarrationTrack,
     SilentNarrationSynthesizer,
+    VoiceCast,
     build_narration_track,
     guard_narration_track,
 )
@@ -49,6 +50,44 @@ class _FixedLengthSynth:
 
 def _expected_frames(plan) -> int:
     return sum(round(scene.duration_s * DEFAULT_SAMPLE_RATE) for scene in plan.scenes)
+
+
+def _two_speaker_script() -> dict:
+    # A 2-scene script whose scenes are foregrounded by different characters.
+    script = valid_scene_script()
+    script["scenes"][0]["characters"][0]["id"] = "child"
+    script["scenes"][1]["characters"][0]["id"] = "mom"
+    for scene in script["scenes"]:
+        scene["audio"]["narration_volume"] = 1.0  # isolate the voice amplitude
+    return script
+
+
+# ── per-character voices (VoiceCast) ────────────────────────────────────────────
+def test_voice_cast_voice_for_falls_back_to_narrator():
+    cast = VoiceCast(narrator=_ConstantSynth(0.1), by_character={"mom": _ConstantSynth(0.5)})
+    assert cast.voice_for("mom")._amplitude == 0.5  # mapped
+    assert cast.voice_for("child")._amplitude == 0.1  # falls back to the narrator
+
+
+def test_voice_cast_narrates_each_scene_in_its_speakers_voice():
+    plan = build_render_plan(_two_speaker_script())
+    assert [scene.speaker_id for scene in plan.scenes] == ["child", "mom"]
+
+    cast = VoiceCast(narrator=_ConstantSynth(0.1), by_character={"mom": _ConstantSynth(0.5)})
+    track = build_narration_track(plan, cast)
+
+    scene1_len = round(plan.scenes[0].duration_s * DEFAULT_SAMPLE_RATE)
+    assert track.samples[0] == pytest.approx(0.1)  # child → narrator voice
+    assert track.samples[scene1_len] == pytest.approx(0.5)  # mom → her own voice
+
+
+def test_single_synth_still_narrates_every_scene():
+    # Back-compat: a plain synthesizer voices all scenes regardless of speaker.
+    plan = build_render_plan(_two_speaker_script())
+    track = build_narration_track(plan, _ConstantSynth(0.3))
+    scene1_len = round(plan.scenes[0].duration_s * DEFAULT_SAMPLE_RATE)
+    assert track.samples[0] == pytest.approx(0.3)
+    assert track.samples[scene1_len] == pytest.approx(0.3)
 
 
 # ── the silent default ────────────────────────────────────────────────────────
