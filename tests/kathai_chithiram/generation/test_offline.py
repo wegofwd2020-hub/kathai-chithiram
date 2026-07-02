@@ -24,23 +24,59 @@ def test_builds_a_contract_valid_script():
     validate_scene_script(script)  # does not raise
     assert script["story_id"] == "s1"
     assert script["child_token"] == "CHILD"
-    assert len(script["scenes"]) == 3  # three sentences → three scenes
-
-
-def test_one_scene_per_sentence_with_caption_matching_narration():
-    script = build_offline_scene_script(story_text=_STORY, mapping=_mapping(), story_id="s1")
-    captions = [scene["caption"] for scene in script["scenes"]]
-    assert captions == ["CHILD woke up calm.", "He brushed his teeth.", "Then CHILD smiled!"]
+    assert len(script["scenes"]) >= 1
     for scene in script["scenes"]:
         assert scene["caption"] == scene["narration"]  # contract requires a verbatim match
 
 
-def test_total_duration_matches_scene_sum():
+def test_short_sentences_are_grouped_into_readable_scenes():
+    # Three short sentences group into fewer, longer captions (no tiny fragments).
+    script = build_offline_scene_script(story_text=_STORY, mapping=_mapping(), story_id="s1")
+    captions = [scene["caption"] for scene in script["scenes"]]
+    assert captions == ["CHILD woke up calm. He brushed his teeth.", "Then CHILD smiled!"]
+
+
+def test_scene_setting_is_inferred_from_content():
+    # Each sentence is long enough to be its own scene, so the settings stay distinct.
+    script = build_offline_scene_script(
+        story_text=(
+            "He splashed happily in the warm bubbly bathtub this morning. "
+            "Later she ran around the big green park with all her friends."
+        ),
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    settings = [scene["setting"] for scene in script["scenes"]]
+    assert settings == ["a bathroom", "outdoors"]
+
+
+def test_duration_scales_with_caption_length_within_the_band():
+    script = build_offline_scene_script(
+        story_text=(
+            "She quietly walked across the whole wide sunny room to the far window. Hi!"
+        ),
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    for scene in script["scenes"]:
+        assert 2 <= scene["duration_s"] <= 8
+    # The longer caption runs longer than a two-word one.
+    longest = max(script["scenes"], key=lambda s: len(s["caption"]))
+    shortest = min(script["scenes"], key=lambda s: len(s["caption"]))
+    assert longest["duration_s"] >= shortest["duration_s"]
+
+
+def test_fixed_duration_override_still_applies():
     script = build_offline_scene_script(
         story_text=_STORY, mapping=_mapping(), story_id="s1", scene_duration_s=5
     )
-    assert script["total_duration_s"] == 5 * len(script["scenes"])
     assert all(scene["duration_s"] == 5 for scene in script["scenes"])
+    assert script["total_duration_s"] == 5 * len(script["scenes"])
+
+
+def test_total_duration_matches_scene_sum():
+    script = build_offline_scene_script(story_text=_STORY, mapping=_mapping(), story_id="s1")
+    assert script["total_duration_s"] == sum(s["duration_s"] for s in script["scenes"])
 
 
 # ── name safety (KC-2) ──────────────────────────────────────────────────────────
