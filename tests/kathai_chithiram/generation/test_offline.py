@@ -79,6 +79,29 @@ def test_total_duration_matches_scene_sum():
     assert script["total_duration_s"] == sum(s["duration_s"] for s in script["scenes"])
 
 
+# ── prop inference ──────────────────────────────────────────────────────────────
+def test_props_inferred_from_caption():
+    script = build_offline_scene_script(
+        story_text="She kicked the ball outside. He read his book quietly at the table nearby.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    all_props = [prop for scene in script["scenes"] for prop in scene["props"]]
+    assert "ball" in all_props
+    assert "book" in all_props
+
+
+def test_no_props_when_no_keywords_and_cap_respected():
+    script = build_offline_scene_script(
+        story_text="She stood quietly and looked around the room for a while.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    for scene in script["scenes"]:
+        assert scene["props"] == []
+        assert len(scene["props"]) <= 2
+
+
 # ── name safety (KC-2) ──────────────────────────────────────────────────────────
 def test_child_name_never_appears_in_the_script():
     script = build_offline_scene_script(story_text=_STORY, mapping=_mapping(), story_id="s1")

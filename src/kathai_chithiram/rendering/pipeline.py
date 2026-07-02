@@ -68,6 +68,8 @@ class PreparedScene:
         sfx: The scene's sound-effect cues (opaque label strings, from the
             script's ``audio.sfx``), in author order; synthesized into the sfx
             bed and placed in this scene's window.
+        props: The scene's prop labels (from the script's ``props``); a renderer
+            draws recognized props as small icons and ignores the rest.
         setting: The scene setting (e.g. ``"bathroom"``).
         transition_in: Incoming transition (``cut`` / ``fade`` / ``dissolve``).
         transition_out: Outgoing transition.
@@ -80,6 +82,7 @@ class PreparedScene:
     narration: str
     narration_volume: float
     sfx: tuple[str, ...]
+    props: tuple[str, ...]
     setting: str
     transition_in: str
     transition_out: str
@@ -154,6 +157,7 @@ def build_render_plan(
             narration=restore(raw["narration"]),
             narration_volume=float(raw["audio"]["narration_volume"]),
             sfx=tuple(raw["audio"]["sfx"]),
+            props=tuple(raw["props"]),
             setting=raw["setting"],
             transition_in=raw["transition_in"],
             transition_out=raw["transition_out"],

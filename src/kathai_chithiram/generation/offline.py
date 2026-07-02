@@ -69,6 +69,35 @@ def _infer_setting(caption: str) -> str:
     return _DEFAULT_SETTING
 
 
+# Ordered (keywords, canonical prop). The canonical names match the render-time
+# prop registry, so an inferred prop is one the renderer knows how to draw. Kept to
+# multi-character keywords to avoid false hits inside unrelated words.
+_PROP_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("toothbrush", "brush", "teeth"), "toothbrush"),
+    (("toothpaste", "paste"), "toothpaste"),
+    (("ball",), "ball"),
+    (("book", "reading"), "book"),
+    (("block",), "blocks"),
+    (("teddy", "bear", "doll", " toy", "toys"), "toy"),
+    (("cup", "juice", "milk", "bottle"), "cup"),
+    (("plate", "lunch", "dinner", "breakfast", "meal", "food"), "plate"),
+)
+#: How many props the generator tags a scene with (drawing is separately capped).
+_MAX_INFERRED_PROPS = 2
+
+
+def _infer_props(caption: str) -> list[str]:
+    """Infer up to ``_MAX_INFERRED_PROPS`` prop labels from the caption's keywords."""
+    text = caption.lower()
+    props: list[str] = []
+    for keywords, prop in _PROP_KEYWORDS:
+        if any(keyword in text for keyword in keywords):
+            props.append(prop)
+        if len(props) >= _MAX_INFERRED_PROPS:
+            break
+    return props
+
+
 def _reading_duration_s(caption: str) -> int:
     """Give a caption enough time on screen to be read, within the 2–8 s band.
 
@@ -140,7 +169,7 @@ def build_offline_scene_script(
             "caption": caption,  # contract: caption must match narration verbatim
             "setting": _infer_setting(caption),
             "characters": [{"id": "child", "pose": "standing", "expression": "calm"}],
-            "props": [],
+            "props": _infer_props(caption),
             "transition_in": "fade",
             "transition_out": "fade",
             "audio": {"narration_volume": 0.7, "sfx": []},

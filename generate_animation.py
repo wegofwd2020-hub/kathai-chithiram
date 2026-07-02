@@ -656,8 +656,86 @@ _BACKGROUND_DRAW = {
 }
 
 
-def scene_from_content(setting: str, caption: str, frame_idx: int) -> np.ndarray:
-    """Draw a scene from its setting + caption (content-driven; for any story)."""
+# ── prop icons (drawn when a scene declares recognized props) ─────────────────
+
+
+def _prop_ball(ax, x, y):
+    ax.add_patch(plt.Circle((x, y), 0.045, color=BLUE, zorder=6))
+    ax.add_patch(plt.Circle((x, y), 0.045, fill=False, color=DARK, lw=1.5, zorder=7))
+    ax.add_patch(Arc((x, y), 0.09, 0.05, angle=0, theta1=200, theta2=340, color=WHITE, lw=1.2,
+                     zorder=7))
+
+
+def _prop_book(ax, x, y):
+    ax.add_patch(patches.FancyBboxPatch((x - 0.05, y - 0.035), 0.10, 0.07,
+                 boxstyle="round,pad=0.004", facecolor=GREEN, edgecolor=DARK, lw=1.5, zorder=6))
+    ax.plot([x, x], [y - 0.035, y + 0.035], color=DARK, lw=1.2, zorder=7)
+
+
+def _prop_cup(ax, x, y):
+    ax.add_patch(patches.FancyBboxPatch((x - 0.03, y - 0.04), 0.06, 0.08,
+                 boxstyle="round,pad=0.003", facecolor=LIGHT_BLUE, edgecolor=DARK, lw=1.5,
+                 zorder=6))
+
+
+def _prop_blocks(ax, x, y):
+    for i, color in enumerate((BLUE, GREEN, YELLOW)):
+        ax.add_patch(patches.Rectangle((x - 0.028, y - 0.05 + i * 0.033), 0.056, 0.03,
+                     facecolor=color, edgecolor=DARK, lw=1, zorder=6))
+
+
+def _prop_toy(ax, x, y):
+    brown = "#B08050"
+    ax.add_patch(plt.Circle((x, y - 0.01), 0.04, color=brown, zorder=6))  # body
+    ax.add_patch(plt.Circle((x, y + 0.045), 0.028, color=brown, zorder=6))  # head
+    for dx in (-0.024, 0.024):
+        ax.add_patch(plt.Circle((x + dx, y + 0.065), 0.012, color=brown, zorder=6))  # ears
+
+
+def _prop_plate(ax, x, y):
+    ax.add_patch(plt.Circle((x, y), 0.05, color=WHITE, zorder=6))
+    ax.add_patch(plt.Circle((x, y), 0.05, fill=False, color=GREY, lw=2, zorder=7))
+
+
+# Canonical prop keyword → draw(ax, x, y). A scene prop string is matched by
+# substring, so "a red ball" → ball. Unrecognized props are silently skipped.
+_PROP_DRAW = {
+    "toothbrush": lambda ax, x, y: draw_toothbrush(ax, x, y, angle_deg=20, scale=0.7),
+    "toothpaste": lambda ax, x, y: draw_toothpaste(ax, x, y, scale=0.7),
+    "ball": _prop_ball,
+    "book": _prop_book,
+    "cup": _prop_cup,
+    "drink": _prop_cup,
+    "block": _prop_blocks,
+    "toy": _prop_toy,
+    "teddy": _prop_toy,
+    "bear": _prop_toy,
+    "doll": _prop_toy,
+    "plate": _prop_plate,
+    "food": _prop_plate,
+}
+
+#: At most this many props are drawn per scene, so the frame stays calm/uncluttered.
+_MAX_PROPS_DRAWN = 2
+
+
+def _draw_props(ax, props) -> None:
+    """Draw up to ``_MAX_PROPS_DRAWN`` recognized props along the scene's edges."""
+    draws = []
+    for prop in props:
+        low = prop.lower()
+        match = next((d for key, d in _PROP_DRAW.items() if key in low), None)
+        if match is not None:
+            draws.append(match)
+        if len(draws) >= _MAX_PROPS_DRAWN:
+            break
+    xs = [0.83] if len(draws) == 1 else [0.15, 0.85]  # edges — clear of the centre figure
+    for draw, x in zip(draws, xs, strict=False):
+        draw(ax, x, 0.14)
+
+
+def scene_from_content(setting: str, caption: str, props, frame_idx: int) -> np.ndarray:
+    """Draw a scene from its setting + caption + props (for any story)."""
     hint = art_hint_for(setting, caption)
     fig, ax = new_fig()
     _BACKGROUND_DRAW[hint.background](ax, frame_idx)
@@ -668,6 +746,7 @@ def scene_from_content(setting: str, caption: str, frame_idx: int) -> np.ndarray
     draw_stick_figure(
         ax, 0.50, bob, scale=1.0, smile=smile, eyes_closed=eyes_closed, arm_r_angle=arm_r_angle
     )
+    _draw_props(ax, props)
     text_box(ax, caption)
     img = fig_to_rgb(fig)
     plt.close(fig)
@@ -754,7 +833,7 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
         """One scene frame: the demo's bespoke art, else content-driven art."""
         if demo and scene.index in SCENE_ART:
             return SCENE_ART[scene.index](f, scene.caption)
-        return scene_from_content(scene.setting, scene.caption, f)
+        return scene_from_content(scene.setting, scene.caption, scene.props, f)
 
     def _composited_frames(self, plan: RenderPlan) -> list[np.ndarray]:
         """Apply each scene's declared transitions, then flatten to a frame list.

@@ -89,6 +89,39 @@ def test_content_art_render_passes_the_safety_guard():
     renderer.render(_arbitrary_script(), output_path=None)  # no raise = guards pass
 
 
+def test_plan_carries_scene_props():
+    script = _arbitrary_script()
+    script["scenes"][0]["props"] = ["ball", "book"]
+    plan = build_render_plan(script)
+    assert plan.scenes[0].props == ("ball", "book")
+
+
+def test_recognized_props_change_the_frame():
+    _renderer()  # ensure matplotlib/PIL
+    from generate_animation import scene_from_content
+
+    with_props = scene_from_content("a park", "She played.", ("ball", "book"), 0)
+    without = scene_from_content("a park", "She played.", (), 0)
+    assert not np.array_equal(with_props, without)  # props were drawn
+
+
+def test_unrecognized_props_are_ignored():
+    _renderer()
+    from generate_animation import scene_from_content
+
+    unknown = scene_from_content("a park", "She played.", ("spaceship", "dragon"), 0)
+    none = scene_from_content("a park", "She played.", (), 0)
+    assert np.array_equal(unknown, none)  # nothing recognized → identical frame
+
+
+def test_render_with_props_passes_the_safety_guard():
+    renderer = _renderer()
+    script = _arbitrary_script()
+    script["scenes"][0]["props"] = ["ball"]
+    script["scenes"][1]["props"] = ["teddy bear", "cup"]
+    renderer.render(script, output_path=None)  # no raise = guards pass with props
+
+
 def test_demo_story_still_uses_its_bespoke_art():
     from generate_animation import SCENE_ART, _is_demo_story
 
