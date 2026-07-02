@@ -48,6 +48,10 @@ from kathai_chithiram.rendering import (
     SceneScriptRenderer,
     SfxSynthesizer,
     SoundBankSfxSynthesizer,
+    build_captions,
+    build_render_plan,
+    to_srt,
+    to_vtt,
 )
 from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
 from kathai_chithiram.storage import StoryArtifactStore, StoryStore
@@ -220,6 +224,17 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
             "'<cue>.wav' per scene sfx cue, e.g. --sfx ./sounds. Sounds are read "
             "locally and scaled gently; a cue with no file plays silence. Omit for "
             "no sound effects."
+        ),
+    )
+    parser.add_argument(
+        "--captions",
+        choices=["srt", "vtt"],
+        default=None,
+        metavar="{srt,vtt}",
+        help=(
+            "Also write a caption sidecar (SubRip .srt or WebVTT .vtt) next to "
+            "--out. The sidecar carries the child's display name, so it is written "
+            "only alongside the --out video; --captions requires --out."
         ),
     )
 
@@ -543,6 +558,12 @@ def _maybe_render(
         print("\nScene script stored. Skipped rendering (--no-render).")
         return 0
 
+    if args.captions is not None and args.out is None:
+        # The sidecar carries the child's display name, so it is written only next
+        # to the decrypted --out video, never into the store.
+        print("error: --captions requires --out", file=sys.stderr)
+        return 2
+
     try:
         narration = _load_voice(args.voice)
     except ValueError as exc:
@@ -579,6 +600,9 @@ def _maybe_render(
         print("(with local sound effects)")
     if args.out is not None:
         print(f"Copy written to: {args.out}")
+    if args.captions is not None:
+        sidecar = _write_captions(script, mapping, args.out, args.captions)
+        print(f"Captions written to: {sidecar}")
     print(
         "\n⚠  DRAFT — a human must review this animation (and the captioned "
         "scene script) before it is shown to a child. It is NOT marked delivered."
@@ -662,6 +686,33 @@ def _load_sfx(spec: str | None) -> SfxSynthesizer | None:
     if spec is None:
         return None
     return SoundBankSfxSynthesizer(spec)
+
+
+def _write_captions(
+    script: dict[str, Any], mapping: NameMapping, out: Path, fmt: str
+) -> Path:
+    """Write a caption sidecar next to ``out`` and return its path.
+
+    Cues are derived from the name-reinserted render plan (so the sidecar carries
+    the child's display name, exactly like the playable video), in the requested
+    ``fmt`` (``srt`` or ``vtt``), at ``out`` with the format's suffix.
+
+    Args:
+        script: The validated scene script.
+        mapping: The render-time name mapping (reinserts the display name).
+        out: The ``--out`` video path; the sidecar is written beside it.
+        fmt: ``"srt"`` or ``"vtt"``.
+
+    Returns:
+        The path the sidecar was written to.
+    """
+    plan = build_render_plan(script, mapping=mapping)
+    cues = build_captions(plan)
+    text = to_srt(cues) if fmt == "srt" else to_vtt(cues)
+    sidecar = out.with_suffix(f".{fmt}")
+    sidecar.parent.mkdir(parents=True, exist_ok=True)
+    sidecar.write_text(text, encoding="utf-8")
+    return sidecar
 
 
 def _render_draft(
