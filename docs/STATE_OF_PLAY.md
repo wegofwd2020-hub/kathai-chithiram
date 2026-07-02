@@ -122,10 +122,11 @@ for the audit trail.
    `docs/R10_DEPLOYMENT_BOUNDARY.md`: the gap, the target properties, the threat-model
    delta (before/after), and a §5 acceptance checklist for reassessing R10 Medium → Low.
    Linked from DPIA R10 + §5 precondition 4. Unblocks the ops conversation.
-3. ~~**Prepare the M1 collaborator outreach.**~~ **Drafted 2026-07-02.**
+3. ~~**Prepare the M1 collaborator outreach.**~~ **Drafted + copy approved 2026-07-02.**
    `docs/M1_OUTREACH_SEND_READY.md` — finalized pediatric-OT / advisory / cold-email
-   message, three fill-ins left ([Name], signature, optional warm-intro line). **Not
-   sent** — outward-facing; needs owner review + go-ahead before sending.
+   message; **owner approved the copy 2026-07-02**. **Still not sent** — sending is an
+   operational step the owner takes from `wegofwd2020@gmail.com` once a recipient
+   (name + email) and signature are supplied. Outward-facing; no auto-send.
 4. ~~**Assemble the DPO/counsel DPIA review package.**~~ **Done 2026-07-02.**
    `docs/DPO_REVIEW_PACKAGE.md` — one entry point: enclosed-docs inventory, processing
    at-a-glance, the five sign-off asks, honestly-surfaced open gaps (international

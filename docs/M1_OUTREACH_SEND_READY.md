@@ -1,6 +1,8 @@
 # M1 outreach — send-ready draft (pediatric OT · advisory · cold email)
 
-**Status:** Ready to send — pending your review + the three fill-ins below.
+**Status:** **Copy approved by owner (2026-07-02).** Not yet sent — sending still
+needs a recipient (name + email), the signature block, and the warm-intro choice
+below. The message text itself is final and requires no further edits.
 **Date:** 2026-07-02 · **Owner:** WeGoFwd2020
 **Companion (attach after a positive reply):** `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md` (v0.2)
 **Source templates:** `docs/M1_COLLABORATOR_OUTREACH.md`
@@ -11,6 +13,11 @@
 > **channel = cold / semi-cold email**. Nothing here is sent automatically — review
 > it, fill the three blanks, and send it yourself. (Outward-facing: do not send
 > without an explicit go-ahead.)
+>
+> **2026-07-02 — the owner has approved this copy.** The remaining step is
+> operational, not editorial: supply the recipient (name + email) and the signature
+> block, pick the warm-intro variant, and send. The send itself stays a human action
+> from `wegofwd2020@gmail.com`.
 
 ## Before you hit send — three fill-ins only
 
