@@ -17,7 +17,7 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **574
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **634
 tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
 template below). **Both** reference renderers now carry the content-aware art: the
 matplotlib default (`generate_animation.py`) and the **Blender v2** renderer
@@ -27,7 +27,7 @@ verified on a real Blender 4.0.2 render.
 
 ## TL;DR
 
-The **product pipeline is built and green** (574 tests): a parent's story becomes a
+The **product pipeline is built and green** (634 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -42,7 +42,7 @@ provisioning.
 - **Core pipeline** — scene-script contract + validation, generation behind the
   `wegofwd-llm` seam (Anthropic provider), both reference renderers consume the contract,
   parent intake with consent capture. `kc intake` / `kc generate` / `kc review` /
-  `kc assign` / `kc progress` / `kc suggestions` / `kc decide` / `kc author` / **`kc delete`** / **`kc retention-sweep`** CLI.
+  `kc assign` / `kc progress` / `kc suggestions` / `kc decide` / `kc author` / `kc delete` / `kc retention-sweep`, plus the **platform** commands `kc family-create` / `kc child-add` / `kc therapist-add` / `kc assign-child` / `kc consent` / `kc program-create` / `kc erase-child` / `kc erase-family` and `kc generate --child`.
 - **Erasure + retention are CLI-invokable** — `kc delete <story>` (owner-only, guarded +
   audited, verifiable KC-1 hard-delete + KC-10 crypto-shred, confirms unless `--yes`) and
   `kc retention-sweep` (purge undelivered older than the window; `--dry-run` reports only).
@@ -138,16 +138,21 @@ provisioning.
 
 - **Part (a) story template — BUILT (2026-07-02, `kc author`).** Adds no new personal
   data, so it was not gated.
-- **Parts (b) family/child/therapist identity + accounts and (c) therapist programs +
-  parent reporting — GATED, not started.** They add accounts + child DOB, which
-  **materially expand special-category processing and contradict the current
-  data-minimization stance** (`PRIVACY §3` / `DPIA §3` list DOB + accounts out of scope).
-- **Blocked on — DPO/counsel + a DPIA revision (ADR-005 D7):** new data categories,
-  lawful basis for accounts, notice/consent update, retention+erasure for account/DOB,
-  DPO note — before any identity/DOB/account code. Engineering decisions already taken:
-  the model slots behind the ADR-004 `IdentityProvider` seam with grants lifted per-story
-  → child-scoped; capture the *child's* DOB only (parent/therapist DOB dropped). Not
-  engineering-blocked; blocked on the privacy clearance.
+- **Parts (b) family/child/therapist identity and (c) therapist programs — BUILT
+  (2026-07-02, PRs #84–92) against SYNTHETIC identities**, after the owner ruled the
+  core gates (DPIA addendum **A8**): **DOB → age band** (full DOB never stored), **lawful
+  basis → parental consent**, **auth → local accounts**. Delivered: the `people` domain
+  model (age-band `AgeBand.from_dob` discards the date; opaque ids, no names), child-scoped
+  grants lifted `story_id → child_id` behind the ADR-004 seam, a persisted `PeopleRegistry`,
+  onboarding + program + erase CLI, `GuardedStore.create_story_for_child` (consent-gated,
+  live child-scoped enforcement), `kc generate --child`, and **cascade right-to-erasure**
+  (`erase_child`/`erase_family` — R15 built, A6.3 met). 
+- **Still gated before a REAL child's data (not just synthetic):** the parent-facing
+  **progress report** (R14 — needs the D7.6 touchpoint + D7.4 copy sign-off) is **not
+  built**; and DPO items **A4.2** (account-data basis), **A4.3** (controller/processor + a
+  DPA for therapist orgs), **A4.4** (Children's Code), **A6.2** (re-versioned notice +
+  consent) remain. The registry is interim plaintext (opaque ids + bands); the per-child
+  **key tree** (`RETENTION_ERASURE_DESIGN §3`) is a further hardening.
 
 ## Launch preconditions (from `docs/DPIA.md` §5) — the critical path
 
