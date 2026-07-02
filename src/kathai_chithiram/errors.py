@@ -17,6 +17,7 @@ __all__ = [
     "EncryptionKeyError",
     "IdentifierLeakError",
     "KathaiChithiramError",
+    "PeopleError",
     "PolicyError",
     "ProviderConfigError",
     "ProviderResponseError",
@@ -220,6 +221,22 @@ class StoryNotFoundError(KathaiChithiramError):
     def __init__(self, story_id: str) -> None:
         self.story_id = story_id
         super().__init__(f"no story found for id {story_id!r}")
+
+
+class PeopleError(KathaiChithiramError):
+    """A people/family registry operation was invalid (ADR-005 parts b/c).
+
+    Raised for an unknown, duplicate, or cross-family record, or a missing parental
+    consent. Carries only opaque ids — never a name or a date of birth (the registry
+    stores neither).
+
+    Args:
+        reason: What was wrong (opaque ids only, no personal data).
+    """
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(reason)
 
 
 class EncryptionKeyError(KathaiChithiramError):

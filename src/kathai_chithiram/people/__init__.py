@@ -16,6 +16,7 @@ from kathai_chithiram.people.models import (
     ParentalConsent,
     Therapist,
 )
+from kathai_chithiram.people.registry import PeopleRegistry
 
 __all__ = [
     "AgeBand",
@@ -23,6 +24,7 @@ __all__ = [
     "Family",
     "ParentalConsent",
     "Parent",
+    "PeopleRegistry",
     "Therapist",
     "child_grants",
 ]
