@@ -91,7 +91,7 @@ mitigation. Mitigations cite the implementing control and its **status**.
 | R7 | Consent not informed / not demonstrable | Medium | Explicit consent captured at intake; parent shown a plain-language notice, and the notice version is recorded against the consent. **Built — KC-8.** | Low |
 | R8 | Profiling of a child (feedback) misused or over-collected | High | Fixed primitives only, no free text; keyed to opaque ids; inherits retention + hard-delete; engine that would act on it is gated behind ADR-002 preconditions. **Capture built; engine gated — ADR-002.** | Medium |
 | R9 | Sensitive data exposed in application logs | Medium | Errors and logs are constructed to carry no raw story text, captions, or names (lengths/counts only). **Built — errors.py / logging conventions.** | Low |
-| R10 | Operator browses story content | Medium | Deny-by-default access control is **built and wired into the app** (ADR-004 / KC-11): a `GuardedStore` authorizes a principal against per-story grants, and the CLI/intake/review flows now run through it. Residual stays Medium: on the single-machine prototype an operator retains direct filesystem access to the store (bounded only by KC-5 encryption + OS perms), so in-app enforcement drops the residual to Low only under a deployment boundary that removes that bypass. Every allowed/denied access is now persisted to a log-safe audit trail. | Medium |
+| R10 | Operator browses story content | Medium | Deny-by-default access control is **built and wired into the app** (ADR-004 / KC-11): a `GuardedStore` authorizes a principal against per-story grants, and the CLI/intake/review flows now run through it. Residual stays Medium: on the single-machine prototype an operator retains direct filesystem access to the store (bounded only by KC-5 encryption + OS perms), so in-app enforcement drops the residual to Low only under a deployment boundary that removes that bypass (specified in `docs/R10_DEPLOYMENT_BOUNDARY.md`). Every allowed/denied access is now persisted to a log-safe audit trail. | Medium |
 
 ## 5. Residual risk and launch preconditions
 
@@ -110,7 +110,9 @@ remains before an EU/UK launch is **operational and human**, not unwritten code.
    for crypto-shredding on delete and incremental master-key rotation are now built
    — **KC-10**; provisioning the secret manager itself remains operational.)
 4. R10 access-control enforcement is decided (technical control vs. documented
-   operational limit) for the intended deployment — tracked as **KC-11**.
+   operational limit) for the intended deployment — tracked as **KC-11**. In-app
+   enforcement is built (ADR-004); the boundary that drops the residual to Low is
+   specified in `docs/R10_DEPLOYMENT_BOUNDARY.md` (§5 acceptance criteria there).
 5. If the ADR-002 progress **engine** is enabled, its own DPIA touchpoint (R8) is
    completed with the professional collaborator.
 
