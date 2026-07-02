@@ -17,15 +17,17 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **565
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **569
 tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
-template below). The matplotlib reference renderer (`generate_animation.py`)
-carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
-path (a heavier bpy lift, lower value than the default matplotlib flow).
+template below). **Both** reference renderers now carry the content-aware art: the
+matplotlib default (`generate_animation.py`) and the **Blender v2** renderer
+(`blender_animation.py`) — the latter brought to parity (content-driven backdrops +
+props + figure expression, plus fade/dissolve transitions via keyframed opacity),
+verified on a real Blender 4.0.2 render.
 
 ## TL;DR
 
-The **product pipeline is built and green** (565 tests): a parent's story becomes a
+The **product pipeline is built and green** (569 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)

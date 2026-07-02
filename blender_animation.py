@@ -9,10 +9,12 @@ Like the matplotlib reference renderer, art is **content-driven**: the
 hand-authored demo ("…Shines His Smile") keeps its bespoke per-scene builders, and
 every other story is drawn from an art hint (setting → backdrop, caption →
 props/figure expression/gesture) shared with the matplotlib path
-(:mod:`kathai_chithiram.rendering.scene_art_hints`). The render-time safety report
-is structural (calm by construction — fixed palette, no audio); scene *transitions*
-(fade/dissolve, opacity keyframes) are a follow-up, so this renderer still cuts
-between scenes.
+(:mod:`kathai_chithiram.rendering.scene_art_hints`). Scene **transitions** render
+too: each scene's declared fade/dissolve is drawn as a keyframed black-overlay
+opacity from the shared :func:`~kathai_chithiram.rendering.transitions.composite_plan`
+(dissolve is a soft fade-through-black for now; a true crossfade is a follow-up).
+The render-time safety report is structural (calm by construction — fixed palette,
+no audio, gentle fades).
 
 ``bpy`` is only available inside Blender, so it is imported lazily; this module
 imports fine anywhere, but actually rendering requires Blender::
@@ -34,6 +36,7 @@ from kathai_chithiram.rendering.scene_art_hints import (
     art_hint_for,
     resolve_figure_cues,
 )
+from kathai_chithiram.rendering.transitions import BlendSource, composite_plan
 
 #: Lazily-bound Blender module; ``None`` until :func:`_load_bpy` runs.
 bpy: Any = None
@@ -722,6 +725,40 @@ def _is_demo_story(plan: RenderPlan) -> bool:
     return "Shines His Smile" in plan.title
 
 
+def _apply_transitions(plan: RenderPlan, title_frames: int) -> None:
+    """Render each scene's fade/dissolve as a keyframed black overlay.
+
+    One full-frame black grease-pencil layer sits in front of the scene (the ortho
+    camera is at Y=-10 looking +Y, so Y=-5 is in front); its opacity is keyframed
+    per frame from the shared :func:`composite_plan` — ``1 - content_weight`` — so a
+    scene fades from/to black on its declared transitions and is fully clear in
+    between. Dissolve is rendered as the same soft fade-through-black here (a true
+    crossfade to the neighbouring scene is a follow-up); ``cut`` frames stay clear.
+    """
+    gp_obj, gp_data = new_gp("FadeOverlay")
+    gp_data.materials.append(gp_material("FadeMat", COL_DARK, use_fill=True,
+                                         fill_color=(0.0, 0.0, 0.0, 1.0)))
+    layer = gp_data.layers.new("l", set_active=True)
+    add_stroke(layer, 1, [(-8, -7), (8, -7), (8, 7), (-8, 7), (-8, -7)],
+               line_width=30, mat_index=0)
+    gp_obj.location = (0, -5.0, 0)  # in front of the scene
+
+    def key(frame, opacity):
+        layer.opacity = max(0.0, min(1.0, opacity))
+        layer.keyframe_insert("opacity", frame=frame)
+
+    key(1, 0.0)  # the title card carries no transition
+    cursor = title_frames + 1
+    for prepared in plan.scenes:
+        comp = composite_plan(
+            prepared.frame_count, plan.fps, prepared.transition_in, prepared.transition_out
+        )
+        for offset, frame in enumerate(comp):
+            opacity = 0.0 if frame.source is BlendSource.KEEP else (1.0 - frame.weight)
+            key(cursor + offset, opacity)
+        cursor += prepared.frame_count
+
+
 # Bespoke scene builders for the 10 narrated scenes, keyed by 1-based index.
 SCENE_BUILDERS = {
     1: build_scene_mirror,
@@ -785,6 +822,8 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
             else:
                 build_scene_content(start, end, prepared)
             cursor = end
+
+        _apply_transitions(plan, title_frames)
 
         if draft_path is not None:
             bpy_module.ops.render.render(animation=True)
