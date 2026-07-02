@@ -36,3 +36,7 @@ story_data/
 .DS_Store
 .idea/
 .vscode/
+
+# Claude Code plugin/skill cache (local tooling, not project code)
+.agents/
+skills-lock.json
