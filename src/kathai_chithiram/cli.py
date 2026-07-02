@@ -209,6 +209,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=Path("kc_store"),
         help="Directory the stories live under (default: ./kc_store).",
     )
+
+    author = sub.add_parser(
+        "author", help="Author a story from a structured template file → a draft video."
+    )
+    author.add_argument(
+        "template", help="Path to a story-template JSON file (see docs/STORY_TEMPLATE.md)."
+    )
+    author.add_argument(
+        "--child-name",
+        required=True,
+        help="The child's name. Used only to strip/reinsert; never stored or logged.",
+    )
+    _add_common_args(author)
     return parser
 
 
@@ -311,6 +324,8 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_assign(args)
     if args.command == "progress":
         return _cmd_progress(args)
+    if args.command == "author":
+        return _cmd_author(args)
     return _cmd_generate(args, provider=provider)
 
 
@@ -402,6 +417,44 @@ def _generate_offline(
         print(f"error: offline generation failed: {exc}", file=sys.stderr)
         return 2
 
+    store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
+    store.write_scene_script(story_id, script)
+    print(f"\nStory id: {story_id}")
+    print(f"Scenes:   {len(script['scenes'])} · {script['total_duration_s']}s @ {script['fps']}fps")
+
+    return _maybe_render(
+        args, store=store, story_id=story_id, script=script, mapping=mapping
+    )
+
+
+def _cmd_author(args: argparse.Namespace) -> int:
+    """Author a story from a structured template file, store it, then render.
+
+    Lowers the template deterministically to a scene script (no LLM, no key); the
+    child's name is stripped and the review gate still applies (ADR-005 D6).
+    """
+    from kathai_chithiram.authoring import load_template, template_to_scene_script
+
+    story_id = args.story_id or uuid.uuid4().hex
+    try:
+        template = load_template(args.template)
+    except (OSError, ValueError) as exc:
+        print(f"error: cannot load template: {exc}", file=sys.stderr)
+        return 2
+
+    store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
+    if store is None:
+        return 2
+    mapping = NameMapping.for_child(args.child_name)
+
+    try:
+        script = template_to_scene_script(template, mapping, story_id=story_id)
+    except (ValueError, KathaiChithiramError) as exc:
+        print(f"error: could not build a scene script from the template: {exc}", file=sys.stderr)
+        return 2
+
+    # story.txt keeps the raw authored text (with the name), like the other flows.
+    story_text = "\n".join(step.text for step in template.steps)
     store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
     store.write_scene_script(story_id, script)
     print(f"\nStory id: {story_id}")

@@ -24,14 +24,14 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from kathai_chithiram.errors import IdentifierLeakError
-from kathai_chithiram.privacy.pseudonymize import (
-    NameMapping,
-    count_identifiers,
-    pseudonymize,
+from kathai_chithiram.generation.scene_builder import (
+    DEFAULT_FPS,
+    assemble_scene_script,
+    build_scene_dict,
+    guard_no_identifier,
 )
+from kathai_chithiram.privacy.pseudonymize import NameMapping, pseudonymize
 from kathai_chithiram.scene_script.schema import MAX_CAPTION_CHARS
-from kathai_chithiram.scene_script.validation import validate_scene_script
 
 __all__ = ["DEFAULT_SCENE_DURATION_S", "MAX_OFFLINE_SCENES", "build_offline_scene_script"]
 
@@ -40,97 +40,12 @@ DEFAULT_SCENE_DURATION_S = 4
 #: Cap on scenes so a very long story yields a bounded video (the rest is dropped,
 #: which the caller is told about).
 MAX_OFFLINE_SCENES = 40
-#: Default frames per second for the generated script.
-DEFAULT_FPS = 24
 #: A scene caption is grown to at least this many characters by grouping short
 #: adjacent sentences, so a scene is never a tiny fragment (still capped at the
 #: contract's caption limit).
 MIN_CAPTION_CHARS = 40
 
 _SENTENCE = re.compile(r"[^.!?]+[.!?]?")
-_DEFAULT_SETTING = "a calm, quiet place"
-# Ordered (keywords, setting) — first match wins. The setting strings deliberately
-# contain the keywords the render-time art layer recognizes (e.g. "a bathroom"
-# holds "bath"), so an inferred setting and its backdrop stay aligned.
-_SETTING_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("bath", "sink", "toilet", "toothbrush", "teeth", "brush"), "a bathroom"),
-    (("bed", "sleep", "asleep", "nap", "pillow", "bedtime", "night"), "a bedroom"),
-    (("kitchen", "cook", "meal", "breakfast", "dinner", "lunch", "eat"), "a kitchen"),
-    (("park", "garden", "outside", "outdoor", "playground", "tree", "beach", "yard"), "outdoors"),
-)
-
-
-def _infer_setting(caption: str) -> str:
-    """Infer a scene ``setting`` string from the caption's keywords."""
-    text = caption.lower()
-    for keywords, setting in _SETTING_KEYWORDS:
-        if any(keyword in text for keyword in keywords):
-            return setting
-    return _DEFAULT_SETTING
-
-
-# Ordered (keywords, canonical prop). The canonical names match the render-time
-# prop registry, so an inferred prop is one the renderer knows how to draw. Kept to
-# multi-character keywords to avoid false hits inside unrelated words.
-_PROP_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("toothbrush", "brush", "teeth"), "toothbrush"),
-    (("toothpaste", "paste"), "toothpaste"),
-    (("ball",), "ball"),
-    (("book", "reading"), "book"),
-    (("block",), "blocks"),
-    (("teddy", "bear", "doll", " toy", "toys"), "toy"),
-    (("cup", "juice", "milk", "bottle"), "cup"),
-    (("plate", "lunch", "dinner", "breakfast", "meal", "food"), "plate"),
-)
-#: How many props the generator tags a scene with (drawing is separately capped).
-_MAX_INFERRED_PROPS = 2
-
-
-def _infer_props(caption: str) -> list[str]:
-    """Infer up to ``_MAX_INFERRED_PROPS`` prop labels from the caption's keywords."""
-    text = caption.lower()
-    props: list[str] = []
-    for keywords, prop in _PROP_KEYWORDS:
-        if any(keyword in text for keyword in keywords):
-            props.append(prop)
-        if len(props) >= _MAX_INFERRED_PROPS:
-            break
-    return props
-
-
-# Caption keywords → the character's expression / pose strings. The strings are the
-# ones the render-time figure resolver recognizes, so an inferred mood is honored.
-_SLEEPY_CAP = ("sleep", "asleep", "nap", "tired", "yawn", "bedtime", "drowsy")
-_WORRIED_CAP = ("scared", "afraid", "worried", "nervous", "upset", "sad", "cried", "anxious")
-_HAPPY_CAP = ("smil", "happ", "laugh", "proud", "glad", "excit", "cheer", "giggle", "joy")
-_WAVE_CAP = ("wave", "hello", "hiya", "goodbye", "greet")
-
-
-def _infer_expression(caption: str) -> str:
-    """Infer the character's expression string from the caption (sleepy>worried>happy)."""
-    text = caption.lower()
-    if any(word in text for word in _SLEEPY_CAP):
-        return "sleepy"
-    if any(word in text for word in _WORRIED_CAP):
-        return "worried"
-    if any(word in text for word in _HAPPY_CAP):
-        return "happy"
-    return "calm"
-
-
-def _infer_pose(caption: str) -> str:
-    """Infer the character's pose string from the caption."""
-    return "waving" if any(word in caption.lower() for word in _WAVE_CAP) else "standing"
-
-
-def _reading_duration_s(caption: str) -> int:
-    """Give a caption enough time on screen to be read, within the 2–8 s band.
-
-    Roughly two-thirds of a second per word, so short captions get a calm 2–3 s and
-    longer ones up to the contract's 8 s ceiling.
-    """
-    words = len(caption.split())
-    return max(2, min(8, round(1 + 0.6 * words)))
 
 
 def build_offline_scene_script(
@@ -180,51 +95,18 @@ def build_offline_scene_script(
     if not captions:
         raise ValueError("story has no usable text to turn into scenes")
 
-    # Never let a real identifier reach the stored script (KC-2 / R1): a residual
-    # match after pseudonymization is a hard stop, carrying only the count.
-    residual = sum(count_identifiers(caption, mapping) for caption in captions)
-    if residual:
-        raise IdentifierLeakError(residual)
-
+    guard_no_identifier(captions, mapping)  # KC-2: the name must never reach the script
     scenes = [
-        {
-            "index": index,
-            "duration_s": scene_duration_s or _reading_duration_s(caption),
-            "narration": caption,
-            "caption": caption,  # contract: caption must match narration verbatim
-            "setting": _infer_setting(caption),
-            "characters": [
-                {
-                    "id": "child",
-                    "pose": _infer_pose(caption),
-                    "expression": _infer_expression(caption),
-                }
-            ],
-            "props": _infer_props(caption),
-            "transition_in": "fade",
-            "transition_out": "fade",
-            "audio": {"narration_volume": 0.7, "sfx": []},
-        }
+        build_scene_dict(index, caption, duration_s=scene_duration_s)
         for index, caption in enumerate(captions, start=1)
     ]
-
-    script: dict[str, Any] = {
-        "schema_version": "1.0",
-        "story_id": story_id,
-        "title": f"{mapping.token}'s story",
-        "child_token": mapping.token,
-        "locale": locale,
-        "total_duration_s": sum(scene["duration_s"] for scene in scenes),
-        "fps": fps,
-        "safety": {
-            "max_flash_hz": 3,
-            "max_scene_cuts_per_min": 20,
-            "reviewed_by_human": False,
-        },
-        "scenes": scenes,
-    }
-    validate_scene_script(script)
-    return script
+    return assemble_scene_script(
+        scenes=scenes,
+        story_id=story_id,
+        title=f"{mapping.token}'s story",
+        fps=fps,
+        locale=locale,
+    )
 
 
 def _captions(tokenized_text: str, max_scenes: int) -> list[str]:
