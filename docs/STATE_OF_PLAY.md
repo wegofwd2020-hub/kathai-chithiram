@@ -7,21 +7,29 @@ never ambiguous.
 > This is a status snapshot, not a spec. The authoritative detail lives in the ADRs,
 > `docs/DPIA.md`, `PRIVACY.md`, and the `TICKETS/`. Update it when a track changes state.
 
-**Final status (2026-07-02):** the next-session queue is fully closed (4/4), all merged to
-`main` (PRs #37–#40); the tree is green — **345 tests pass, ruff + mypy clean**. **No
-engineering-ownable work remains open.** Everything left to reach launch is
-external/operational (DPO/counsel, professional collaborator, ops provisioning), each with
-a decision-ready artifact and a named owner below.
+**Compliance status (2026-07-02):** the next-session queue is fully closed (4/4), all merged
+to `main` (PRs #37–#40). **No engineering-ownable *launch-blocker* work remains open** —
+everything left to reach launch is external/operational (DPO/counsel, professional
+collaborator, ops provisioning), each with a decision-ready artifact and a named owner below.
+
+**Rendering/offline status (2026-07-02):** a follow-on session hardened the **render and
+authoring** side (PRs #47–#57, all merged): in-process narration voice + sound-effects
+(mixed into the mp4), rendered scene transitions, an accessibility caption sidecar
+(`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline` — story→video
+with no LLM/API key), and content-aware scene art (per-scene inferred setting, backdrop,
+props, and character pose/expression). Tree is green — **505 tests pass, ruff + mypy clean**.
 
 ## TL;DR
 
-The **product pipeline is built and green** (345 tests): a parent's story becomes a
+The **product pipeline is built and green** (505 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
-LLM seam, with encryption at rest and verifiable deletion. **There is essentially no
-engineering-ownable work left**: the two open tracks (M1 progress engine, KC-11 access
-control) are built to the line where the next step is a *person* or *deployment*, and the
-one remaining pick-up-able item (KC-10 envelope keys) is now built too. What blocks launch
-is external: a professional collaborator, a DPO sign-off, and operational provisioning.
+LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
+sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
+for manual verification. **There is essentially no engineering-ownable launch-blocker work
+left**: the two open tracks (M1 progress engine, KC-11 access control) are built to the line
+where the next step is a *person* or *deployment*, and KC-10 envelope keys is built too. What
+blocks launch is external: a professional collaborator, a DPO sign-off, and operational
+provisioning.
 
 ## What is built (done)
 
@@ -41,6 +49,19 @@ is external: a professional collaborator, a DPO sign-off, and operational provis
   stored wrapped by the master; hard-delete crypto-shreds the wrapped key (undecryptable
   even from a stale backup), and `rewrap_story` rotates the master without re-encrypting
   bodies. Backward-compatible with legacy KC-5 stores.
+- **Rendering & offline authoring (PRs #47–#57)** — the render/authoring side, all
+  in-process and behind the scene-script contract:
+  - *Audio* — an in-process narration voice (`--voice`, a local CLI-TTS seam) and a local
+    sound-effects bank (`--sfx`), each safety-guarded and mixed into the sealed mp4; the
+    child's name/audio never leaves the machine (ADR-026 D1).
+  - *Motion & accessibility* — scene transitions (fade/dissolve) actually rendered, and a
+    caption sidecar (`kc … --captions srt|vtt`) written beside the `--out` video.
+  - *Offline generation* — `kc generate --offline` / `kc intake --offline` turn a story into
+    a video with **no LLM/API key** (deterministic local segmentation): sentences grouped
+    into readable scenes, name still stripped (KC-2), contract-validated, review-gated.
+  - *Content-aware art* — each scene infers its setting, backdrop, props, character
+    pose/expression, and reading-paced duration from its content; the hand-authored demo
+    keeps its bespoke frames. (Reference renderer: `generate_animation.py`.)
 - **Decision-ready artifacts for the external blockers** — `docs/R10_DEPLOYMENT_BOUNDARY.md`
   (the boundary + acceptance checklist that drops R10 → Low), `docs/M1_OUTREACH_SEND_READY.md`
   (send-ready collaborator email, three fill-ins, *not sent*), and `docs/DPO_REVIEW_PACKAGE.md`
