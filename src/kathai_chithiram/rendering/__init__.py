@@ -42,10 +42,12 @@ from kathai_chithiram.rendering.sfx import (
     build_sfx_bed,
     guard_sfx_bed,
 )
+from kathai_chithiram.rendering.sounds import DEFAULT_SFX_GAIN, SoundBankSfxSynthesizer
 from kathai_chithiram.rendering.voices import CliTtsSynthesizer
 
 __all__ = [
     "DEFAULT_SAMPLE_RATE",
+    "DEFAULT_SFX_GAIN",
     "MAX_NARRATION_VOLUME",
     "MAX_SFX_VOLUME",
     "CliTtsSynthesizer",
@@ -60,6 +62,7 @@ __all__ = [
     "SfxSynthesizer",
     "SilentNarrationSynthesizer",
     "SilentSfxSynthesizer",
+    "SoundBankSfxSynthesizer",
     "build_narration_track",
     "build_render_plan",
     "build_sfx_bed",

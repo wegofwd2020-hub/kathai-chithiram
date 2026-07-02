@@ -42,7 +42,13 @@ from kathai_chithiram.intake import (
     submit_intake,
 )
 from kathai_chithiram.privacy import NameMapping
-from kathai_chithiram.rendering import CliTtsSynthesizer, NarrationSynthesizer, SceneScriptRenderer
+from kathai_chithiram.rendering import (
+    CliTtsSynthesizer,
+    NarrationSynthesizer,
+    SceneScriptRenderer,
+    SfxSynthesizer,
+    SoundBankSfxSynthesizer,
+)
 from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
 from kathai_chithiram.storage import StoryArtifactStore, StoryStore
 from kathai_chithiram.video import generate_story_video
@@ -203,6 +209,17 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
             "--voice 'espeak-ng -w {out} {text}'. Runs locally — the child's name "
             "stays on this machine — and needs the render extra plus the engine "
             "installed. Omit for a silent (video-only) draft."
+        ),
+    )
+    parser.add_argument(
+        "--sfx",
+        default=None,
+        metavar="SOUND_DIR",
+        help=(
+            "Add sound effects from a local sound bank: a directory holding one "
+            "'<cue>.wav' per scene sfx cue, e.g. --sfx ./sounds. Sounds are read "
+            "locally and scaled gently; a cue with no file plays silence. Omit for "
+            "no sound effects."
         ),
     )
 
@@ -533,6 +550,12 @@ def _maybe_render(
         return 2
 
     try:
+        sfx = _load_sfx(args.sfx)
+    except ValueError as exc:
+        print(f"error: invalid --sfx sound bank: {exc}", file=sys.stderr)
+        return 2
+
+    try:
         renderer = _load_default_renderer()
         media_path = _render_draft(
             renderer=renderer,
@@ -542,6 +565,7 @@ def _maybe_render(
             mapping=mapping,
             extra_out=args.out,
             narration=narration,
+            sfx=sfx,
         )
     except (RuntimeError, KathaiChithiramError, VideoError) as exc:
         print(f"error: render failed: {exc}", file=sys.stderr)
@@ -551,6 +575,8 @@ def _maybe_render(
     print(f"\nDraft animation: {media_path}")
     if narration is not None:
         print("(with local narration audio)")
+    if sfx is not None:
+        print("(with local sound effects)")
     if args.out is not None:
         print(f"Copy written to: {args.out}")
     print(
@@ -618,6 +644,26 @@ def _load_voice(spec: str | None) -> NarrationSynthesizer | None:
     return CliTtsSynthesizer(shlex.split(spec))
 
 
+def _load_sfx(spec: str | None) -> SfxSynthesizer | None:
+    """Build a local sound-bank sfx source from a ``--sfx`` directory path.
+
+    Args:
+        spec: The sound-bank directory (one ``<cue>.wav`` per cue), or ``None``
+            for a render with no sound effects.
+
+    Returns:
+        A :class:`SoundBankSfxSynthesizer` for ``spec``, or ``None`` when no sound
+        bank was requested.
+
+    Raises:
+        ValueError: If ``spec`` is not an existing directory (surfaced to the user
+            as a usage error).
+    """
+    if spec is None:
+        return None
+    return SoundBankSfxSynthesizer(spec)
+
+
 def _render_draft(
     *,
     renderer: SceneScriptRenderer,
@@ -627,6 +673,7 @@ def _render_draft(
     mapping: NameMapping,
     extra_out: Path | None,
     narration: NarrationSynthesizer | None = None,
+    sfx: SfxSynthesizer | None = None,
 ) -> Path:
     """Render a guarded draft animation through the shared video seam and file it.
 
@@ -635,8 +682,10 @@ def _render_draft(
     against the renderer's limits, the media is sealed at rest through the store
     (KC-5), and a provenance stamp (provider/model/seed/contract versions) is
     persisted alongside it. When ``narration`` is given, its track is synthesized
-    in-process and muxed into the media. The optional ``--out`` copy is the
-    decrypted, playable bytes read back from the store, not the sealed on-disk file.
+    in-process and muxed into the media; when ``sfx`` is given, each scene's cues
+    are synthesized from the local sound bank and mixed in alongside it. The
+    optional ``--out`` copy is the decrypted, playable bytes read back from the
+    store, not the sealed on-disk file.
     """
     result = generate_story_video(
         renderer=renderer,
@@ -645,6 +694,7 @@ def _render_draft(
         story_id=story_id,
         mapping=mapping,
         narration=narration,
+        sfx=sfx,
         filename=_DRAFT_MEDIA_FILENAME,
     )
     if extra_out is not None:

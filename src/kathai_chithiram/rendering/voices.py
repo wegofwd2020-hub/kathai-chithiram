@@ -16,18 +16,15 @@ clear, gated error rather than silently degrading.
 
 from __future__ import annotations
 
-import io
 import shutil
 import subprocess
 import tempfile
-import wave
-from array import array
 from collections.abc import Sequence
 from pathlib import Path
 
-__all__ = ["CliTtsSynthesizer"]
+from kathai_chithiram.rendering.wav_io import read_wav_mono, resample_linear
 
-_INT16_SCALE = 32768.0
+__all__ = ["CliTtsSynthesizer"]
 
 
 class CliTtsSynthesizer:
@@ -93,54 +90,8 @@ class CliTtsSynthesizer:
                 raise RuntimeError(
                     f"narration voice '{self._template[0]}' produced no WAV output"
                 )
-            source_rate, samples = _read_wav_mono(out_path.read_bytes())
+            source_rate, samples = read_wav_mono(out_path.read_bytes())
 
         if source_rate != sample_rate:
-            samples = _resample_linear(samples, source_rate, sample_rate)
+            samples = resample_linear(samples, source_rate, sample_rate)
         return samples
-
-
-def _read_wav_mono(data: bytes) -> tuple[int, list[float]]:
-    """Read a PCM WAV into (sample_rate, mono float samples in [-1, 1]).
-
-    Raises:
-        RuntimeError: If the WAV is not 16-bit PCM (the format CLI TTS engines emit).
-    """
-    with wave.open(io.BytesIO(data)) as wav:
-        channels = wav.getnchannels()
-        width = wav.getsampwidth()
-        rate = wav.getframerate()
-        frames = wav.readframes(wav.getnframes())
-    if width != 2:
-        raise RuntimeError(f"narration WAV must be 16-bit PCM, got sample width {width}")
-    pcm = array("h")
-    pcm.frombytes(frames)
-    if channels <= 1:
-        return rate, [sample / _INT16_SCALE for sample in pcm]
-    # Downmix interleaved channels to mono by averaging each frame.
-    mono = [
-        sum(pcm[base : base + channels]) / (channels * _INT16_SCALE)
-        for base in range(0, len(pcm) - channels + 1, channels)
-    ]
-    return rate, mono
-
-
-def _resample_linear(samples: list[float], source_rate: int, target_rate: int) -> list[float]:
-    """Linearly resample ``samples`` from ``source_rate`` to ``target_rate``.
-
-    Adequate for narration at speech rates; keeps the module dependency-free.
-    """
-    if not samples or source_rate == target_rate:
-        return samples
-    target_count = round(len(samples) * target_rate / source_rate)
-    if target_count <= 1:
-        return samples[:target_count]
-    ratio = (len(samples) - 1) / (target_count - 1)
-    resampled: list[float] = []
-    for index in range(target_count):
-        position = index * ratio
-        left = int(position)
-        frac = position - left
-        right = min(left + 1, len(samples) - 1)
-        resampled.append(samples[left] * (1.0 - frac) + samples[right] * frac)
-    return resampled
