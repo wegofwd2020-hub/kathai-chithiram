@@ -53,6 +53,9 @@ class PreparedScene:
         duration_s: Scene duration in seconds.
         caption: Caption text with the child's display name reinserted.
         narration: Narration text with the display name reinserted.
+        narration_volume: Target narration level for this scene, in ``[0, 1]``
+            (from the script's per-scene ``audio`` block); the narration track is
+            scaled to it and the render-time audio guard checks the result.
         setting: The scene setting (e.g. ``"bathroom"``).
         transition_in: Incoming transition (``cut`` / ``fade`` / ``dissolve``).
         transition_out: Outgoing transition.
@@ -63,6 +66,7 @@ class PreparedScene:
     duration_s: float
     caption: str
     narration: str
+    narration_volume: float
     setting: str
     transition_in: str
     transition_out: str
@@ -132,6 +136,7 @@ def build_render_plan(
             duration_s=float(raw["duration_s"]),
             caption=restore(raw["caption"]),
             narration=restore(raw["narration"]),
+            narration_volume=float(raw["audio"]["narration_volume"]),
             setting=raw["setting"],
             transition_in=raw["transition_in"],
             transition_out=raw["transition_out"],
