@@ -89,6 +89,25 @@ remains on the critical path is human and operational.
 - **Engineering:** only **KC-10** is pick-up-able now; everything else waits on the above.
   When the M1 gate opens, a small policy-wiring task remains.
 
+## Next-session task queue (pinned 2026-07-01)
+
+Resume here. Ordered; #1 is self-contained code, the rest are prep for the external
+blockers above.
+
+1. **Build KC-10 — envelope / per-story keys (crypto-shredding).** The one pick-up-able
+   engineering item (P2, not a blocker). Full spec: `TICKETS/KC-10-envelope-per-story-keys.md`.
+   Verify with `pytest -q`, `ruff check .`, `python -m mypy` (canonical, no path args).
+2. **Write the R10 deployment-boundary design note.** Document what boundary drops R10
+   from Medium to Low (network/service boundary so operators reach content only through the
+   `GuardedStore`-enforced API, never the filesystem; networked `IdentityProvider` behind
+   the ADR-004 D3 seam; server-side key + audit handling). Unblocks the ops conversation.
+3. **Prepare the M1 collaborator outreach.** Tailor a send-ready message from
+   `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md` (v0.2) + the outreach templates. Draft only —
+   confirm before sending (outward-facing).
+4. **Assemble the DPO/counsel DPIA review package.** Collate `docs/DPIA.md` +
+   `docs/PARENT_PRIVACY_NOTICE.md` + `PRIVACY.md` + the open-items/questions into one entry
+   point for sign-off. Prepares for, does not substitute, legal review.
+
 ## Human-in-the-loop stays on
 
 Per CLAUDE.md, the human review gate (`kc review`) remains mandatory before any output
