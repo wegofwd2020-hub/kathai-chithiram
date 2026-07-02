@@ -7,13 +7,18 @@ shared provenance record. Everything runs **in-process** — no vendor, no netwo
 so the no-training / zero-retention dispatch gates that guard kathai's LLM path
 (:mod:`kathai_chithiram.wegofwd_llm.gateway`) do not apply here: child content
 never leaves the process (ADR-026 D1).
+
+The rendered media is persisted **through the store** (``add_media``), so it is
+sealed with the store's cipher and encrypted at rest (KC-5) exactly like every
+other artifact — the renderer's raw output only ever lives in a private temp file.
 """
 
 from __future__ import annotations
 
 import json
+import tempfile
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -101,22 +106,33 @@ def generate_story_video(
         ingredients=len(brief.ingredients),
     )
 
-    media_path = store.story_dir(story_id) / "media" / filename
-    media_path.parent.mkdir(parents=True, exist_ok=True)
-
-    render_fn = make_render_fn(
-        renderer, script, output_path=str(media_path), model=model_id, mapping=mapping
-    )
-    provider = build_provider(_PROVIDER_ID, render_fn=render_fn, model=model_id)
-    result = provider.generate(
-        VideoRequest(
-            brief=brief,
-            resolution=_RESOLUTION,
-            aspect_ratio=_ASPECT_RATIO,
-            target_duration_s=duration_s,
-            seed=seed,
+    # Render to a private temp file first, then persist the bytes *through the
+    # store* (``add_media``) so the video is encrypted at rest (KC-5) and readable
+    # via ``read_media``. Writing the renderer's output straight into ``media/``
+    # would bypass the store cipher — leaving child content in plaintext on disk
+    # and unreadable once a cipher is configured. The ``.mp4`` suffix is kept so
+    # the encoder still infers the container from the extension.
+    with tempfile.TemporaryDirectory() as tmp:
+        render_target = str(Path(tmp) / filename)
+        render_fn = make_render_fn(
+            renderer, script, output_path=render_target, model=model_id, mapping=mapping
         )
-    )
+        provider = build_provider(_PROVIDER_ID, render_fn=render_fn, model=model_id)
+        result = provider.generate(
+            VideoRequest(
+                brief=brief,
+                resolution=_RESOLUTION,
+                aspect_ratio=_ASPECT_RATIO,
+                target_duration_s=duration_s,
+                seed=seed,
+            )
+        )
+        media_bytes = Path(render_target).read_bytes()
+
+    media_path = store.add_media(story_id, filename, media_bytes)
+    # The renderer wrote to the temp path; the durable artifact is the sealed
+    # store file, so the result must advertise the stored location, not the temp.
+    result = replace(result, asset_uri=str(media_path))
 
     prov = provenance(_PROVIDER_ID, model_id, seed=seed)
     # Provenance is non-sensitive (provider/model/seed/versions — no story text or
