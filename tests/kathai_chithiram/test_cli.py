@@ -208,6 +208,24 @@ def test_author_rejects_a_bad_template(tmp_path: Path) -> None:
     assert code == 2
 
 
+def test_author_dry_run_previews_and_stores_nothing(tmp_path: Path, capsys) -> None:
+    template = tmp_path / "story.json"
+    template.write_text(
+        json.dumps({"title": "Robin Brushes", "steps": [{"text": "Robin stands at the sink."}]}),
+        encoding="utf-8",
+    )
+    store_root = tmp_path / "store"
+    code = main(
+        ["author", str(template), "--child-name", CHILD, "--dry-run",
+         "--store-root", str(store_root)]
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "dry run" in out
+    assert "a bathroom" in out  # the inferred setting is shown in the preview
+    assert not store_root.exists()  # nothing was stored
+
+
 def _author_interactive_args(store_root: Path) -> object:
     # No template positional → interactive mode.
     return build_arg_parser().parse_args(

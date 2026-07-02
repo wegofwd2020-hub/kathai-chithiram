@@ -1,0 +1,9 @@
+{
+  "title": "Alex Gets Ready for Bed",
+  "steps": [
+    { "text": "It is night, and Alex puts on soft, cosy pyjamas.", "setting": "a bedroom" },
+    { "text": "Alex reads one short, gentle story in bed.", "props": ["book"] },
+    { "text": "Alex hugs their teddy and turns off the light.", "props": ["teddy"] },
+    { "text": "Alex feels calm and safe, and drifts off to sleep.", "expression": "sleepy" }
+  ]
+}

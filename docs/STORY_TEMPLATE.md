@@ -76,6 +76,30 @@ Add narration or sound the same way as the other flows:
 The result is a **draft**: review it (`kc review <id> --show`) before it reaches a
 child.
 
+## Preview before you render
+
+Add `--dry-run` to see exactly what your template becomes — the scenes, their inferred
+settings/props/mood, and durations — **without storing or rendering anything**:
+
+```bash
+kc author story.json --child-name Silas --dry-run
+```
+
+## Ready-made examples
+
+Three starter templates live in [`docs/examples/`](examples/) — copy one and edit:
+
+- [`brushing_teeth.json`](examples/brushing_teeth.json) — a bathroom routine
+- [`bedtime_routine.json`](examples/bedtime_routine.json) — a calm bedtime
+- [`going_to_the_park.json`](examples/going_to_the_park.json) — an outing
+
+They use the name **Alex**; run with `--child-name Alex` (or change the name in both the
+text and the flag to your child's):
+
+```bash
+kc author docs/examples/brushing_teeth.json --child-name Alex --dry-run
+```
+
 ## Good template habits
 
 - One idea per step — short steps read more calmly than long ones.
