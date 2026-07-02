@@ -35,16 +35,48 @@ from kathai_chithiram.scene_script.validation import validate_scene_script
 
 __all__ = ["DEFAULT_SCENE_DURATION_S", "MAX_OFFLINE_SCENES", "build_offline_scene_script"]
 
-#: Seconds each generated scene runs for (within the contract's 2–8 s band).
+#: Seconds a scene runs when a fixed duration is requested (2–8 s band).
 DEFAULT_SCENE_DURATION_S = 4
 #: Cap on scenes so a very long story yields a bounded video (the rest is dropped,
 #: which the caller is told about).
 MAX_OFFLINE_SCENES = 40
 #: Default frames per second for the generated script.
 DEFAULT_FPS = 24
+#: A scene caption is grown to at least this many characters by grouping short
+#: adjacent sentences, so a scene is never a tiny fragment (still capped at the
+#: contract's caption limit).
+MIN_CAPTION_CHARS = 40
 
 _SENTENCE = re.compile(r"[^.!?]+[.!?]?")
-_SETTING = "a calm, quiet place"
+_DEFAULT_SETTING = "a calm, quiet place"
+# Ordered (keywords, setting) — first match wins. The setting strings deliberately
+# contain the keywords the render-time art layer recognizes (e.g. "a bathroom"
+# holds "bath"), so an inferred setting and its backdrop stay aligned.
+_SETTING_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("bath", "sink", "toilet", "toothbrush", "teeth", "brush"), "a bathroom"),
+    (("bed", "sleep", "asleep", "nap", "pillow", "bedtime", "night"), "a bedroom"),
+    (("kitchen", "cook", "meal", "breakfast", "dinner", "lunch", "eat"), "a kitchen"),
+    (("park", "garden", "outside", "outdoor", "playground", "tree", "beach", "yard"), "outdoors"),
+)
+
+
+def _infer_setting(caption: str) -> str:
+    """Infer a scene ``setting`` string from the caption's keywords."""
+    text = caption.lower()
+    for keywords, setting in _SETTING_KEYWORDS:
+        if any(keyword in text for keyword in keywords):
+            return setting
+    return _DEFAULT_SETTING
+
+
+def _reading_duration_s(caption: str) -> int:
+    """Give a caption enough time on screen to be read, within the 2–8 s band.
+
+    Roughly two-thirds of a second per word, so short captions get a calm 2–3 s and
+    longer ones up to the contract's 8 s ceiling.
+    """
+    words = len(caption.split())
+    return max(2, min(8, round(1 + 0.6 * words)))
 
 
 def build_offline_scene_script(
@@ -53,22 +85,26 @@ def build_offline_scene_script(
     mapping: NameMapping,
     story_id: str,
     fps: int = DEFAULT_FPS,
-    scene_duration_s: int = DEFAULT_SCENE_DURATION_S,
+    scene_duration_s: int | None = None,
     locale: str = "en-US",
     max_scenes: int = MAX_OFFLINE_SCENES,
 ) -> dict[str, Any]:
     """Assemble a contract-valid scene script from ``story_text``, locally.
 
-    The story is pseudonymized, split into sentence-sized captions (each ≤ the
-    contract's caption limit), and wrapped into scenes with calm defaults. The
-    child's display name is never stored — the script carries the mapping's token.
+    The story is pseudonymized, grouped into caption-sized scenes (short adjacent
+    sentences are merged so a scene is never a tiny fragment; each caption ≤ the
+    contract limit), and each scene gets a **setting inferred from its content** and
+    a **duration sized to how long its caption takes to read**. The child's display
+    name is never stored — the script carries the mapping's token.
 
     Args:
         story_text: The raw parent-authored story.
         mapping: The local identifier→token mapping for this child.
         story_id: Opaque id recorded on the script.
         fps: Frames per second (8–30).
-        scene_duration_s: Seconds per scene (2–8).
+        scene_duration_s: A fixed seconds-per-scene (2–8) to override the
+            reading-time estimate; ``None`` (default) sizes each scene to its
+            caption.
         locale: BCP-47-ish locale tag for the script.
         max_scenes: Cap on the number of scenes (excess captions are dropped).
 
@@ -99,10 +135,10 @@ def build_offline_scene_script(
     scenes = [
         {
             "index": index,
-            "duration_s": scene_duration_s,
+            "duration_s": scene_duration_s or _reading_duration_s(caption),
             "narration": caption,
             "caption": caption,  # contract: caption must match narration verbatim
-            "setting": _SETTING,
+            "setting": _infer_setting(caption),
             "characters": [{"id": "child", "pose": "standing", "expression": "calm"}],
             "props": [],
             "transition_in": "fade",
@@ -118,7 +154,7 @@ def build_offline_scene_script(
         "title": f"{mapping.token}'s story",
         "child_token": mapping.token,
         "locale": locale,
-        "total_duration_s": scene_duration_s * len(scenes),
+        "total_duration_s": sum(scene["duration_s"] for scene in scenes),
         "fps": fps,
         "safety": {
             "max_flash_hz": 3,
@@ -132,19 +168,33 @@ def build_offline_scene_script(
 
 
 def _captions(tokenized_text: str, max_scenes: int) -> list[str]:
-    """Split pseudonymized text into ≤ ``max_scenes`` caption strings.
+    """Group pseudonymized text into ≤ ``max_scenes`` caption strings.
 
-    Sentences are the unit; a sentence longer than the caption limit is broken into
-    word chunks that each fit. Empty fragments are dropped.
+    Sentences are the unit; a sentence longer than the caption limit is first broken
+    into word-bounded chunks that fit. Short adjacent units are then merged so a
+    caption reaches at least ``MIN_CAPTION_CHARS`` (never exceeding the contract
+    limit), so a scene is a readable line rather than a two-word fragment.
     """
-    captions: list[str] = []
+    units: list[str] = []
     for sentence in _SENTENCE.findall(tokenized_text):
         cleaned = " ".join(sentence.split())  # collapse whitespace/newlines
-        if not cleaned:
-            continue
-        captions.extend(_chunk(cleaned, MAX_CAPTION_CHARS))
+        if cleaned:
+            units.extend(_chunk(cleaned, MAX_CAPTION_CHARS))
+
+    captions: list[str] = []
+    current = ""
+    for unit in units:
+        if not current:
+            current = unit
+        elif len(current) < MIN_CAPTION_CHARS and len(current) + 1 + len(unit) <= MAX_CAPTION_CHARS:
+            current = f"{current} {unit}"  # merge a short caption with the next unit
+        else:
+            captions.append(current)
+            current = unit
         if len(captions) >= max_scenes:
             return captions[:max_scenes]
+    if current and len(captions) < max_scenes:
+        captions.append(current)
     return captions[:max_scenes]
 
 
