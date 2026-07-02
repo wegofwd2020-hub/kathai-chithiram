@@ -274,6 +274,36 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Report what would be purged and delete nothing.",
     )
+
+    suggestions = sub.add_parser(
+        "suggestions", help="List a story's open premise suggestions (therapist)."
+    )
+    suggestions.add_argument("story_id", help="Opaque id of the story to list suggestions for.")
+    suggestions.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the stories live under (default: ./kc_store).",
+    )
+
+    decide = sub.add_parser(
+        "decide", help="Record a therapist's accept / edit / dismiss on a premise suggestion."
+    )
+    decide.add_argument("story_id", help="Opaque id of the story the suggestion is under.")
+    decide.add_argument("suggestion_id", help="Opaque id of the suggestion to decide.")
+    action = decide.add_mutually_exclusive_group(required=True)
+    action.add_argument("--accept", action="store_true", help="Accept the suggested premise as-is.")
+    action.add_argument("--edit", action="store_true", help="Accept an edited premise (--premise).")
+    action.add_argument("--dismiss", action="store_true", help="Dismiss the suggestion.")
+    decide.add_argument("--reviewer", required=True, help="Therapist identity for the decision.")
+    decide.add_argument("--premise", default=None, help="Edited premise text (with --edit).")
+    decide.add_argument("--note", default=None, help="Optional reviewer note.")
+    decide.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the stories live under (default: ./kc_store).",
+    )
     return parser
 
 
@@ -376,6 +406,10 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_assign(args)
     if args.command == "progress":
         return _cmd_progress(args)
+    if args.command == "suggestions":
+        return _cmd_suggestions(args)
+    if args.command == "decide":
+        return _cmd_decide(args)
     if args.command == "author":
         return _cmd_author(args)
     if args.command == "delete":
@@ -817,6 +851,98 @@ def _cmd_progress(args: argparse.Namespace) -> int:
         )
     else:
         print("\nno suggestion produced (the state/rules did not warrant one).")
+    return 0
+
+
+def _cmd_suggestions(args: argparse.Namespace) -> int:
+    """List a story's open (undecided) premise suggestions (therapist-only)."""
+    from kathai_chithiram.progress import open_suggestions
+
+    store = _open_guarded_store(args.store_root)
+    if store is None:
+        return 2
+    try:
+        pending = open_suggestions(store, args.story_id)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: cannot read suggestions: {exc}", file=sys.stderr)
+        return 2
+
+    if not pending:
+        print(f"No open suggestions for {args.story_id}.")
+        return 0
+    print(f"{len(pending)} open suggestion(s) for {args.story_id}:")
+    for suggestion in pending:
+        print(f"\n  {suggestion.suggestion_id}  (goal {suggestion.goal_id})")
+        print(f"    premise: {suggestion.suggested_premise}")
+        print(f"    why:     {suggestion.rationale}")
+    print(
+        f"\nDecide with:  kc decide {args.story_id} <suggestion-id> "
+        "--accept|--edit --premise \"…\"|--dismiss --reviewer NAME"
+    )
+    return 0
+
+
+def _cmd_decide(args: argparse.Namespace) -> int:
+    """Record a therapist's accept / edit / dismiss on a suggestion (therapist-only).
+
+    Recording the decision is the only effect (ADR-002 D3/4/8): it never edits a
+    premise, generates a story, or schedules one. An accepted/edited premise still
+    re-enters the full safety pipeline before any new story is made.
+    """
+    from kathai_chithiram.progress import (
+        SuggestionStatus,
+        decide_suggestion,
+        open_suggestions,
+    )
+
+    if args.edit and not (args.premise or "").strip():
+        print("error: --edit requires --premise with the edited premise text", file=sys.stderr)
+        return 2
+
+    store = _open_guarded_store(args.store_root)
+    if store is None:
+        return 2
+
+    if args.accept:
+        # Accept as-is: the approved premise is the suggestion's own text.
+        try:
+            pending = {s.suggestion_id: s for s in open_suggestions(store, args.story_id)}
+        except (KathaiChithiramError, ValueError) as exc:
+            print(f"error: cannot read suggestions: {exc}", file=sys.stderr)
+            return 2
+        suggestion = pending.get(args.suggestion_id)
+        if suggestion is None:
+            print(
+                f"error: no open suggestion {args.suggestion_id} for {args.story_id}",
+                file=sys.stderr,
+            )
+            return 2
+        status, final_premise = SuggestionStatus.ACCEPTED, suggestion.suggested_premise
+    elif args.edit:
+        status, final_premise = SuggestionStatus.EDITED, args.premise
+    else:
+        status, final_premise = SuggestionStatus.DISMISSED, None
+
+    try:
+        decide_suggestion(
+            store,
+            args.story_id,
+            suggestion_id=args.suggestion_id,
+            status=status,
+            reviewer=args.reviewer,
+            final_premise=final_premise,
+            note=args.note,
+        )
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: decide failed: {exc}", file=sys.stderr)
+        return 2
+
+    print(f"✓ Recorded {status.value} on {args.suggestion_id} by {args.reviewer}.")
+    if status is not SuggestionStatus.DISMISSED:
+        print(
+            "(The approved premise re-enters the full safety pipeline before any new "
+            "story is made — ADR-002 D4.)"
+        )
     return 0
 
 

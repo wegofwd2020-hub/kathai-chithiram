@@ -443,6 +443,81 @@ def test_progress_denied_without_the_therapist_role(tmp_path: Path, monkeypatch)
     assert code == 2  # denied
 
 
+# --- therapist decision loop (kc suggestions / kc decide) -----------------------
+
+
+def _seed_suggestion(store_root: Path, *, therapist: str, suggestion_id: str = "sug1") -> None:
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.cli import _LOCAL_PRINCIPAL_ID
+    from kathai_chithiram.progress import PremiseSuggestion, record_suggestion
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store = StoryArtifactStore(store_root)
+    store.create_story("s1", created_at=datetime(2026, 6, 1, tzinfo=timezone.utc), story_text="x")
+    store.write_grants(
+        "s1", {"owner_id": _LOCAL_PRINCIPAL_ID, "assignments": {therapist: "therapist"}}
+    )
+    record_suggestion(
+        store,
+        "s1",
+        PremiseSuggestion(
+            suggestion_id=suggestion_id,
+            goal_id="g1",
+            suggested_premise="Try a slightly harder step.",
+            rationale="Independence has held.",
+            created_at=datetime(2026, 6, 5, tzinfo=timezone.utc),
+        ),
+    )
+
+
+def test_suggestions_lists_open_ones(tmp_path: Path, monkeypatch, capsys) -> None:
+    store_root = tmp_path / "store"
+    _seed_suggestion(store_root, therapist="dr")
+    monkeypatch.setenv("KC_PRINCIPAL", "dr")
+    code = main(["suggestions", "s1", "--store-root", str(store_root)])
+    assert code == 0
+    out = capsys.readouterr().out
+    assert "sug1" in out and "harder step" in out
+
+
+def test_decide_accept_records_and_closes_the_suggestion(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.progress import open_suggestions
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_suggestion(store_root, therapist="dr")
+    monkeypatch.setenv("KC_PRINCIPAL", "dr")
+    code = main(["decide", "s1", "sug1", "--accept", "--reviewer", "dr",
+                 "--store-root", str(store_root)])
+    assert code == 0
+    # No longer open once decided.
+    from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal
+    store = GuardedStore(
+        StoryArtifactStore(store_root), Principal("dr"),
+        audit=JsonlAuditSink(store_root / "audit.jsonl"),
+    )
+    assert open_suggestions(store, "s1") == []
+
+
+def test_decide_edit_requires_a_premise(tmp_path: Path, monkeypatch) -> None:
+    store_root = tmp_path / "store"
+    _seed_suggestion(store_root, therapist="dr")
+    monkeypatch.setenv("KC_PRINCIPAL", "dr")
+    code = main(["decide", "s1", "sug1", "--edit", "--reviewer", "dr",
+                 "--store-root", str(store_root)])
+    assert code == 2  # --edit without --premise is a usage error
+
+
+def test_decide_denied_for_non_therapist(tmp_path: Path, monkeypatch) -> None:
+    store_root = tmp_path / "store"
+    _seed_suggestion(store_root, therapist="dr")
+    monkeypatch.delenv("KC_PRINCIPAL", raising=False)  # default owner, not therapist
+    code = main(["decide", "s1", "sug1", "--dismiss", "--reviewer", "owner",
+                 "--store-root", str(store_root)])
+    assert code == 2
+
+
 def test_intake_offline_needs_no_provider(tmp_path: Path) -> None:
     from kathai_chithiram.storage import StoryArtifactStore
 
