@@ -15,6 +15,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import pytest
+
 from kathai_chithiram.cli import _cmd_intake, build_arg_parser, main
 from kathai_chithiram.generation import EXAMPLE_SCENE_SCRIPT
 from kathai_chithiram.wegofwd_llm.provider import LLMRequest, LLMResponse
@@ -438,6 +440,87 @@ def test_generate_seam_seals_media_and_out_copy_is_decrypted(tmp_path: Path, mon
     assert (story_dir / "cache" / "video_provenance.json").is_file()
     # …but the exported copy is decrypted and directly playable.
     assert out.read_bytes() == b"draft-bytes"
+
+
+# --- narration voice (--voice) -------------------------------------------------
+
+
+def test_load_voice_builds_a_synthesizer_or_none():
+    from kathai_chithiram.cli import _load_voice
+    from kathai_chithiram.rendering import CliTtsSynthesizer
+
+    assert _load_voice(None) is None
+    voice = _load_voice("espeak-ng -w {out} {text}")
+    assert isinstance(voice, CliTtsSynthesizer)
+
+
+def test_load_voice_rejects_a_bad_template():
+    from kathai_chithiram.cli import _load_voice
+
+    with pytest.raises(ValueError, match="must not be empty"):
+        _load_voice("")
+    with pytest.raises(ValueError, match=r"\{out\}"):
+        _load_voice("espeak-ng {text}")  # no {out} token
+
+
+def _capture_seam_narration(monkeypatch, captured: dict) -> None:
+    """Replace the CLI's render path with a fast fake that records the voice."""
+    import kathai_chithiram.cli as cli
+
+    class _Result:
+        media_path = Path("unused/animation.mp4")
+
+    def _fake_seam(*, renderer, script, store, story_id, mapping, narration, filename):
+        captured["narration"] = narration
+        return _Result()
+
+    monkeypatch.setattr(cli, "_load_default_renderer", lambda: object())
+    monkeypatch.setattr(cli, "generate_story_video", _fake_seam)
+
+
+def test_voice_flag_threads_a_synthesizer_into_the_seam(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.rendering import CliTtsSynthesizer
+
+    captured: dict = {}
+    _capture_seam_narration(monkeypatch, captured)
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--voice",
+            "espeak-ng -w {out} {text}",
+        ),
+        provider=_provider(),
+    )
+    assert code == 0
+    assert isinstance(captured["narration"], CliTtsSynthesizer)
+
+
+def test_no_voice_flag_renders_silent(tmp_path: Path, monkeypatch) -> None:
+    captured: dict = {}
+    _capture_seam_narration(monkeypatch, captured)
+    code = main(
+        _argv(_write_story(tmp_path), tmp_path / "store", "--provider-no-train-zdr"),
+        provider=_provider(),
+    )
+    assert code == 0
+    assert captured["narration"] is None
+
+
+def test_invalid_voice_template_exits_cleanly(tmp_path: Path) -> None:
+    # A template missing {out} is a usage error: exit 2, and no render is attempted.
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--voice",
+            "espeak-ng {text}",
+        ),
+        provider=_provider(),
+    )
+    assert code == 2
 
 
 # --- ZDR / no-training credential (KC-6) ---------------------------------------
