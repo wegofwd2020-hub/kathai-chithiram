@@ -143,6 +143,50 @@ class PeopleRegistry:
         family = self._families[child.family_id]
         return child_grants(child, family, assignments=self._assignments.get(child_id, {}))
 
+    # ── removal (erasure cascade; RETENTION_ERASURE_DESIGN §4) ─────────────────────
+    def children_of(self, family_id: str) -> list[str]:
+        """Return the ids of every child in a family (empty if none/unknown)."""
+        return [c.child_id for c in self._children.values() if c.family_id == family_id]
+
+    def remove_child(self, child_id: str) -> None:
+        """Remove a child and its assignments + consents (its DOB band goes with it).
+
+        Raises:
+            PeopleError: If the child is unknown.
+        """
+        if child_id not in self._children:
+            raise PeopleError(f"unknown child {child_id!r}")
+        del self._children[child_id]
+        self._assignments.pop(child_id, None)
+        self._consents.pop(child_id, None)
+
+    def remove_family(self, family_id: str) -> None:
+        """Remove a family record. Its children must already be removed (no orphans).
+
+        Raises:
+            PeopleError: If the family is unknown or still has children.
+        """
+        if family_id not in self._families:
+            raise PeopleError(f"unknown family {family_id!r}")
+        if self.children_of(family_id):
+            raise PeopleError("family still has children; erase them first")
+        del self._families[family_id]
+
+    def unassign_therapist(self, principal_id: str) -> None:
+        """Unassign a therapist from every child and remove their account.
+
+        Family content is untouched (a therapist never owned it), matching the
+        RETENTION_ERASURE_DESIGN §4 therapist rule.
+
+        Raises:
+            PeopleError: If the therapist is unknown.
+        """
+        if principal_id not in self._therapists:
+            raise PeopleError(f"unknown therapist {principal_id!r}")
+        for grants in self._assignments.values():
+            grants.pop(principal_id, None)
+        del self._therapists[principal_id]
+
     # ── persistence (interim plaintext; encryption + key tree = the erasure slice) ──
     def to_dict(self) -> dict[str, Any]:
         """Serialize the registry to a JSON-safe dict of opaque ids + bands + consent.
