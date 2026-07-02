@@ -17,7 +17,8 @@ from tests.kathai_chithiram.scene_script.mock_scripts import valid_scene_script
 
 from kathai_chithiram.rendering.narration import build_narration_track
 from kathai_chithiram.rendering.pipeline import build_render_plan
-from kathai_chithiram.rendering.voices import CliTtsSynthesizer, _read_wav_mono, _resample_linear
+from kathai_chithiram.rendering.voices import CliTtsSynthesizer
+from kathai_chithiram.rendering.wav_io import read_wav_mono, resample_linear
 
 _STUB = """\
 import sys, wave, struct, math
@@ -105,14 +106,14 @@ def test_read_wav_mono_downmixes_stereo():
         w.setsampwidth(2)
         w.setframerate(8000)
         w.writeframes(b"".join(struct.pack("<hh", 30000, -30000) for _ in range(10)))
-    rate, mono = _read_wav_mono(buffer.getvalue())
+    rate, mono = read_wav_mono(buffer.getvalue())
     assert rate == 8000
     assert len(mono) == 10
     assert all(abs(s) < 0.01 for s in mono)
 
 
 def test_resample_linear_endpoints_preserved():
-    up = _resample_linear([0.0, 1.0], 1, 4)
+    up = resample_linear([0.0, 1.0], 1, 4)
     assert up[0] == pytest.approx(0.0)
     assert up[-1] == pytest.approx(1.0)
     assert len(up) == 8

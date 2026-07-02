@@ -464,14 +464,15 @@ def test_load_voice_rejects_a_bad_template():
 
 
 def _capture_seam_narration(monkeypatch, captured: dict) -> None:
-    """Replace the CLI's render path with a fast fake that records the voice."""
+    """Replace the CLI's render path with a fast fake that records voice + sfx."""
     import kathai_chithiram.cli as cli
 
     class _Result:
         media_path = Path("unused/animation.mp4")
 
-    def _fake_seam(*, renderer, script, store, story_id, mapping, narration, filename):
+    def _fake_seam(*, renderer, script, store, story_id, mapping, narration, sfx, filename):
         captured["narration"] = narration
+        captured["sfx"] = sfx
         return _Result()
 
     monkeypatch.setattr(cli, "_load_default_renderer", lambda: object())
@@ -517,6 +518,74 @@ def test_invalid_voice_template_exits_cleanly(tmp_path: Path) -> None:
             "--provider-no-train-zdr",
             "--voice",
             "espeak-ng {text}",
+        ),
+        provider=_provider(),
+    )
+    assert code == 2
+
+
+# --- sound effects (--sfx) -----------------------------------------------------
+
+
+def test_load_sfx_builds_a_source_or_none(tmp_path: Path):
+    from kathai_chithiram.cli import _load_sfx
+    from kathai_chithiram.rendering import SoundBankSfxSynthesizer
+
+    assert _load_sfx(None) is None
+    bank = tmp_path / "sounds"
+    bank.mkdir()
+    source = _load_sfx(str(bank))
+    assert isinstance(source, SoundBankSfxSynthesizer)
+
+
+def test_load_sfx_rejects_a_missing_directory(tmp_path: Path):
+    from kathai_chithiram.cli import _load_sfx
+
+    with pytest.raises(ValueError, match="not a directory"):
+        _load_sfx(str(tmp_path / "does-not-exist"))
+
+
+def test_sfx_flag_threads_a_source_into_the_seam(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.rendering import SoundBankSfxSynthesizer
+
+    bank = tmp_path / "sounds"
+    bank.mkdir()
+    captured: dict = {}
+    _capture_seam_narration(monkeypatch, captured)
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--sfx",
+            str(bank),
+        ),
+        provider=_provider(),
+    )
+    assert code == 0
+    assert isinstance(captured["sfx"], SoundBankSfxSynthesizer)
+
+
+def test_no_sfx_flag_renders_without_effects(tmp_path: Path, monkeypatch) -> None:
+    captured: dict = {}
+    _capture_seam_narration(monkeypatch, captured)
+    code = main(
+        _argv(_write_story(tmp_path), tmp_path / "store", "--provider-no-train-zdr"),
+        provider=_provider(),
+    )
+    assert code == 0
+    assert captured["sfx"] is None
+
+
+def test_invalid_sfx_dir_exits_cleanly(tmp_path: Path) -> None:
+    # A non-existent sound bank is a usage error: exit 2, no render attempted.
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--sfx",
+            str(tmp_path / "no-such-dir"),
         ),
         provider=_provider(),
     )
