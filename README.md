@@ -65,6 +65,19 @@ End to end, `kc intake` / `kc generate` take a parent's story to a captioned dra
 with privacy (the name is stripped before the provider, scene scripts hold only a token, consent
 is captured) and a human-review gate enforced in code.
 
+#### Try it yourself — story → video, offline (no API key)
+
+`--offline` generates the scene script locally by sentence segmentation — no LLM, no network, no
+key — so you can feed any story and watch the video render. It does **not** adapt or safety-rephrase
+the text (that's the LLM path); the name is still stripped and the human-review gate still applies.
+
+```bash
+kc generate story.txt --child-name Silas --offline --out video.mp4 --captions srt
+```
+
+Writes a playable `video.mp4` (with `video.srt` captions) alongside the sealed store copy. Add
+`--voice 'espeak-ng -w {out} {text}'` for narration or `--sfx ./sounds` for effects.
+
 ### Production hardening — built and on `main`
 
 All five hardening tickets are implemented (`TICKETS/KC-5`…`KC-9`):

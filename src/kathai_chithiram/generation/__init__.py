@@ -16,6 +16,7 @@ from kathai_chithiram.generation.generator import (
     GeneratedSceneScript,
     generate_scene_script,
 )
+from kathai_chithiram.generation.offline import build_offline_scene_script
 from kathai_chithiram.generation.scene_script_prompt import (
     EXAMPLE_SCENE_SCRIPT,
     build_scene_script_system_prompt,
@@ -32,6 +33,7 @@ __all__ = [
     "MUST_NOT",
     "GeneratedSceneScript",
     "build_generation_system_prompt",
+    "build_offline_scene_script",
     "build_scene_script_system_prompt",
     "generate_scene_script",
 ]
