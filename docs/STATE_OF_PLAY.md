@@ -17,15 +17,15 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **526
-tests pass, ruff + mypy clean** (526 incl. the M1 policy wire-up below). The matplotlib
-reference renderer (`generate_animation.py`)
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **547
+tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
+template below). The matplotlib reference renderer (`generate_animation.py`)
 carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
 path (a heavier bpy lift, lower value than the default matplotlib flow).
 
 ## TL;DR
 
-The **product pipeline is built and green** (526 tests): a parent's story becomes a
+The **product pipeline is built and green** (547 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -40,7 +40,11 @@ provisioning.
 - **Core pipeline** — scene-script contract + validation, generation behind the
   `wegofwd-llm` seam (Anthropic provider), both reference renderers consume the contract,
   parent intake with consent capture. `kc intake` / `kc generate` / `kc review` /
-  `kc assign` CLI.
+  `kc assign` / `kc progress` / **`kc author`** CLI.
+- **Three ways to make a story** — `kc intake` (interactive, consented), `kc generate`
+  (free text; `--offline` = no LLM/key), and **`kc author`** (a structured story template
+  → scene script, deterministic, no key — ADR-005 part a; `docs/STORY_TEMPLATE.md`). All
+  three strip the child's name to the token (KC-2) and produce a review-gated draft.
 - **Production hardening (KC-1…KC-9)** — verifiable hard-delete (KC-1), identifier
   minimization before the LLM (KC-2), scene-script validation (KC-3), render-time seizure/
   flash safety (KC-4), **encryption at rest** (KC-5), **dedicated ZDR/no-training
@@ -112,6 +116,21 @@ provisioning.
   rotation procedure in `TICKETS/KC-10-envelope-per-story-keys.md`.
 - **Blocked on — nobody:** done. The only operational follow-on is provisioning the
   secret manager that holds `KC_STORAGE_KEY` (already tracked as a launch precondition).
+
+### 4. M2 — multi-user program platform (`docs/ADR_005_multi_user_program_platform.md`, Proposed)
+
+- **Part (a) story template — BUILT (2026-07-02, `kc author`).** Adds no new personal
+  data, so it was not gated.
+- **Parts (b) family/child/therapist identity + accounts and (c) therapist programs +
+  parent reporting — GATED, not started.** They add accounts + child DOB, which
+  **materially expand special-category processing and contradict the current
+  data-minimization stance** (`PRIVACY §3` / `DPIA §3` list DOB + accounts out of scope).
+- **Blocked on — DPO/counsel + a DPIA revision (ADR-005 D7):** new data categories,
+  lawful basis for accounts, notice/consent update, retention+erasure for account/DOB,
+  DPO note — before any identity/DOB/account code. Engineering decisions already taken:
+  the model slots behind the ADR-004 `IdentityProvider` seam with grants lifted per-story
+  → child-scoped; capture the *child's* DOB only (parent/therapist DOB dropped). Not
+  engineering-blocked; blocked on the privacy clearance.
 
 ## Launch preconditions (from `docs/DPIA.md` §5) — the critical path
 
