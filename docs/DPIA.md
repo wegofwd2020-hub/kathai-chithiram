@@ -127,6 +127,13 @@ the parent notice, `PRIVACY.md`, and the supporting evidence, and lists the spec
 decisions and open gaps (international transfer, controller/processor DPA, Art. 22,
 DSAR process) we need a DPO/counsel to rule on.
 
+> **Scope note.** This DPIA assesses the **current single-operator** product (story +
+> first name only). A **proposed** multi-user expansion adding **accounts and child DOB**
+> (ADR-005 parts b/c) is assessed separately in
+> `docs/DPIA_ADDENDUM_accounts_and_dob.md` — that expansion is **gated on the DPO review**
+> in the addendum and is **not built**. The addendum folds into this DPIA once (b)/(c) are
+> built and cleared.
+
 - **Internal:** WeGoFwd2020 (owner). ADR-001/002 authors for the safety and
   profiling stances.
 - **Required before launch:** DPO / qualified data-protection counsel; where the
