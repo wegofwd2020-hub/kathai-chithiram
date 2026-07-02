@@ -110,6 +110,8 @@ fade/dissolve transitions, all under render-time seizure/flash + gentle-audio sa
 | `kc progress <goal> --policy <file> --story <id>` | Run the M1 engine against a policy (gated; see below). |
 | `kc suggestions <id>` | List a story's open premise suggestions (therapist). |
 | `kc decide <id> <sug> --accept\|--edit\|--dismiss` | Therapist records a decision on a suggestion. |
+| `kc family-create` / `kc child-add` / `kc therapist-add` | Onboard a family / child (age band only) / therapist (ADR-005 b). |
+| `kc assign-child` / `kc consent` | Assign a therapist to a child; record parental consent (the lawful basis). |
 | `kc delete <id>` | Owner-only verifiable hard-delete + crypto-shred (right-to-erasure). |
 | `kc retention-sweep [--dry-run]` | Purge undelivered stories past the retention window (ops). |
 

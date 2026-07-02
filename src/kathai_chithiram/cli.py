@@ -41,6 +41,14 @@ from kathai_chithiram.intake import (
     format_notice_preamble,
     submit_intake,
 )
+from kathai_chithiram.people import (
+    AgeBand,
+    Child,
+    Family,
+    ParentalConsent,
+    PeopleRegistry,
+    Therapist,
+)
 from kathai_chithiram.privacy import NameMapping
 from kathai_chithiram.rendering import (
     CliTtsSynthesizer,
@@ -304,6 +312,41 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=Path("kc_store"),
         help="Directory the stories live under (default: ./kc_store).",
     )
+
+    # ── platform onboarding (ADR-005 b): families, children, therapists ──
+    _PEOPLE_FILE = ("--people-file", Path("people.json"),
+                    "Registry file for families/children/therapists (default: ./people.json).")
+
+    fam = sub.add_parser("family-create", help="Create a family with its parent member(s).")
+    fam.add_argument("--family-id", required=True, help="Opaque id for the family.")
+    fam.add_argument("--owner", required=True, help="Opaque principal id of the owning parent.")
+    fam.add_argument("--member", action="append", default=[],
+                     help="Additional parent principal id (repeatable); the owner is included.")
+    fam.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+
+    kid = sub.add_parser("child-add", help="Add a child to a family (age band only).")
+    kid.add_argument("--child-id", required=True, help="Opaque id for the child.")
+    kid.add_argument("--family-id", required=True, help="The family the child belongs to.")
+    age = kid.add_mutually_exclusive_group(required=True)
+    age.add_argument("--age-band", choices=[b.value for b in AgeBand], help="The child's age band.")
+    age.add_argument("--dob", help="Date of birth YYYY-MM-DD — converted to a band and DISCARDED.")
+    kid.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+
+    ther = sub.add_parser("therapist-add", help="Register a therapist principal.")
+    ther.add_argument("--therapist-id", required=True, help="Opaque principal id of the therapist.")
+    ther.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+
+    assign = sub.add_parser("assign-child", help="Assign a therapist to a child (child-scoped).")
+    assign.add_argument("--child-id", required=True, help="The child to assign to.")
+    assign.add_argument("--therapist-id", required=True, help="The therapist principal to assign.")
+    assign.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+
+    consent = sub.add_parser("consent", help="Record a parent's consent for a child.")
+    consent.add_argument("--child-id", required=True, help="The child the consent covers.")
+    consent.add_argument("--parent", required=True, help="Consenting parent principal id.")
+    consent.add_argument("--policy-version", required=True, help="Consent version.")
+    consent.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+
     return parser
 
 
@@ -410,6 +453,16 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_suggestions(args)
     if args.command == "decide":
         return _cmd_decide(args)
+    if args.command == "family-create":
+        return _cmd_family_create(args)
+    if args.command == "child-add":
+        return _cmd_child_add(args)
+    if args.command == "therapist-add":
+        return _cmd_therapist_add(args)
+    if args.command == "assign-child":
+        return _cmd_assign_child(args)
+    if args.command == "consent":
+        return _cmd_consent(args)
     if args.command == "author":
         return _cmd_author(args)
     if args.command == "delete":
@@ -943,6 +996,94 @@ def _cmd_decide(args: argparse.Namespace) -> int:
             "(The approved premise re-enters the full safety pipeline before any new "
             "story is made — ADR-002 D4.)"
         )
+    return 0
+
+
+def _resolve_age_band(args: argparse.Namespace) -> AgeBand:
+    """Resolve the child's age band from ``--age-band`` or ``--dob`` (DOB discarded)."""
+    if args.age_band:
+        return AgeBand(args.age_band)
+    from datetime import date
+
+    # --dob is used only to compute the band, then discarded (minimization, A8).
+    return AgeBand.from_dob(date.fromisoformat(args.dob), today=date.today())
+
+
+def _cmd_family_create(args: argparse.Namespace) -> int:
+    """Create a family with its owning parent plus any additional members."""
+    members = frozenset({args.owner, *args.member})
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        reg.add_family(Family(family_id=args.family_id, owner_id=args.owner, member_ids=members))
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"✓ family {args.family_id} created with {len(members)} parent(s).")
+    return 0
+
+
+def _cmd_child_add(args: argparse.Namespace) -> int:
+    """Add a child to a family, storing only an age band (never the DOB)."""
+    try:
+        band = _resolve_age_band(args)
+        reg = PeopleRegistry.load(args.people_file)
+        reg.add_child(Child(child_id=args.child_id, family_id=args.family_id, age_band=band))
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"✓ child {args.child_id} added to family {args.family_id} "
+        f"(age band {band.value}; no date of birth stored)."
+    )
+    return 0
+
+
+def _cmd_therapist_add(args: argparse.Namespace) -> int:
+    """Register a therapist principal."""
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        reg.add_therapist(Therapist(principal_id=args.therapist_id))
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"✓ therapist {args.therapist_id} registered.")
+    return 0
+
+
+def _cmd_assign_child(args: argparse.Namespace) -> int:
+    """Assign a registered therapist to a child (a child-scoped grant)."""
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        reg.assign(args.child_id, args.therapist_id, Role.THERAPIST)
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"✓ therapist {args.therapist_id} assigned to child {args.child_id}.")
+    return 0
+
+
+def _cmd_consent(args: argparse.Namespace) -> int:
+    """Record a parent's consent for a child (the lawful basis, A8)."""
+    from datetime import datetime, timezone
+
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        reg.record_consent(ParentalConsent(
+            consenting_parent_id=args.parent, child_id=args.child_id,
+            policy_version=args.policy_version, granted_at=datetime.now(timezone.utc),
+        ))
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"✓ consent recorded for child {args.child_id} by parent {args.parent} "
+        f"(version {args.policy_version})."
+    )
     return 0
 
 

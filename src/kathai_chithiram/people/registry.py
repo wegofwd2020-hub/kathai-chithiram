@@ -14,11 +14,16 @@ follow the per-child key tree in ``docs/RETENTION_ERASURE_DESIGN.md`` (a later s
 
 from __future__ import annotations
 
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 from kathai_chithiram.access.policy import ChildGrants
 from kathai_chithiram.access.principal import Role
 from kathai_chithiram.errors import PeopleError
 from kathai_chithiram.people.grants import child_grants
-from kathai_chithiram.people.models import Child, Family, ParentalConsent, Therapist
+from kathai_chithiram.people.models import AgeBand, Child, Family, ParentalConsent, Therapist
 
 __all__ = ["PeopleRegistry"]
 
@@ -137,3 +142,92 @@ class PeopleRegistry:
         child = self.get_child(child_id)
         family = self._families[child.family_id]
         return child_grants(child, family, assignments=self._assignments.get(child_id, {}))
+
+    # ── persistence (interim plaintext; encryption + key tree = the erasure slice) ──
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the registry to a JSON-safe dict of opaque ids + bands + consent.
+
+        Contains no name and no date of birth — only opaque ids, age bands, roles, and
+        consent timestamps (DPIA addendum A8). Durable encryption and the per-child key
+        tree follow ``docs/RETENTION_ERASURE_DESIGN.md``.
+        """
+        return {
+            "families": [
+                {"family_id": f.family_id, "owner_id": f.owner_id,
+                 "member_ids": sorted(f.member_ids)}
+                for f in self._families.values()
+            ],
+            "children": [
+                {"child_id": c.child_id, "family_id": c.family_id, "age_band": c.age_band.value}
+                for c in self._children.values()
+            ],
+            "therapists": [t.principal_id for t in self._therapists.values()],
+            "assignments": {
+                child_id: {pid: role.value for pid, role in grants.items()}
+                for child_id, grants in self._assignments.items()
+            },
+            "consents": {
+                child_id: [
+                    {"consenting_parent_id": c.consenting_parent_id,
+                     "policy_version": c.policy_version, "granted_at": c.granted_at.isoformat()}
+                    for c in consents
+                ]
+                for child_id, consents in self._consents.items()
+            },
+        }
+
+    def save(self, path: Path) -> None:
+        """Write the registry to ``path`` as JSON (creating parent dirs)."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(self.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: Path) -> PeopleRegistry:
+        """Load a registry from ``path``; return an empty one if the file is absent.
+
+        Raises:
+            PeopleError: If the file exists but is not valid registry JSON.
+        """
+        if not path.exists():
+            return cls()
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PeopleError(f"registry file is not valid JSON: {exc}") from exc
+        return cls.from_dict(data)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> PeopleRegistry:
+        """Rebuild a registry from :meth:`to_dict` output, revalidating every record.
+
+        Raises:
+            PeopleError: If a record is malformed (each is re-run through its model's
+                validation and the registry's own invariants).
+        """
+        reg = cls()
+        try:
+            for f in data.get("families", []):
+                reg.add_family(Family(
+                    family_id=f["family_id"], owner_id=f["owner_id"],
+                    member_ids=frozenset(f["member_ids"]),
+                ))
+            for c in data.get("children", []):
+                reg.add_child(Child(
+                    child_id=c["child_id"], family_id=c["family_id"],
+                    age_band=AgeBand(c["age_band"]),
+                ))
+            for pid in data.get("therapists", []):
+                reg.add_therapist(Therapist(principal_id=pid))
+            for child_id, grants in data.get("assignments", {}).items():
+                for pid, role in grants.items():
+                    reg.assign(child_id, pid, Role(role))
+            for child_id, consents in data.get("consents", {}).items():
+                for c in consents:
+                    reg.record_consent(ParentalConsent(
+                        consenting_parent_id=c["consenting_parent_id"], child_id=child_id,
+                        policy_version=c["policy_version"],
+                        granted_at=datetime.fromisoformat(c["granted_at"]),
+                    ))
+        except (KeyError, ValueError) as exc:
+            raise PeopleError(f"malformed registry record: {exc}") from exc
+        return reg
