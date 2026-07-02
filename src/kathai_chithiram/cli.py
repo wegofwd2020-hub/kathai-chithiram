@@ -134,6 +134,21 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "applies. The child's name is still stripped and never stored."
         ),
     )
+    generate.add_argument(
+        "--child",
+        default=None,
+        help=(
+            "Make this a child-scoped story owned by the given child id (ADR-005): "
+            "access follows the child (family + assigned therapist), and parental "
+            "consent must be on record. Needs --people-file."
+        ),
+    )
+    generate.add_argument(
+        "--people-file",
+        type=Path,
+        default=Path("people.json"),
+        help="Registry file for --child (default: ./people.json).",
+    )
     _add_common_args(generate)
 
     review = sub.add_parser(
@@ -512,7 +527,10 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
         print(f"error: cannot read story: {exc}", file=sys.stderr)
         return 2
 
-    store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
+    store = _open_guarded_store(
+        args.store_root, warn_if_plaintext=True,
+        people_file=args.people_file if args.child else None,
+    )
     if store is None:
         return 2
 
@@ -555,7 +573,8 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
             )
         return 2
 
-    store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
+    if not _create_story_flow(store, story_id, child_id=args.child, story_text=story_text):
+        return 2
     store.write_scene_script(story_id, result.script)
     _print_summary(story_id=story_id, store=store, generated=result)
 
@@ -567,7 +586,7 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
 def _generate_offline(
     args: argparse.Namespace,
     *,
-    store: StoryStore,
+    store: GuardedStore,
     story_id: str,
     story_text: str,
     mapping: NameMapping,
@@ -591,7 +610,8 @@ def _generate_offline(
         print(f"error: offline generation failed: {exc}", file=sys.stderr)
         return 2
 
-    store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
+    if not _create_story_flow(store, story_id, child_id=args.child, story_text=story_text):
+        return 2
     store.write_scene_script(story_id, script)
     print(f"\nStory id: {story_id}")
     print(f"Scenes:   {len(script['scenes'])} · {script['total_duration_s']}s @ {script['fps']}fps")
@@ -1665,12 +1685,16 @@ def _resolve_principal() -> Principal | None:
 
 
 def _open_guarded_store(
-    store_root: Path, *, warn_if_plaintext: bool = False
+    store_root: Path,
+    *,
+    warn_if_plaintext: bool = False,
+    people_file: Path | None = None,
 ) -> GuardedStore | None:
     """Open the store and bind the acting principal, enforcing access (ADR-004).
 
-    Returns ``None`` (after printing why) if the store key or the principal is
-    misconfigured, so the caller can exit cleanly.
+    When ``people_file`` is given, the people registry is attached so child-scoped
+    stories authorize against the child's grants (ADR-005 D3). Returns ``None`` (after
+    printing why) if the store key, the principal, or the registry is misconfigured.
     """
     store = _open_store(store_root, warn_if_plaintext=warn_if_plaintext)
     if store is None:
@@ -1678,8 +1702,33 @@ def _open_guarded_store(
     principal = _resolve_principal()
     if principal is None:
         return None
+    registry = None
+    if people_file is not None:
+        try:
+            registry = PeopleRegistry.load(people_file)
+        except KathaiChithiramError as exc:
+            print(f"error: cannot load registry: {exc}", file=sys.stderr)
+            return None
     audit = JsonlAuditSink(store_root / _AUDIT_LOG_FILE)
-    return GuardedStore(store, principal, audit=audit)
+    return GuardedStore(store, principal, audit=audit, registry=registry)
+
+
+def _create_story_flow(
+    store: GuardedStore, story_id: str, *, child_id: str | None, story_text: str
+) -> bool:
+    """Create the story — child-scoped if ``child_id`` — printing + returning False on denial."""
+    at = datetime.now(timezone.utc)
+    try:
+        if child_id:
+            store.create_story_for_child(
+                story_id, child_id=child_id, created_at=at, story_text=story_text
+            )
+        else:
+            store.create_story(story_id, created_at=at, story_text=story_text)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: cannot create story: {exc}", file=sys.stderr)
+        return False
+    return True
 
 
 def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:

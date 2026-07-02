@@ -1256,3 +1256,43 @@ def test_erase_child_aborts_without_confirmation(tmp_path: Path) -> None:
     )
     assert _cmd_erase_child(args, input_fn=lambda _prompt: "n") == 1  # aborted
     assert list(StoryArtifactStore(Path(sr)).iter_story_ids()) == ["s1"]  # untouched
+
+
+def test_generate_child_scoped_story(tmp_path: Path, monkeypatch) -> None:
+    from kathai_chithiram.access import GuardedStore, Principal
+    from kathai_chithiram.errors import AccessDeniedError
+    from kathai_chithiram.people import PeopleRegistry
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    pf, sr = str(tmp_path / "people.json"), str(tmp_path / "store")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    main(["child-add", "--child-id", "k", "--family-id", "f", "--age-band", "6-8",
+          "--people-file", pf])
+    main(["consent", "--child-id", "k", "--parent", "mum", "--policy-version", "v1",
+          "--people-file", pf])
+    story = tmp_path / "s.txt"
+    story.write_text("Kid brushes teeth. Kid smiles.", encoding="utf-8")
+    monkeypatch.setenv("KC_PRINCIPAL", "mum")
+
+    code = main(["generate", str(story), "--child-name", "Kid", "--offline", "--child", "k",
+                 "--people-file", pf, "--store-root", sr, "--story-id", "s1", "--no-render"])
+    assert code == 0
+    # The story is child-scoped: another parent could read it, a stranger cannot.
+    reg = PeopleRegistry.load(Path(pf))
+    st = StoryArtifactStore(Path(sr))
+    assert GuardedStore(st, Principal("mum"), registry=reg).read_scene_script("s1")
+    with pytest.raises(AccessDeniedError):
+        GuardedStore(st, Principal("stranger"), registry=reg).read_scene_script("s1")
+
+
+def test_generate_child_scoped_refused_without_consent(tmp_path: Path, monkeypatch) -> None:
+    pf, sr = str(tmp_path / "people.json"), str(tmp_path / "store")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    main(["child-add", "--child-id", "k", "--family-id", "f", "--age-band", "6-8",
+          "--people-file", pf])  # no consent
+    story = tmp_path / "s.txt"
+    story.write_text("hi there.", encoding="utf-8")
+    monkeypatch.setenv("KC_PRINCIPAL", "mum")
+    code = main(["generate", str(story), "--child-name", "Kid", "--offline", "--child", "k",
+                 "--people-file", pf, "--store-root", sr, "--story-id", "s1", "--no-render"])
+    assert code == 2  # no parental consent on record
