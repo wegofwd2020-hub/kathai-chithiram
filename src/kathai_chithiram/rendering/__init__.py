@@ -17,6 +17,7 @@ from kathai_chithiram.rendering.narration import (
     SilentNarrationSynthesizer,
     build_narration_track,
     guard_narration_track,
+    mono_wav_bytes,
 )
 from kathai_chithiram.rendering.pipeline import (
     PreparedScene,
@@ -34,6 +35,13 @@ from kathai_chithiram.rendering.safety import (
     guard_frame_rate,
     guard_render,
 )
+from kathai_chithiram.rendering.sfx import (
+    SfxBed,
+    SfxSynthesizer,
+    SilentSfxSynthesizer,
+    build_sfx_bed,
+    guard_sfx_bed,
+)
 from kathai_chithiram.rendering.voices import CliTtsSynthesizer
 
 __all__ = [
@@ -48,13 +56,19 @@ __all__ = [
     "RenderResult",
     "RenderSafetyReport",
     "SceneScriptRenderer",
+    "SfxBed",
+    "SfxSynthesizer",
     "SilentNarrationSynthesizer",
+    "SilentSfxSynthesizer",
     "build_narration_track",
     "build_render_plan",
+    "build_sfx_bed",
     "guard_audio_levels",
     "guard_flashes",
     "guard_frame_rate",
     "guard_narration_track",
     "guard_render",
+    "guard_sfx_bed",
+    "mono_wav_bytes",
     "mux_wav_into_mp4",
 ]

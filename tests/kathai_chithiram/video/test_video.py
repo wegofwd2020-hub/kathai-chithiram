@@ -182,6 +182,48 @@ def test_seam_threads_narration_and_reports_audio(tmp_path):
     assert any("Audio:" in line for line in probe.stderr.splitlines())
 
 
+def test_seam_threads_sfx_and_reports_audio(tmp_path):
+    # generate_story_video passes an in-process sfx source to the renderer; the
+    # scene's cues are synthesized into a bed, muxed into the sealed mp4, and
+    # has_audio is reported True.
+    import subprocess
+    from collections.abc import Sequence
+
+    pytest.importorskip("matplotlib")
+    pytest.importorskip("imageio_ffmpeg")
+    import imageio_ffmpeg
+    from generate_animation import MatplotlibStickFigureRenderer
+    from tests.kathai_chithiram.rendering.fake_renderer import tiny_script
+
+    class _Sfx:
+        def synthesize(self, cue: str, *, sample_rate: int, duration_s: float) -> Sequence[float]:
+            return [0.4] * round(duration_s * sample_rate)
+
+    script = tiny_script(fps=8, duration_s=2)
+    script["scenes"][0]["audio"]["sfx"] = ["water_running"]
+
+    store = StoryArtifactStore(root=tmp_path, cipher=AesGcmCipher(generate_data_key()))
+    store.create_story(
+        "story1", created_at=datetime(2026, 7, 2, tzinfo=timezone.utc), story_text="x"
+    )
+
+    out = generate_story_video(
+        renderer=MatplotlibStickFigureRenderer(),
+        script=script,
+        store=store,
+        story_id="story1",
+        sfx=_Sfx(),
+    )
+
+    assert out.result.has_audio is True
+    decrypted = tmp_path / "play.mp4"
+    decrypted.write_bytes(store.read_media("story1", "story.mp4"))
+    probe = subprocess.run(
+        [imageio_ffmpeg.get_ffmpeg_exe(), "-i", str(decrypted)], capture_output=True, text=True
+    )
+    assert any("Audio:" in line for line in probe.stderr.splitlines())
+
+
 def test_adapter_rejects_missing_output(tmp_path):
     # output_path=None path: renderer produces no file → VideoResponseError surfaced.
     from wegofwd_video.errors import VideoResponseError

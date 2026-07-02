@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
+from array import array
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -36,8 +37,10 @@ from kathai_chithiram.rendering.narration import (
     NarrationSynthesizer,
     NarrationTrack,
     build_narration_track,
+    mono_wav_bytes,
 )
 from kathai_chithiram.rendering.safety import RenderSafetyReport, guard_render
+from kathai_chithiram.rendering.sfx import SfxBed, SfxSynthesizer, build_sfx_bed
 from kathai_chithiram.scene_script.validation import validate_scene_script
 
 __all__ = [
@@ -62,6 +65,9 @@ class PreparedScene:
         narration_volume: Target narration level for this scene, in ``[0, 1]``
             (from the script's per-scene ``audio`` block); the narration track is
             scaled to it and the render-time audio guard checks the result.
+        sfx: The scene's sound-effect cues (opaque label strings, from the
+            script's ``audio.sfx``), in author order; synthesized into the sfx
+            bed and placed in this scene's window.
         setting: The scene setting (e.g. ``"bathroom"``).
         transition_in: Incoming transition (``cut`` / ``fade`` / ``dissolve``).
         transition_out: Outgoing transition.
@@ -73,6 +79,7 @@ class PreparedScene:
     caption: str
     narration: str
     narration_volume: float
+    sfx: tuple[str, ...]
     setting: str
     transition_in: str
     transition_out: str
@@ -146,6 +153,7 @@ def build_render_plan(
             caption=restore(raw["caption"]),
             narration=restore(raw["narration"]),
             narration_volume=float(raw["audio"]["narration_volume"]),
+            sfx=tuple(raw["audio"]["sfx"]),
             setting=raw["setting"],
             transition_in=raw["transition_in"],
             transition_out=raw["transition_out"],
@@ -158,6 +166,36 @@ def build_render_plan(
         total_frames=sum(scene.frame_count for scene in scenes),
         scenes=scenes,
     )
+
+
+def _mix_audio_to_wav(track: NarrationTrack | None, bed: SfxBed | None) -> bytes:
+    """Mix the narration track and sfx bed into one mono WAV for muxing.
+
+    Narration and the bed are built from the same plan at the same sample rate, so
+    they are sample-aligned; the two are summed and clamped to ``[-1, 1]`` (so the
+    combined signal never clips) and serialized through the shared WAV writer. When
+    only one source is present its samples pass through unchanged. At least one of
+    the two must be given (the caller only mixes when there is audible audio).
+
+    Raises:
+        ValueError: If both ``track`` and ``bed`` are ``None``.
+    """
+    if track is None and bed is None:
+        raise ValueError("_mix_audio_to_wav requires at least one audio source")
+    if bed is None:
+        assert track is not None
+        return track.to_wav_bytes()
+    if track is None:
+        return bed.to_wav_bytes()
+
+    length = max(len(track.samples), len(bed.samples))
+    mixed = array("f", bytes(4 * length))
+    for index in range(length):
+        left = track.samples[index] if index < len(track.samples) else 0.0
+        right = bed.samples[index] if index < len(bed.samples) else 0.0
+        total = left + right
+        mixed[index] = -1.0 if total < -1.0 else 1.0 if total > 1.0 else total
+    return mono_wav_bytes(mixed, track.sample_rate)
 
 
 class SceneScriptRenderer(ABC):
@@ -178,6 +216,7 @@ class SceneScriptRenderer(ABC):
         mapping: NameMapping | None = None,
         output_path: str | None = None,
         narration: NarrationSynthesizer | None = None,
+        sfx: SfxSynthesizer | None = None,
     ) -> RenderResult:
         """Render ``script`` safely; return a :class:`RenderResult`.
 
@@ -191,6 +230,11 @@ class SceneScriptRenderer(ABC):
                 built from the plan, its measured level is safety-guarded, and — for
                 a file render — an audible track is muxed into the output. Defaults
                 to no audio (a silent render), preserving the video-only behavior.
+            sfx: Optional in-process sound source. When given, each scene's
+                ``audio.sfx`` cues are synthesized into a bed timed to the plan,
+                each cue's measured peak is safety-guarded, and the bed is mixed
+                with any narration into the single audio track muxed into the
+                output. Defaults to no sound effects.
 
         Returns:
             The :class:`RenderResult` for a guard-passing render.
@@ -199,18 +243,22 @@ class SceneScriptRenderer(ABC):
             SceneScriptInvalidError: If the script is invalid.
             UnsupportedSchemaVersionError: If this renderer can't render the
                 script's MAJOR version.
-            RenderSafetyError: If the produced output (video or the narration
-                track) trips a render-time guard; no final artifact is left behind.
+            RenderSafetyError: If the produced output (video, the narration track,
+                or any sfx cue) trips a render-time guard; no final artifact is
+                left behind.
             RuntimeError: If audio was requested but muxing is unavailable/fails.
         """
         plan = build_render_plan(script, mapping=mapping)
         self._require_supported(script)
 
         track = build_narration_track(plan, narration) if narration is not None else None
-        has_audio = track is not None and not track.is_silent
+        bed = build_sfx_bed(plan, sfx) if sfx is not None else None
+        has_audio = (track is not None and not track.is_silent) or (
+            bed is not None and not bed.is_silent
+        )
 
         if output_path is None:
-            report = self._measured_report(self._render(plan, draft_path=None), track)
+            report = self._measured_report(self._render(plan, draft_path=None), track, bed)
             guard_render(report)
             return RenderResult(
                 plan=plan, safety_report=report, output_path=None, has_audio=has_audio
@@ -222,11 +270,13 @@ class SceneScriptRenderer(ABC):
         out = Path(output_path)
         draft_path = str(out.with_name(f"{out.stem}.draft{out.suffix}"))
         try:
-            report = self._measured_report(self._render(plan, draft_path=draft_path), track)
+            report = self._measured_report(
+                self._render(plan, draft_path=draft_path), track, bed
+            )
             guard_render(report)
             # Guard the (video) draft first, then mux audio only once it is safe.
-            if has_audio and track is not None:
-                mux_wav_into_mp4(draft_path, track.to_wav_bytes())
+            if has_audio:
+                mux_wav_into_mp4(draft_path, _mix_audio_to_wav(track, bed))
         except BaseException:
             # Never leave an unsafe or partial draft behind.
             if os.path.exists(draft_path):
@@ -240,18 +290,22 @@ class SceneScriptRenderer(ABC):
 
     @staticmethod
     def _measured_report(
-        report: RenderSafetyReport, track: NarrationTrack | None
+        report: RenderSafetyReport,
+        track: NarrationTrack | None,
+        bed: SfxBed | None,
     ) -> RenderSafetyReport:
-        """Fold a narration track's *measured* peak into the safety report.
+        """Fold the *measured* narration and sfx levels into the safety report.
 
-        The subclass ``_render`` describes only the video (its narration level is a
-        placeholder); when a track is present, its measured peak becomes the level
-        the shared audio guard checks — so the guarantee is enforced on the signal
-        actually produced, not a self-reported number.
+        The subclass ``_render`` describes only the video (its audio levels are
+        placeholders); when a track or bed is present, its measured peak(s) replace
+        those placeholders so the shared audio guard checks the signal actually
+        produced, not a self-reported number.
         """
-        if track is None:
+        if track is None and bed is None:
             return report
-        return replace(report, narration_volume=track.peak)
+        narration_volume = track.peak if track is not None else report.narration_volume
+        sfx_levels = bed.cue_peaks if bed is not None else report.sfx_levels
+        return replace(report, narration_volume=narration_volume, sfx_levels=sfx_levels)
 
     def _require_supported(self, script: Mapping[str, Any]) -> None:
         """Reject a script whose schema MAJOR this renderer does not support."""

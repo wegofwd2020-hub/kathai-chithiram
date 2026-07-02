@@ -33,6 +33,7 @@ from wegofwd_video import (
 from kathai_chithiram.privacy.pseudonymize import NameMapping
 from kathai_chithiram.rendering.narration import NarrationSynthesizer
 from kathai_chithiram.rendering.pipeline import SceneScriptRenderer
+from kathai_chithiram.rendering.sfx import SfxSynthesizer
 from kathai_chithiram.storage.protocol import StoryStore
 from kathai_chithiram.video.adapter import make_render_fn
 from kathai_chithiram.video.brief import build_video_brief
@@ -67,6 +68,7 @@ def generate_story_video(
     story_id: str,
     mapping: NameMapping | None = None,
     narration: NarrationSynthesizer | None = None,
+    sfx: SfxSynthesizer | None = None,
     seed: int | None = None,
     model: str | None = None,
     filename: str = _MEDIA_FILENAME,
@@ -86,6 +88,9 @@ def generate_story_video(
         mapping: Optional name mapping for render-time name reinsertion.
         narration: Optional in-process voice; when given, its narration track is
             muxed into the media (in-process, so the child's name stays local).
+        sfx: Optional in-process sound source; when given, each scene's ``audio.sfx``
+            cues are synthesized into a bed and mixed with any narration into the
+            muxed audio (in-process, so nothing leaves the machine).
         seed: Optional reproducibility seed, recorded in provenance.
         model: Override the recorded model id (defaults to ``renderer.name``).
         filename: Output media file name under ``media/``.
@@ -125,6 +130,7 @@ def generate_story_video(
             model=model_id,
             mapping=mapping,
             narration=narration,
+            sfx=sfx,
         )
         provider = build_provider(_PROVIDER_ID, render_fn=render_fn, model=model_id)
         result = provider.generate(

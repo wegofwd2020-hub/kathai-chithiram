@@ -19,6 +19,7 @@ from wegofwd_video.errors import VideoResponseError
 from kathai_chithiram.privacy.pseudonymize import NameMapping
 from kathai_chithiram.rendering.narration import NarrationSynthesizer
 from kathai_chithiram.rendering.pipeline import RenderResult, SceneScriptRenderer
+from kathai_chithiram.rendering.sfx import SfxSynthesizer
 
 # The deterministic renderer is frame-based and not AI-generated, so it carries no
 # C2PA/SynthID provenance signature. Audio is present only when an in-process
@@ -59,18 +60,23 @@ def make_render_fn(
     model: str,
     mapping: NameMapping | None = None,
     narration: NarrationSynthesizer | None = None,
+    sfx: SfxSynthesizer | None = None,
 ) -> Callable[[VideoRequest], VideoResult]:
     """Return a ``wegofwd_video`` render_fn that drives ``renderer``.
 
     ``mapping`` is what reinserts the child's real name at render time (KC-2); it
     is deliberately confined to the renderer and never reaches the brief.
-    ``narration`` is an optional in-process voice; the child's name stays local to
-    the renderer for it too, and never reaches the brief.
+    ``narration`` is an optional in-process voice and ``sfx`` an optional in-process
+    sound source; both stay local to the renderer and never reach the brief.
     """
 
     def _render_fn(_request: VideoRequest) -> VideoResult:
         result = renderer.render(
-            script, mapping=mapping, output_path=output_path, narration=narration
+            script,
+            mapping=mapping,
+            output_path=output_path,
+            narration=narration,
+            sfx=sfx,
         )
         return render_result_to_video_result(result, model=model)
 

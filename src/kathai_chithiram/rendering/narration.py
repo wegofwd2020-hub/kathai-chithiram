@@ -39,12 +39,49 @@ __all__ = [
     "SilentNarrationSynthesizer",
     "build_narration_track",
     "guard_narration_track",
+    "mono_wav_bytes",
 ]
 
 #: Mono sample rate for narration tracks (Hz); 22.05 kHz is ample for speech.
 DEFAULT_SAMPLE_RATE = 22050
 
 _INT16_MAX = 32767
+
+
+def _to_int16(sample: float) -> int:
+    """Clamp ``sample`` to ``[-1, 1]`` and quantize to signed 16-bit PCM."""
+    clamped = -1.0 if sample < -1.0 else 1.0 if sample > 1.0 else sample
+    return int(round(clamped * _INT16_MAX))
+
+
+def mono_wav_bytes(samples: Sequence[float], sample_rate: int) -> bytes:
+    """Serialize mono float ``samples`` to a 16-bit PCM WAV (stdlib ``wave``).
+
+    Shared by every in-process audio track (narration and the sfx bed) so the one
+    quantization path — clamp to ``[-1, 1]``, quantize to signed 16-bit — is
+    identical everywhere. No dependencies; the child's audio never leaves the
+    process.
+
+    Args:
+        samples: Mono samples in ``[-1, 1]``, in play order.
+        sample_rate: Samples per second (Hz); must be positive.
+
+    Returns:
+        The complete WAV file as bytes.
+
+    Raises:
+        ValueError: If ``sample_rate`` is not positive.
+    """
+    if sample_rate <= 0:
+        raise ValueError("sample_rate must be positive")
+    pcm = array("h", (_to_int16(sample) for sample in samples))
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(pcm.tobytes())
+    return buffer.getvalue()
 
 
 @runtime_checkable
@@ -118,20 +155,7 @@ class NarrationTrack:
         Returns:
             The complete WAV file as bytes.
         """
-        pcm = array("h", (self._to_int16(sample) for sample in self.samples))
-        buffer = io.BytesIO()
-        with wave.open(buffer, "wb") as wav:
-            wav.setnchannels(1)
-            wav.setsampwidth(2)
-            wav.setframerate(self.sample_rate)
-            wav.writeframes(pcm.tobytes())
-        return buffer.getvalue()
-
-    @staticmethod
-    def _to_int16(sample: float) -> int:
-        """Clamp ``sample`` to ``[-1, 1]`` and quantize to signed 16-bit."""
-        clamped = -1.0 if sample < -1.0 else 1.0 if sample > 1.0 else sample
-        return int(round(clamped * _INT16_MAX))
+        return mono_wav_bytes(self.samples, self.sample_rate)
 
 
 def build_narration_track(
