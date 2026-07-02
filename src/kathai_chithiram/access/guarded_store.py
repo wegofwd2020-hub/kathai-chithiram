@@ -32,9 +32,15 @@ from pathlib import Path
 from typing import Any
 
 from kathai_chithiram.access.audit import AccessEvent, AccessOutcome, AuditSink
-from kathai_chithiram.access.policy import AccessPolicy, Action, StoryGrants
+from kathai_chithiram.access.policy import (
+    AccessPolicy,
+    Action,
+    ChildGrantsSource,
+    Grants,
+    StoryGrants,
+)
 from kathai_chithiram.access.principal import Principal, Role
-from kathai_chithiram.errors import AccessDeniedError
+from kathai_chithiram.errors import AccessDeniedError, PeopleError
 from kathai_chithiram.storage.deletion import BackupPurgeLog, DeletionReceipt
 from kathai_chithiram.storage.deletion import delete_story as _delete_story
 from kathai_chithiram.storage.store import StoryArtifactStore, StoryMetadata
@@ -63,12 +69,14 @@ class GuardedStore:
         policy: AccessPolicy | None = None,
         audit: AuditSink | None = None,
         clock: Callable[[], datetime] | None = None,
+        registry: ChildGrantsSource | None = None,
     ) -> None:
         self._store = store
         self._principal = principal
         self._policy = policy if policy is not None else AccessPolicy()
         self._audit = audit
         self._clock = clock if clock is not None else _default_clock
+        self._registry = registry
 
     # --- ownership / grants -------------------------------------------------
 
@@ -97,6 +105,55 @@ class GuardedStore:
         self._record(story_id, Action.MANAGE_STORY, AccessOutcome.ALLOWED)
         return metadata
 
+    def create_story_for_child(
+        self,
+        story_id: str,
+        *,
+        child_id: str,
+        created_at: datetime,
+        story_text: str,
+        delivered: bool = False,
+    ) -> StoryMetadata:
+        """Create a story owned by a child (ADR-005 D3): access follows the child.
+
+        The story's grants are the child's — every family parent owns it and any
+        therapist assigned to the child inherits their role — so this needs a
+        ``registry``. The calling principal must be a family member of the child, and
+        **parental consent must be on record** (the lawful basis, A8); both fail closed.
+        The stored grants record is just the ``child_id``, so re-assigning a therapist
+        to the child propagates to all the child's stories (live resolution).
+
+        Raises:
+            ValueError: If no registry is configured.
+            PeopleError: If the child is unknown to the registry.
+            AccessDeniedError: If the principal is not a family member of the child, or
+                no parental consent is on record.
+            OSError: If the artifacts cannot be written.
+        """
+        if self._registry is None:
+            raise ValueError("create_story_for_child needs a registry (child-scoped grants)")
+        grants = self._registry.child_grants(child_id)  # raises PeopleError if unknown
+        if grants.role_of(self._principal) is not Role.FAMILY_OWNER:
+            self._record(story_id, Action.MANAGE_STORY, AccessOutcome.DENIED,
+                         reason="not a family member of the child")
+            raise AccessDeniedError(
+                Action.MANAGE_STORY.value, "principal is not a family member of the child",
+                principal_id=self._principal.principal_id, story_id=story_id,
+            )
+        if not self._registry.has_consent(child_id):
+            self._record(story_id, Action.MANAGE_STORY, AccessOutcome.DENIED,
+                         reason="no parental consent on record")
+            raise AccessDeniedError(
+                Action.MANAGE_STORY.value, "no parental consent on record for this child",
+                principal_id=self._principal.principal_id, story_id=story_id,
+            )
+        metadata = self._store.create_story(
+            story_id, created_at=created_at, story_text=story_text, delivered=delivered
+        )
+        self._store.write_grants(story_id, {"child_id": child_id})
+        self._record(story_id, Action.MANAGE_STORY, AccessOutcome.ALLOWED)
+        return metadata
+
     def assign_role(self, story_id: str, principal_id: str, role: Role) -> StoryGrants:
         """Grant ``role`` on ``story_id`` to another principal (owner-only).
 
@@ -115,6 +172,11 @@ class GuardedStore:
                 role, or assigning the owner).
         """
         grants = self._guard(story_id, Action.MANAGE_STORY)
+        if not isinstance(grants, StoryGrants):
+            raise ValueError(
+                "child-scoped story: assign a therapist to the child via the registry, "
+                "not per-story"
+            )
         updated = StoryGrants(
             owner_id=grants.owner_id,
             assignments={**grants.assignments, principal_id: role},
@@ -122,8 +184,11 @@ class GuardedStore:
         self._store.write_grants(story_id, _grants_to_record(updated))
         return updated
 
-    def grants(self, story_id: str) -> StoryGrants:
-        """Return the story's grants (owner-only view).
+    def grants(self, story_id: str) -> Grants:
+        """Return the story's effective grants (owner-only view).
+
+        For a child-scoped story this is the child's :class:`ChildGrants`; otherwise
+        the story's own :class:`StoryGrants`.
 
         Raises:
             AccessDeniedError: If the caller is not authorized to manage the story.
@@ -256,12 +321,19 @@ class GuardedStore:
 
     # --- internals ----------------------------------------------------------
 
-    def _guard(self, story_id: str, action: Action) -> StoryGrants:
+    def _guard(self, story_id: str, action: Action) -> Grants:
         """Authorize ``action`` on ``story_id``; audit the outcome; return the grants.
 
+        Resolves grants at the right scope: a story whose record carries a ``child_id``
+        is authorized against the **child's** live grants from the registry (ADR-005
+        D3); any other story uses its own per-story :class:`StoryGrants` (ADR-004). A
+        child-scoped story with no registry configured, or an unknown child, fails
+        closed.
+
         Raises:
-            AccessDeniedError: If the story has no recorded owner, or the principal's
-                role does not grant ``action``. Audited as a denial before re-raising.
+            AccessDeniedError: If the story has no grants, its child grants cannot be
+                resolved, or the principal's role does not grant ``action``. Audited as
+                a denial before re-raising.
         """
         record = self._store.read_grants(story_id)
         try:
@@ -272,7 +344,26 @@ class GuardedStore:
                     principal_id=self._principal.principal_id,
                     story_id=story_id,
                 )
-            grants = _grants_from_record(record)
+            child_id = record.get("child_id")
+            if child_id is not None:
+                if self._registry is None:
+                    raise AccessDeniedError(
+                        action.value,
+                        "child-scoped story needs a registry to resolve grants",
+                        principal_id=self._principal.principal_id,
+                        story_id=story_id,
+                    )
+                try:
+                    grants: Grants = self._registry.child_grants(child_id)
+                except PeopleError as exc:
+                    raise AccessDeniedError(
+                        action.value,
+                        "child grants could not be resolved",
+                        principal_id=self._principal.principal_id,
+                        story_id=story_id,
+                    ) from exc
+            else:
+                grants = _grants_from_record(record)
             self._policy.authorize(self._principal, grants, action, story_id=story_id)
         except AccessDeniedError as exc:
             self._record(story_id, action, AccessOutcome.DENIED, reason=exc.reason)
