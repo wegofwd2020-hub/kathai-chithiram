@@ -32,10 +32,12 @@ Parent writes a story  ──▶  generation (wegofwd-llm)  ──▶  structure
   (see *Current state*); the rendering layer is intended to sit behind a stable scene-script
   contract so renderers can evolve without changing the generation step.
 
-## Current state (prototype)
+## Current state (single-operator prototype, full pipeline)
 
-This repository currently holds the **proof-of-concept renderers** and the first hand-built
-social story, *"Silas Shines His Smile"* — an 11-scene tooth-brushing routine:
+The end-to-end pipeline below is **built and green** (story → generation/authoring → validated
+scene script → render, with privacy, safety, and a human-review gate enforced in code). The two
+**reference renderers** and the first hand-built social story, *"Silas Shines His Smile"* (an
+11-scene tooth-brushing routine), remain the render layer:
 
 | File | What it is |
 |---|---|
@@ -75,8 +77,39 @@ the text (that's the LLM path); the name is still stripped and the human-review 
 kc generate story.txt --child-name Silas --offline --out video.mp4 --captions srt
 ```
 
-Writes a playable `video.mp4` (with `video.srt` captions) alongside the sealed store copy. Add
-`--voice 'espeak-ng -w {out} {text}'` for narration or `--sfx ./sounds` for effects.
+Writes a playable `video.mp4` (with `video.srt` captions) alongside the sealed store copy.
+
+#### Or author from a template — no prose, no key
+
+`kc author` builds the story from a structured template (a title + ordered steps) instead of
+free text, and lowers it deterministically to the same scene script. Pass a JSON file, or omit
+it to be prompted interactively (see `docs/STORY_TEMPLATE.md`):
+
+```bash
+kc author story.json --child-name Silas --out video.mp4 --captions srt
+kc author --child-name Silas --out video.mp4        # guided prompts, no file
+```
+
+#### The render options (all in-process, no data leaves the machine)
+
+Every make-a-story command takes the same render flags: `--out` (a playable copy), `--captions
+srt|vtt` (a sidecar), `--voice '<cli-tts> {out} {text}'` (narration), `--character-voice
+ID=<cli-tts>` (a distinct voice per character), `--sfx ./sounds` (a local sound bank). Scenes
+render with content-aware art (setting, backdrop, props, pose/expression) and gentle
+fade/dissolve transitions, all under render-time seizure/flash + gentle-audio safety guards.
+
+#### Commands
+
+| Command | What it does |
+|---|---|
+| `kc intake` | Interactive parent flow: consent → name → story → review-gated draft. |
+| `kc generate <story>` | Non-interactive from a file/stdin (`--offline` = no LLM/key). |
+| `kc author [<template>]` | Author from a template file, or interactively; no LLM/key. |
+| `kc review <id> --show\|--approve\|--reject` | The human review gate (KC-7). |
+| `kc assign <id> --principal … --role reviewer\|therapist` | Grant a role (owner-only). |
+| `kc progress <goal> --policy <file> --story <id>` | Run the M1 engine against a policy (gated; see below). |
+| `kc delete <id>` | Owner-only verifiable hard-delete + crypto-shred (right-to-erasure). |
+| `kc retention-sweep [--dry-run]` | Purge undelivered stories past the retention window (ops). |
 
 ### Production hardening — built and on `main`
 
@@ -110,12 +143,25 @@ the ZDR organization, and secret-manager key management.
   Every clinical parameter (window K, thresholds, trends, per-goal on/off) is collaborator-authored
   **configuration** — the code ships **no thresholds and no defaults**, so it cannot run until a
   policy is supplied.
-- ⏳ **Gated** — enabling the engine (loading a real policy and wiring suggestions to the review
-  plumbing) stays blocked until ADR-002 Decision 7's non-engineering preconditions are met: a
-  professional collaborator authors the `ProgressPolicy` — the signal itself: window K, thresholds,
-  trends (see `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`) — a clinical-language review, and a DPIA
-  progress-profiling touchpoint. The system will only ever *suggest*; a therapist decides, and every
-  accepted premise still re-enters the full safety pipeline.
+- ✅ **Wire-up (built, gated by config)** — the policy loader, the runner (`measure` → `suggest` →
+  record), and `kc progress <goal> --policy <file> --story <id>` are landed. But **no policy ships**:
+  `--policy` is required, and recording a suggestion needs the therapist role (fails closed), so the
+  engine literally does nothing until a reviewed policy exists.
+- ⏳ **Gated** — *using* it in production stays blocked until ADR-002 Decision 7's non-engineering
+  preconditions are met: a professional collaborator authors the `ProgressPolicy` — the signal
+  itself: window K, thresholds, trends (see `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`) — a
+  clinical-language review, and a DPIA progress-profiling touchpoint. The system will only ever
+  *suggest*; a therapist decides, and every accepted premise still re-enters the full safety pipeline.
+
+### Where it's heading — a multi-user program platform (ADR-005, gated)
+
+Today's product is a **single-operator** tool. The next step (`docs/ADR_005_multi_user_program_platform.md`)
+is a platform: a family / child / therapist account model, therapist-run programs, and
+progress reporting to parents. Its **story-template** part (a) is already built (`kc author`,
+above); accounts and **child date of birth** (parts b/c) **materially expand the personal data
+we process and are deliberately gated** on a DPIA revision — assessed in
+`docs/DPIA_ADDENDUM_accounts_and_dob.md` and `docs/RETENTION_ERASURE_DESIGN.md`, awaiting
+DPO/counsel review. No accounts/DOB code ships before that clears.
 
 ## Family
 
