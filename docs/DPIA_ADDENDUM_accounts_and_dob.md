@@ -94,7 +94,7 @@ Ratings are pre-mitigation inherent, then residual after the (proposed) control.
 | # | Risk | Inherent | Proposed mitigation (status) | Residual |
 |---|---|---|---|---|
 | R11 | **Account compromise** exposes a family's children's content | High | Authentication behind the ADR-004 `IdentityProvider` seam; deny-by-default authz (ADR-004) already gates content; credentials never logged (R9 convention extends). **Seam built; auth deployment + credential storage not built.** | Medium until auth is built + reviewed |
-| R12 | **Child DOB** increases re-identification / is over-collected | High | Child-only DOB (ADR-005 D4); least-granular form pending the A3 decision; stored + encrypted at rest (KC-5/KC-10) and swept by erasure (R15). **Minimization decided; granularity open; storage built.** | Low–Medium (depends on A3) |
+| R12 | **Child DOB** increases re-identification / is over-collected | High | Child-only, and now **age band only — full DOB never collected** (A8 ruling; DOB discarded at intake). Stored + encrypted at rest (KC-5/KC-10) and swept by erasure (R15). **Minimization + granularity decided (age band).** | Low |
 | R13 | **Therapist over-access** — a therapist assigned to one child sees another family's data | High | Grants lifted from per-story to **child-scoped** (ADR-005 D3); a therapist sees only children they are assigned to; every access audited (ADR-004). **Model decided; child-scoped grants not built.** | Low if built as specified |
 | R14 | **Child-level progress profiling** (aggregation + reporting) misused or over-rich | High | Extends R8: fixed primitives only, no free text, non-clinical framing (CONTENT_SAFETY §3/§7); the engine stays gated (ADR-002 D7) and reports are read-only, therapist-decided. **Needs the D7.6 DPIA progress touchpoint + copy review.** | Medium until D7.6 done |
 | R15 | **Incomplete erasure** of an account / family / child / program / DOB | High | Erasure must **cascade**: deleting a family/child destroys its stories, programs, progress, DOB, and account records, extending KC-1 hard-delete + KC-10 crypto-shred to the new entities, with a test asserting it. **Not built — a precondition (A6).** | High until built + tested |
@@ -124,6 +124,29 @@ All of the following must land **before** any identity/DOB/account/program code:
 Until all five land, the product stays single-operator (accounts/DOB out of scope), and
 `kc author` / `kc generate` / `kc intake` continue to collect only story + first name.
 
+## A8. Rulings received (owner-authorized, 2026-07-02)
+
+The owner (data controller) has directed the (b)/(c) build and made the core A3/A4/A6
+decisions. Recorded here so the basis is traceable:
+
+- **A3 — DOB granularity → `age band` (least granular).** The child's **full DOB is not
+  collected**; only a coarse **age band** is captured, computed at intake and the DOB
+  discarded. This is the strongest minimization of the three options and drops **R12**'s
+  residual to **Low**. The domain model stores an `AgeBand`, never a date.
+- **A4.1 — Lawful basis for the child's data → parental/guardian consent** (Art. 6(1)(a)
+  + Art. 9(2)(a)), captured per child and withdrawable per child (extends the KC-8
+  consent mechanism).
+- **A6.5 — Authentication → local accounts** behind the existing ADR-004
+  `IdentityProvider` seam (the `LocalIdentityProvider` concrete), credentials never
+  logged (R11).
+
+**Still open / still required before production use** (build proceeds against **synthetic**
+identities only until these land): A4.2 account-data basis, A4.3 controller/processor + a
+**DPA** for external therapist orgs, A4.4 Children's Code scope; A6.2 the re-versioned
+parent notice + consent; A6.3 the cascade-erasure test (`RETENTION_ERASURE_DESIGN.md`, built
+as part of this work); A6.4 the D7.6 progress touchpoint. The rulings above unblock **building**
+(b)/(c); they do not by themselves authorize processing a **real** child's data.
+
 ## A7. Consultation & sign-off
 
 This addendum is enclosed with `docs/DPO_REVIEW_PACKAGE.md` (its "accounts,"
@@ -132,7 +155,7 @@ here) and reviewed alongside `docs/DPIA.md`.
 
 | Role | Name | Decision | Conditions | Date |
 |---|---|---|---|---|
-| Owner | WeGoFwd2020 | Draft prepared for review | — | 2026-07-02 |
+| Owner | WeGoFwd2020 | Directed the build; A3/A4.1/A6.5 ruled (see A8) | Build against synthetic identities; A4.2–4.4 + A6.2–6.4 still required before real-child processing | 2026-07-02 |
 | DPO / counsel | _pending_ | _pending_ | _pending_ | — |
 | Professional collaborator (progress touchpoint) | _pending_ | _pending_ | _pending_ | — |
 
