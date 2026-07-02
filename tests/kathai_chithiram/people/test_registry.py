@@ -88,3 +88,33 @@ def test_only_a_family_member_may_consent():
 def test_has_consent_is_false_until_recorded():
     reg = _seed()
     assert reg.has_consent("kid") is False
+
+
+# ── persistence ───────────────────────────────────────────────────────────────────
+def test_save_load_roundtrip(tmp_path):
+    reg = _seed()
+    reg.assign("kid", "ot", Role.THERAPIST)
+    reg.record_consent(ParentalConsent(
+        consenting_parent_id="mum", child_id="kid", policy_version="v1",
+        granted_at=datetime(2026, 7, 2, tzinfo=timezone.utc),
+    ))
+    path = tmp_path / "people.json"
+    reg.save(path)
+
+    loaded = PeopleRegistry.load(path)
+    assert loaded.child_grants("kid").role_of(Principal("ot")) is Role.THERAPIST
+    assert loaded.child_grants("kid").role_of(Principal("mum")) is Role.FAMILY_OWNER
+    assert loaded.has_consent("kid")
+
+
+def test_load_missing_file_is_an_empty_registry(tmp_path):
+    reg = PeopleRegistry.load(tmp_path / "absent.json")
+    with pytest.raises(PeopleError):
+        reg.get_child("anyone")
+
+
+def test_load_bad_json_raises(tmp_path):
+    path = tmp_path / "bad.json"
+    path.write_text("{not valid json", encoding="utf-8")
+    with pytest.raises(PeopleError, match="not valid JSON"):
+        PeopleRegistry.load(path)

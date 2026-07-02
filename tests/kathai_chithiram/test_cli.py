@@ -1139,3 +1139,52 @@ def test_generate_fails_closed_without_zdr_key(tmp_path: Path, monkeypatch) -> N
     )
     assert code == 2
     assert not (store_root / "test-story").exists()  # nothing generated or stored
+
+
+# --- platform onboarding (ADR-005 b) -------------------------------------------
+
+
+def test_onboarding_flow_persists_and_resolves(tmp_path: Path) -> None:
+    from kathai_chithiram.access import Principal, Role
+    from kathai_chithiram.people import PeopleRegistry
+
+    pf = str(tmp_path / "people.json")
+    assert main(["family-create", "--family-id", "f", "--owner", "mum",
+                 "--member", "dad", "--people-file", pf]) == 0
+    assert main(["child-add", "--child-id", "k", "--family-id", "f",
+                 "--age-band", "6-8", "--people-file", pf]) == 0
+    assert main(["therapist-add", "--therapist-id", "ot", "--people-file", pf]) == 0
+    assert main(["assign-child", "--child-id", "k", "--therapist-id", "ot",
+                 "--people-file", pf]) == 0
+    assert main(["consent", "--child-id", "k", "--parent", "mum",
+                 "--policy-version", "v1", "--people-file", pf]) == 0
+
+    reg = PeopleRegistry.load(Path(pf))
+    assert reg.child_grants("k").role_of(Principal("ot")) is Role.THERAPIST
+    assert reg.has_consent("k")
+
+
+def test_child_add_dob_is_converted_and_never_stored(tmp_path: Path) -> None:
+    pf = str(tmp_path / "people.json")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    assert main(["child-add", "--child-id", "k", "--family-id", "f",
+                 "--dob", "2018-05-01", "--people-file", pf]) == 0
+    data = json.loads(Path(pf).read_text(encoding="utf-8"))
+    assert data["children"][0]["age_band"]  # a band was stored
+    assert "dob" not in json.dumps(data) and "2018" not in json.dumps(data)  # DOB discarded
+
+
+def test_child_add_rejects_an_adult_dob(tmp_path: Path) -> None:
+    pf = str(tmp_path / "people.json")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    assert main(["child-add", "--child-id", "k", "--family-id", "f",
+                 "--dob", "1997-09-03", "--people-file", pf]) == 2
+
+
+def test_consent_rejects_a_non_family_parent(tmp_path: Path) -> None:
+    pf = str(tmp_path / "people.json")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    main(["child-add", "--child-id", "k", "--family-id", "f", "--age-band", "6-8",
+          "--people-file", pf])
+    assert main(["consent", "--child-id", "k", "--parent", "stranger",
+                 "--policy-version", "v1", "--people-file", pf]) == 2
