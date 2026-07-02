@@ -43,6 +43,13 @@ from kathai_chithiram.rendering.sfx import (
     guard_sfx_bed,
 )
 from kathai_chithiram.rendering.sounds import DEFAULT_SFX_GAIN, SoundBankSfxSynthesizer
+from kathai_chithiram.rendering.transitions import (
+    TRANSITION_SECONDS,
+    BlendSource,
+    FrameComposite,
+    composite_plan,
+    transition_frames,
+)
 from kathai_chithiram.rendering.voices import CliTtsSynthesizer
 
 __all__ = [
@@ -63,9 +70,13 @@ __all__ = [
     "SilentNarrationSynthesizer",
     "SilentSfxSynthesizer",
     "SoundBankSfxSynthesizer",
+    "TRANSITION_SECONDS",
+    "BlendSource",
+    "FrameComposite",
     "build_narration_track",
     "build_render_plan",
     "build_sfx_bed",
+    "composite_plan",
     "guard_audio_levels",
     "guard_flashes",
     "guard_frame_rate",
@@ -74,4 +85,5 @@ __all__ = [
     "guard_sfx_bed",
     "mono_wav_bytes",
     "mux_wav_into_mp4",
+    "transition_frames",
 ]

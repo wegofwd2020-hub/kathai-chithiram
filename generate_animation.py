@@ -32,6 +32,10 @@ from kathai_chithiram.rendering.pipeline import (  # noqa: E402
     SceneScriptRenderer,
 )
 from kathai_chithiram.rendering.safety import RenderSafetyReport  # noqa: E402
+from kathai_chithiram.rendering.transitions import (  # noqa: E402
+    BlendSource,
+    composite_plan,
+)
 
 FPS = 24
 W, H = 960, 540  # output resolution
@@ -577,6 +581,16 @@ SCENE_ART: dict[int, Callable[[int, str], np.ndarray]] = {
 }
 
 
+def _blend(frame: np.ndarray, other: np.ndarray, weight: float) -> np.ndarray:
+    """Alpha-composite ``frame`` over ``other``: ``frame*weight + other*(1-weight)``.
+
+    Returns a fresh ``uint8`` RGB frame; ``weight`` is the scene content's share in
+    ``[0, 1]`` (the transition compositing plan's per-frame weight).
+    """
+    mixed = frame.astype(np.float32) * weight + other.astype(np.float32) * (1.0 - weight)
+    return mixed.round().clip(0, 255).astype(np.uint8)
+
+
 class MatplotlibStickFigureRenderer(SceneScriptRenderer):
     """Reference v1 renderer: silent stick-figure animation via matplotlib."""
 
@@ -600,10 +614,11 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
             RuntimeError: If an mp4 path is requested but ``imageio`` (with the
                 ffmpeg plugin) is unavailable.
         """
+        frames = self._composited_frames(plan)
         writer = self._open_writer(draft_path, plan.fps)
         luminances: list[float] = []
         try:
-            for frame in self._iter_frames(plan):
+            for frame in frames:
                 luminances.append(float(frame.mean()) / 255.0)
                 if writer is not None:
                     writer.append_data(frame)
@@ -618,14 +633,66 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
             sfx_levels=[],
         )
 
-    def _iter_frames(self, plan: RenderPlan):
-        """Yield every output frame: a 1-second title card, then the scenes."""
-        for f in range(plan.fps):
-            yield scene_title(f, plan.title)
-        for scene in plan.scenes:
-            art = SCENE_ART.get(scene.index, scene_generic)
-            for f in range(scene.frame_count):
-                yield art(f, scene.caption)
+    def _segments(self, plan: RenderPlan) -> list[list[np.ndarray]]:
+        """Render each unit to its own frame list: a 1-s title card, then scenes.
+
+        Kept as separate segments (rather than one flat stream) so scene
+        transitions can blend across the boundaries between them.
+        """
+        title = [scene_title(f, plan.title) for f in range(plan.fps)]
+        scenes = [
+            [SCENE_ART.get(scene.index, scene_generic)(f, scene.caption)
+             for f in range(scene.frame_count)]
+            for scene in plan.scenes
+        ]
+        return [title, *scenes]
+
+    def _composited_frames(self, plan: RenderPlan) -> list[np.ndarray]:
+        """Apply each scene's declared transitions, then flatten to a frame list.
+
+        The title card carries no transition; segment ``i + 1`` is ``plan.scenes[i]``.
+        A fade blends toward black; a dissolve blends toward the neighbouring
+        scene's *original* boundary frame (snapshotted before compositing so an
+        A→B dissolve and B→A dissolve do not feed on each other's output). Frame
+        counts are unchanged, so the audio timeline and safety report stay in sync.
+        """
+        segments = self._segments(plan)
+        # Snapshot the pre-transition boundary frames each segment exposes.
+        first_of = [seg[0] for seg in segments]
+        last_of = [seg[-1] for seg in segments]
+
+        for si, scene in enumerate(plan.scenes, start=1):
+            seg = segments[si]
+            comp_plan = composite_plan(
+                len(seg), plan.fps, scene.transition_in, scene.transition_out
+            )
+            prev_boundary = last_of[si - 1]
+            next_boundary = first_of[si + 1] if si + 1 < len(segments) else None
+            for i, comp in enumerate(comp_plan):
+                if comp.source is BlendSource.KEEP:
+                    continue
+                other = self._blend_target(comp.source, seg[i], prev_boundary, next_boundary)
+                seg[i] = _blend(seg[i], other, comp.weight)
+
+        return [frame for seg in segments for frame in seg]
+
+    @staticmethod
+    def _blend_target(
+        source: BlendSource,
+        frame: np.ndarray,
+        prev_boundary: np.ndarray,
+        next_boundary: np.ndarray | None,
+    ) -> np.ndarray:
+        """Resolve what a frame blends with: black, or a neighbour boundary frame.
+
+        A dissolve with no neighbour on that side (the first scene's ``prev`` after
+        the title always exists; the last scene's ``next``) falls back to black.
+        """
+        if source is BlendSource.PREV:
+            return prev_boundary
+        if source is BlendSource.NEXT and next_boundary is not None:
+            return next_boundary
+        return np.zeros_like(frame)  # BLACK, or a dissolve past the last scene
 
     @staticmethod
     def _open_writer(draft_path: str | None, fps: int):
