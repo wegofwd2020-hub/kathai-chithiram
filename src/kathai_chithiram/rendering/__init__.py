@@ -36,6 +36,13 @@ from kathai_chithiram.rendering.safety import (
     guard_frame_rate,
     guard_render,
 )
+from kathai_chithiram.rendering.scene_art_hints import (
+    Background,
+    Expression,
+    Gesture,
+    SceneArtHint,
+    art_hint_for,
+)
 from kathai_chithiram.rendering.sfx import (
     SfxBed,
     SfxSynthesizer,
@@ -72,9 +79,14 @@ __all__ = [
     "SilentSfxSynthesizer",
     "SoundBankSfxSynthesizer",
     "TRANSITION_SECONDS",
+    "Background",
     "BlendSource",
     "Cue",
+    "Expression",
     "FrameComposite",
+    "Gesture",
+    "SceneArtHint",
+    "art_hint_for",
     "build_captions",
     "build_narration_track",
     "build_render_plan",

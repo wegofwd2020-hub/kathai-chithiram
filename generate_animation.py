@@ -32,6 +32,12 @@ from kathai_chithiram.rendering.pipeline import (  # noqa: E402
     SceneScriptRenderer,
 )
 from kathai_chithiram.rendering.safety import RenderSafetyReport  # noqa: E402
+from kathai_chithiram.rendering.scene_art_hints import (  # noqa: E402
+    Background,
+    Expression,
+    Gesture,
+    art_hint_for,
+)
 from kathai_chithiram.rendering.transitions import (  # noqa: E402
     BlendSource,
     composite_plan,
@@ -581,6 +587,102 @@ SCENE_ART: dict[int, Callable[[int, str], np.ndarray]] = {
 }
 
 
+# ── content-driven scene art (for arbitrary stories) ─────────────────────────
+# The bespoke SCENE_ART above is hand-authored for the demo. Any other story is
+# drawn from an art hint (background + expression + gesture) derived from the
+# scene's setting and caption, so it gets a calm, roughly-appropriate scene rather
+# than the demo's frames or a bare caption card.
+
+
+def _bg_calm(ax, _frame_idx):
+    """A soft, quiet gradient backdrop — the neutral default."""
+    for i in range(20):
+        ax.add_patch(
+            patches.Rectangle((0, i / 20), 1, 1 / 20, color=LIGHT_BLUE,
+                              alpha=0.03 * (i / 20), zorder=0)
+        )
+
+
+def _bg_bathroom(ax, _frame_idx):
+    """Tiled wall + sink."""
+    _tiled_wall(ax)
+    draw_sink(ax, 0.5, 0.05)
+
+
+def _bg_bedroom(ax, _frame_idx):
+    """A calm night bedroom: floor, bed, and a window with a moon."""
+    ax.add_patch(patches.Rectangle((0, 0), 1, 0.22, color="#E6DFD2", zorder=0))  # floor
+    ax.add_patch(
+        patches.FancyBboxPatch((0.55, 0.09), 0.4, 0.15, boxstyle="round,pad=0.01",
+                               facecolor=LIGHT_BLUE, edgecolor=GREY, lw=1, alpha=0.7, zorder=1)
+    )  # bed
+    ax.add_patch(patches.Rectangle((0.60, 0.19), 0.11, 0.06, color=WHITE, zorder=2))  # pillow
+    ax.add_patch(
+        patches.Rectangle((0.08, 0.55), 0.22, 0.28, facecolor="#2A3F57",
+                          edgecolor=GREY, lw=2, zorder=1)
+    )  # night window
+    ax.add_patch(plt.Circle((0.20, 0.73), 0.035, color=YELLOW, alpha=0.85, zorder=2))  # moon
+
+
+def _bg_kitchen(ax, _frame_idx):
+    """A simple kitchen: floor, counter, and a cupboard."""
+    ax.add_patch(patches.Rectangle((0, 0), 1, 0.18, color="#E6DFD2", zorder=0))  # floor
+    ax.add_patch(patches.Rectangle((0, 0.18), 1, 0.05, color="#C9A66B", zorder=1))  # counter
+    ax.add_patch(
+        patches.Rectangle((0.10, 0.55), 0.20, 0.20, facecolor=LIGHT_BLUE,
+                          edgecolor=GREY, lw=2, alpha=0.55, zorder=1)
+    )  # cupboard
+
+
+def _bg_outdoors(ax, _frame_idx):
+    """A calm outdoor scene: sky, grass, sun, and a tree."""
+    for i in range(18):
+        ax.add_patch(
+            patches.Rectangle((0, 0.3 + i / 18 * 0.7), 1, 0.04, color=LIGHT_BLUE,
+                              alpha=max(0.0, 0.45 - 0.02 * i), zorder=0)
+        )  # sky gradient
+    ax.add_patch(patches.Rectangle((0, 0), 1, 0.30, color=GREEN, alpha=0.45, zorder=1))  # grass
+    ax.add_patch(plt.Circle((0.83, 0.82), 0.065, color=YELLOW, alpha=0.9, zorder=1))  # sun
+    ax.add_patch(patches.Rectangle((0.14, 0.30), 0.03, 0.16, color="#8B5E3C", zorder=2))  # trunk
+    ax.add_patch(plt.Circle((0.155, 0.50), 0.085, color=GREEN, alpha=0.8, zorder=2))  # canopy
+
+
+_BACKGROUND_DRAW = {
+    Background.CALM: _bg_calm,
+    Background.BATHROOM: _bg_bathroom,
+    Background.BEDROOM: _bg_bedroom,
+    Background.KITCHEN: _bg_kitchen,
+    Background.OUTDOORS: _bg_outdoors,
+}
+
+
+def scene_from_content(setting: str, caption: str, frame_idx: int) -> np.ndarray:
+    """Draw a scene from its setting + caption (content-driven; for any story)."""
+    hint = art_hint_for(setting, caption)
+    fig, ax = new_fig()
+    _BACKGROUND_DRAW[hint.background](ax, frame_idx)
+    bob = 0.30 + 0.01 * math.sin(frame_idx * 0.35)  # gentle breathing
+    smile = hint.expression in (Expression.SMILE, Expression.CALM)
+    eyes_closed = hint.expression is Expression.SLEEPY
+    arm_r_angle = -35 if hint.gesture is Gesture.WAVE else -120
+    draw_stick_figure(
+        ax, 0.50, bob, scale=1.0, smile=smile, eyes_closed=eyes_closed, arm_r_angle=arm_r_angle
+    )
+    text_box(ax, caption)
+    img = fig_to_rgb(fig)
+    plt.close(fig)
+    return img
+
+
+def _is_demo_story(plan: RenderPlan) -> bool:
+    """Whether this is the hand-authored demo (keeps its bespoke per-scene art).
+
+    Every other story is drawn content-driven from setting + caption, so an
+    arbitrary scene never borrows the demo's brushing frames.
+    """
+    return "Shines His Smile" in plan.title
+
+
 def _blend(frame: np.ndarray, other: np.ndarray, weight: float) -> np.ndarray:
     """Alpha-composite ``frame`` over ``other``: ``frame*weight + other*(1-weight)``.
 
@@ -640,12 +742,19 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
         transitions can blend across the boundaries between them.
         """
         title = [scene_title(f, plan.title) for f in range(plan.fps)]
+        demo = _is_demo_story(plan)
         scenes = [
-            [SCENE_ART.get(scene.index, scene_generic)(f, scene.caption)
-             for f in range(scene.frame_count)]
+            [self._scene_frame(scene, f, demo=demo) for f in range(scene.frame_count)]
             for scene in plan.scenes
         ]
         return [title, *scenes]
+
+    @staticmethod
+    def _scene_frame(scene, f: int, *, demo: bool) -> np.ndarray:
+        """One scene frame: the demo's bespoke art, else content-driven art."""
+        if demo and scene.index in SCENE_ART:
+            return SCENE_ART[scene.index](f, scene.caption)
+        return scene_from_content(scene.setting, scene.caption, f)
 
     def _composited_frames(self, plan: RenderPlan) -> list[np.ndarray]:
         """Apply each scene's declared transitions, then flatten to a frame list.
