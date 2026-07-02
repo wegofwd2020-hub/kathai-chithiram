@@ -17,7 +17,7 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **558
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **565
 tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
 template below). The matplotlib reference renderer (`generate_animation.py`)
 carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
@@ -25,7 +25,7 @@ path (a heavier bpy lift, lower value than the default matplotlib flow).
 
 ## TL;DR
 
-The **product pipeline is built and green** (558 tests): a parent's story becomes a
+The **product pipeline is built and green** (565 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -47,9 +47,10 @@ provisioning.
   The right-to-erasure the DPIA/PRIVACY reference is now user-invokable, not just a function.
 - **Three ways to make a story** — `kc intake` (interactive, consented), `kc generate`
   (free text; `--offline` = no LLM/key), and **`kc author`** (a structured story template
-  **from a file or via guided interactive prompts** → scene script, deterministic, no key —
-  ADR-005 part a; `docs/STORY_TEMPLATE.md`). All three strip the child's name to the token
-  (KC-2) and produce a review-gated draft.
+  **from a file or via guided interactive prompts**, with `--dry-run` preview and shipped
+  examples in `docs/examples/` → scene script, deterministic, no key — ADR-005 part a;
+  `docs/STORY_TEMPLATE.md`). All three strip the child's name to the token (KC-2) and produce
+  a review-gated draft.
 - **Production hardening (KC-1…KC-9)** — verifiable hard-delete (KC-1), identifier
   minimization before the LLM (KC-2), scene-script validation (KC-3), render-time seizure/
   flash safety (KC-4), **encryption at rest** (KC-5), **dedicated ZDR/no-training
@@ -74,9 +75,10 @@ provisioning.
   - *Offline generation* — `kc generate --offline` / `kc intake --offline` turn a story into
     a video with **no LLM/API key** (deterministic local segmentation): sentences grouped
     into readable scenes, name still stripped (KC-2), contract-validated, review-gated.
-  - *Content-aware art* — each scene infers its setting, backdrop, props, character
-    pose/expression, and reading-paced duration from its content; the hand-authored demo
-    keeps its bespoke frames. (Reference renderer: `generate_animation.py`.)
+  - *Content-aware art* — each scene infers its setting (bathroom / bedroom / kitchen /
+    classroom / outdoors / calm), backdrop, props (brushing / mealtime / play / school /
+    dressing), character pose/expression, and reading-paced duration from its content; the
+    hand-authored demo keeps its bespoke frames. (Reference renderer: `generate_animation.py`.)
 - **Decision-ready artifacts for the external blockers** — `docs/R10_DEPLOYMENT_BOUNDARY.md`
   (the boundary + acceptance checklist that drops R10 → Low), `docs/M1_OUTREACH_SEND_READY.md`
   (send-ready collaborator email, three fill-ins, *not sent*), and `docs/DPO_REVIEW_PACKAGE.md`
