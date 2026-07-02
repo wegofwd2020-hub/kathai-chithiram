@@ -108,6 +108,8 @@ fade/dissolve transitions, all under render-time seizure/flash + gentle-audio sa
 | `kc review <id> --show\|--approve\|--reject` | The human review gate (KC-7). |
 | `kc assign <id> --principal … --role reviewer\|therapist` | Grant a role (owner-only). |
 | `kc progress <goal> --policy <file> --story <id>` | Run the M1 engine against a policy (gated; see below). |
+| `kc suggestions <id>` | List a story's open premise suggestions (therapist). |
+| `kc decide <id> <sug> --accept\|--edit\|--dismiss` | Therapist records a decision on a suggestion. |
 | `kc delete <id>` | Owner-only verifiable hard-delete + crypto-shred (right-to-erasure). |
 | `kc retention-sweep [--dry-run]` | Purge undelivered stories past the retention window (ops). |
 
