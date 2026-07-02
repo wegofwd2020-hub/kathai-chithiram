@@ -38,7 +38,7 @@ control:
 
 | Field | What it does | Example |
 |---|---|---|
-| `setting` | The backdrop | `"a bathroom"`, `"a bedroom"`, `"a kitchen"`, `"outdoors"` |
+| `setting` | The backdrop | `"a bathroom"`, `"a bedroom"`, `"a kitchen"`, `"a classroom"`, `"outdoors"` |
 | `props` | Small objects drawn in the scene | `["toothbrush", "cup"]` |
 | `expression` | The child's face | `"happy"`, `"calm"`, `"sleepy"`, `"worried"` |
 | `pose` | The child's pose | `"standing"`, `"waving"` |

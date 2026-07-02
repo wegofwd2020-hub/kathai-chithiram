@@ -147,6 +147,23 @@ def test_render_with_props_passes_the_safety_guard():
     renderer.render(script, output_path=None)  # no raise = guards pass with props
 
 
+def test_classroom_and_new_props_render_and_pass_guard():
+    renderer = _renderer()
+    from generate_animation import scene_from_content
+
+    caption = "CHILD reads at the desk."
+    with_props = scene_from_content(
+        "a classroom", caption, ("apple", "backpack"), "standing", "calm", 0
+    )
+    without = scene_from_content("a classroom", caption, (), "standing", "calm", 0)
+    assert not np.array_equal(with_props, without)  # the new props were drawn
+
+    script = _arbitrary_script()
+    script["scenes"][0]["setting"] = "a classroom"
+    script["scenes"][0]["props"] = ["spoon", "shoes"]
+    renderer.render(script, output_path=None)  # classroom backdrop + props pass the guards
+
+
 def test_demo_story_still_uses_its_bespoke_art():
     from generate_animation import SCENE_ART, _is_demo_story
 

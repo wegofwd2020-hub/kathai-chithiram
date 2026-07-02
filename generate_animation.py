@@ -648,11 +648,27 @@ def _bg_outdoors(ax, _frame_idx):
     ax.add_patch(plt.Circle((0.155, 0.50), 0.085, color=GREEN, alpha=0.8, zorder=2))  # canopy
 
 
+def _bg_classroom(ax, _frame_idx):
+    """A calm classroom: floor, a board on the wall, and a small desk."""
+    ax.add_patch(patches.Rectangle((0, 0), 1, 0.18, color="#E6DFD2", zorder=0))  # floor
+    ax.add_patch(
+        patches.Rectangle((0.14, 0.52), 0.48, 0.30, facecolor="#3E6B57",
+                          edgecolor="#8B5E3C", lw=3, zorder=1)
+    )  # soft-green board
+    ax.add_patch(
+        patches.Rectangle((0.68, 0.10), 0.26, 0.12, facecolor="#C9A66B",
+                          edgecolor=DARK, lw=1.5, zorder=1)
+    )  # desk top
+    for leg_x in (0.70, 0.90):
+        ax.add_patch(patches.Rectangle((leg_x, 0.0), 0.02, 0.10, color="#8B5E3C", zorder=1))
+
+
 _BACKGROUND_DRAW = {
     Background.CALM: _bg_calm,
     Background.BATHROOM: _bg_bathroom,
     Background.BEDROOM: _bg_bedroom,
     Background.KITCHEN: _bg_kitchen,
+    Background.CLASSROOM: _bg_classroom,
     Background.OUTDOORS: _bg_outdoors,
 }
 
@@ -698,6 +714,33 @@ def _prop_plate(ax, x, y):
     ax.add_patch(plt.Circle((x, y), 0.05, fill=False, color=GREY, lw=2, zorder=7))
 
 
+def _prop_apple(ax, x, y):
+    ax.add_patch(plt.Circle((x, y), 0.04, color="#D9534F", zorder=6))
+    ax.add_patch(plt.Circle((x, y), 0.04, fill=False, color=DARK, lw=1.2, zorder=7))
+    ax.plot([x, x], [y + 0.035, y + 0.06], color="#6B4A2B", lw=2, zorder=7)  # stem
+    ax.add_patch(plt.Circle((x + 0.02, y + 0.055), 0.012, color=GREEN, zorder=7))  # leaf
+
+
+def _prop_backpack(ax, x, y):
+    ax.add_patch(patches.FancyBboxPatch((x - 0.04, y - 0.05), 0.08, 0.10,
+                 boxstyle="round,pad=0.01", facecolor=BLUE, edgecolor=DARK, lw=1.5, zorder=6))
+    ax.add_patch(patches.FancyBboxPatch((x - 0.025, y - 0.03), 0.05, 0.05,
+                 boxstyle="round,pad=0.005", facecolor=LIGHT_BLUE, edgecolor=DARK, lw=1, zorder=7))
+
+
+def _prop_spoon(ax, x, y):
+    ax.plot([x, x], [y - 0.05, y + 0.02], color=GREY, lw=3, zorder=6, solid_capstyle="round")
+    ax.add_patch(plt.Circle((x, y + 0.035), 0.02, color=GREY, zorder=6))  # bowl
+
+
+def _prop_shoes(ax, x, y):
+    for dx in (-0.03, 0.03):
+        ax.add_patch(patches.FancyBboxPatch((x + dx - 0.025, y - 0.02), 0.05, 0.03,
+                     boxstyle="round,pad=0.005", facecolor=DARK, edgecolor=DARK, lw=1, zorder=6))
+        ax.add_patch(patches.Rectangle((x + dx - 0.02, y + 0.006), 0.04, 0.012, color=WHITE,
+                     zorder=7))
+
+
 # Canonical prop keyword → draw(ax, x, y). A scene prop string is matched by
 # substring, so "a red ball" → ball. Unrecognized props are silently skipped.
 _PROP_DRAW = {
@@ -714,6 +757,12 @@ _PROP_DRAW = {
     "doll": _prop_toy,
     "plate": _prop_plate,
     "food": _prop_plate,
+    "apple": _prop_apple,
+    "fruit": _prop_apple,
+    "backpack": _prop_backpack,
+    "bag": _prop_backpack,
+    "spoon": _prop_spoon,
+    "shoe": _prop_shoes,
 }
 
 #: At most this many props are drawn per scene, so the frame stays calm/uncluttered.
