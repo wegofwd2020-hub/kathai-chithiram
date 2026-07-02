@@ -43,6 +43,7 @@ _SETTING_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("bath", "sink", "toilet", "toothbrush", "teeth", "brush"), "a bathroom"),
     (("bed", "sleep", "asleep", "nap", "pillow", "bedtime", "night"), "a bedroom"),
     (("kitchen", "cook", "meal", "breakfast", "dinner", "lunch", "eat"), "a kitchen"),
+    (("classroom", "school", "teacher", "lesson", "desk"), "a classroom"),
     (("park", "garden", "outside", "outdoor", "playground", "tree", "beach", "yard"), "outdoors"),
 )
 
@@ -56,6 +57,10 @@ _PROP_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("block",), "blocks"),
     (("teddy", "bear", "doll", " toy", "toys"), "toy"),
     (("cup", "juice", "milk", "bottle"), "cup"),
+    (("apple", "fruit"), "apple"),
+    (("backpack", "school bag", "rucksack"), "backpack"),
+    (("spoon",), "spoon"),
+    (("shoe", "sneaker", "trainer"), "shoes"),
     (("plate", "lunch", "dinner", "breakfast", "meal", "food"), "plate"),
 )
 _MAX_INFERRED_PROPS = 2

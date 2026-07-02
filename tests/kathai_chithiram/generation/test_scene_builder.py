@@ -22,6 +22,22 @@ def test_infers_setting_props_expression_from_the_caption():
     assert 2 <= scene["duration_s"] <= 8
 
 
+def test_infers_the_classroom_setting():
+    from kathai_chithiram.generation.scene_builder import _infer_setting
+
+    assert _infer_setting("CHILD sits at the desk in the classroom.") == "a classroom"
+    assert _infer_setting("CHILD walks to school.") == "a classroom"
+
+
+def test_infers_the_new_props():
+    from kathai_chithiram.generation.scene_builder import _infer_props
+
+    assert "apple" in _infer_props("CHILD eats an apple.")
+    assert "backpack" in _infer_props("CHILD packs the backpack.")
+    assert "spoon" in _infer_props("CHILD holds the spoon.")
+    assert "shoes" in _infer_props("CHILD puts on their shoes.")
+
+
 def test_explicit_overrides_win_over_inference():
     scene = build_scene_dict(
         1,

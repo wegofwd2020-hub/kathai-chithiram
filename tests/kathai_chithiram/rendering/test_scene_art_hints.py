@@ -20,6 +20,8 @@ from kathai_chithiram.rendering.scene_art_hints import (
         ("bathroom", Background.BATHROOM),
         ("the bedroom", Background.BEDROOM),
         ("kitchen", Background.KITCHEN),
+        ("the classroom", Background.CLASSROOM),
+        ("at school", Background.CLASSROOM),
         ("the park", Background.OUTDOORS),
         ("a calm, quiet place", Background.CALM),  # the offline generator's default setting
         ("somewhere unknown", Background.CALM),

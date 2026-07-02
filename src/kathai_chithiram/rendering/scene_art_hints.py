@@ -36,6 +36,7 @@ class Background(str, Enum):
     BATHROOM = "bathroom"
     BEDROOM = "bedroom"
     KITCHEN = "kitchen"
+    CLASSROOM = "classroom"
     OUTDOORS = "outdoors"
     CALM = "calm"  # the neutral fallback: a soft, quiet backdrop
 
@@ -87,6 +88,11 @@ _BACKGROUND_KEYWORDS: tuple[tuple[str, Background], ...] = (
     ("meal", Background.KITCHEN),
     ("breakfast", Background.KITCHEN),
     ("dinner", Background.KITCHEN),
+    ("classroom", Background.CLASSROOM),
+    ("school", Background.CLASSROOM),
+    ("teacher", Background.CLASSROOM),
+    ("lesson", Background.CLASSROOM),
+    ("desk", Background.CLASSROOM),
     ("park", Background.OUTDOORS),
     ("garden", Background.OUTDOORS),
     ("outside", Background.OUTDOORS),
