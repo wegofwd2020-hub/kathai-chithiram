@@ -23,7 +23,14 @@ from kathai_chithiram.access.policy import ChildGrants
 from kathai_chithiram.access.principal import Role
 from kathai_chithiram.errors import PeopleError
 from kathai_chithiram.people.grants import child_grants
-from kathai_chithiram.people.models import AgeBand, Child, Family, ParentalConsent, Therapist
+from kathai_chithiram.people.models import (
+    AgeBand,
+    Child,
+    Family,
+    ParentalConsent,
+    Program,
+    Therapist,
+)
 
 __all__ = ["PeopleRegistry"]
 
@@ -42,6 +49,7 @@ class PeopleRegistry:
         self._therapists: dict[str, Therapist] = {}
         self._assignments: dict[str, dict[str, Role]] = {}
         self._consents: dict[str, list[ParentalConsent]] = {}
+        self._programs: dict[str, Program] = {}
 
     # ── registration ─────────────────────────────────────────────────────────────
     def add_family(self, family: Family) -> None:
@@ -143,6 +151,34 @@ class PeopleRegistry:
         family = self._families[child.family_id]
         return child_grants(child, family, assignments=self._assignments.get(child_id, {}))
 
+    # ── programs (ADR-005 D5) ──────────────────────────────────────────────────────
+    def add_program(self, program: Program) -> None:
+        """Register a therapist's program for a child (child-scoped, ADR-005 D5).
+
+        Raises:
+            PeopleError: If the program id is taken, the child is unknown, or the
+                owning therapist is not assigned to the child (only an assigned
+                therapist may run a program for that child).
+        """
+        if program.program_id in self._programs:
+            raise PeopleError(f"program {program.program_id!r} already exists")
+        self.get_child(program.child_id)  # fail closed if unknown
+        assigned = self._assignments.get(program.child_id, {}).get(program.therapist_id)
+        if assigned is not Role.THERAPIST:
+            raise PeopleError("program therapist must be assigned to the child")
+        self._programs[program.program_id] = program
+
+    def get_program(self, program_id: str) -> Program:
+        """Return a registered program or raise :class:`PeopleError`."""
+        try:
+            return self._programs[program_id]
+        except KeyError:
+            raise PeopleError(f"unknown program {program_id!r}") from None
+
+    def programs_for_child(self, child_id: str) -> list[str]:
+        """Return the ids of every program for a child (empty if none)."""
+        return [p.program_id for p in self._programs.values() if p.child_id == child_id]
+
     # ── removal (erasure cascade; RETENTION_ERASURE_DESIGN §4) ─────────────────────
     def children_of(self, family_id: str) -> list[str]:
         """Return the ids of every child in a family (empty if none/unknown)."""
@@ -159,6 +195,8 @@ class PeopleRegistry:
         del self._children[child_id]
         self._assignments.pop(child_id, None)
         self._consents.pop(child_id, None)
+        for program_id in self.programs_for_child(child_id):
+            del self._programs[program_id]
 
     def remove_family(self, family_id: str) -> None:
         """Remove a family record. Its children must already be removed (no orphans).
@@ -218,6 +256,12 @@ class PeopleRegistry:
                 ]
                 for child_id, consents in self._consents.items()
             },
+            "programs": [
+                {"program_id": p.program_id, "child_id": p.child_id,
+                 "therapist_id": p.therapist_id, "goal_ids": sorted(p.goal_ids),
+                 "created_at": p.created_at.isoformat()}
+                for p in self._programs.values()
+            ],
         }
 
     def save(self, path: Path) -> None:
@@ -272,6 +316,12 @@ class PeopleRegistry:
                         policy_version=c["policy_version"],
                         granted_at=datetime.fromisoformat(c["granted_at"]),
                     ))
+            for p in data.get("programs", []):
+                reg.add_program(Program(
+                    program_id=p["program_id"], child_id=p["child_id"],
+                    therapist_id=p["therapist_id"], goal_ids=frozenset(p["goal_ids"]),
+                    created_at=datetime.fromisoformat(p["created_at"]),
+                ))
         except (KeyError, ValueError) as exc:
             raise PeopleError(f"malformed registry record: {exc}") from exc
         return reg

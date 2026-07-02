@@ -22,7 +22,15 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
 
-__all__ = ["AgeBand", "Child", "Family", "ParentalConsent", "Parent", "Therapist"]
+__all__ = [
+    "AgeBand",
+    "Child",
+    "Family",
+    "ParentalConsent",
+    "Parent",
+    "Program",
+    "Therapist",
+]
 
 #: Opaque-id charset — matches :class:`Principal` and the store's id rules, so no name
 #: or free text can smuggle into an identity.
@@ -190,6 +198,48 @@ class Therapist:
 
     def __post_init__(self) -> None:
         _require_id(self.principal_id, "principal_id")
+
+
+@dataclass(frozen=True)
+class Program:
+    """A therapist's plan for a child — child-scoped, tracked via M1 (ADR-005 D5).
+
+    A program is the therapist's set of **goals** for a child; the content and tracking
+    (feedback → measure → suggest, still gated on the ADR-002 D7 policy) hang off it. It
+    inherits the child's access scope (family + assigned therapist), so it carries no
+    grants of its own. No free text and no name — only opaque ids — so a parent-facing
+    report over it stays a non-clinical, engagement-oriented read model
+    (CONTENT_SAFETY §3/§7), never a clinical score.
+
+    Args:
+        program_id: Opaque id for the program.
+        child_id: The child the program is for (child-scoped).
+        therapist_id: The therapist who owns the program (must be assigned to the
+            child, enforced by the registry).
+        goal_ids: The goals the program tracks (at least one; opaque ids).
+        created_at: When the program was established (timezone-aware).
+
+    Raises:
+        ValueError: If an id is empty/unsafe, ``goal_ids`` is empty, or ``created_at``
+            is naive.
+    """
+
+    program_id: str
+    child_id: str
+    therapist_id: str
+    goal_ids: frozenset[str]
+    created_at: datetime
+
+    def __post_init__(self) -> None:
+        _require_id(self.program_id, "program_id")
+        _require_id(self.child_id, "child_id")
+        _require_id(self.therapist_id, "therapist_id")
+        if not self.goal_ids:
+            raise ValueError("a program must track at least one goal")
+        for goal_id in self.goal_ids:
+            _require_id(goal_id, "goal_ids entry")
+        if self.created_at.tzinfo is None:
+            raise ValueError("created_at must be timezone-aware")
 
 
 @dataclass(frozen=True)
