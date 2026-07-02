@@ -7,6 +7,7 @@ import pytest
 from kathai_chithiram.access import (
     AccessPolicy,
     Action,
+    ChildGrants,
     Principal,
     Role,
     StoryGrants,
@@ -115,3 +116,44 @@ def test_access_denied_error_message_carries_no_content() -> None:
     err = AccessDeniedError("read_content", "no role", principal_id="p1", story_id="s1")
     text = str(err)
     assert "p1" in text and "s1" in text and "read_content" in text
+
+
+# ── child-scoped grants (ADR-005 D3) ──────────────────────────────────────────────
+def _child_grants() -> ChildGrants:
+    return ChildGrants(
+        child_id="child-1",
+        family_member_ids=frozenset({"mum-1", "dad-1"}),
+        assignments={_THERAPIST.principal_id: Role.THERAPIST},
+    )
+
+
+def test_child_grants_resolve_roles() -> None:
+    grants = _child_grants()
+    assert grants.role_of(Principal("mum-1")) is Role.FAMILY_OWNER  # every parent owns
+    assert grants.role_of(Principal("dad-1")) is Role.FAMILY_OWNER
+    assert grants.role_of(_THERAPIST) is Role.THERAPIST
+    assert grants.role_of(_STRANGER) is None
+
+
+def test_policy_works_on_child_grants() -> None:
+    policy, grants = AccessPolicy(), _child_grants()
+    # A parent owns the child's content; a therapist assigned to the child may read it.
+    assert policy.is_allowed(Principal("dad-1"), grants, Action.MANAGE_STORY)
+    assert policy.is_allowed(_THERAPIST, grants, Action.READ_FEEDBACK)
+    assert not policy.is_allowed(_THERAPIST, grants, Action.WRITE_CONTENT)
+    with pytest.raises(AccessDeniedError):
+        policy.authorize(_STRANGER, grants, Action.READ_CONTENT, story_id="child-1")
+
+
+def test_child_grants_reject_a_member_who_is_also_an_assignee() -> None:
+    with pytest.raises(ValueError, match="must not also be an assignee"):
+        ChildGrants(
+            child_id="child-1",
+            family_member_ids=frozenset({"mum-1"}),
+            assignments={"mum-1": Role.THERAPIST},
+        )
+
+
+def test_child_grants_need_a_family_member() -> None:
+    with pytest.raises(ValueError, match="at least one family member"):
+        ChildGrants(child_id="child-1", family_member_ids=frozenset(), assignments={})
