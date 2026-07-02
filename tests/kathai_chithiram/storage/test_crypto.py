@@ -8,10 +8,14 @@ import pytest
 
 from kathai_chithiram.errors import DecryptionError, EncryptionKeyError
 from kathai_chithiram.storage.crypto import (
+    DATA_KEY_BYTES,
     STORAGE_KEY_ENV,
     AesGcmCipher,
+    generate_data_key,
     generate_key,
     load_cipher_from_env,
+    unwrap_data_key,
+    wrap_data_key,
 )
 
 
@@ -80,3 +84,46 @@ def test_load_cipher_rejects_wrong_length_key() -> None:
     short = base64.urlsafe_b64encode(b"0123456789").decode("ascii")  # 10 bytes
     with pytest.raises(EncryptionKeyError, match="32 bytes"):
         load_cipher_from_env({STORAGE_KEY_ENV: short})
+
+
+# --- Envelope encryption helpers (KC-10) -------------------------------------
+
+
+def test_generate_data_key_is_32_random_bytes() -> None:
+    key = generate_data_key()
+    assert isinstance(key, bytes)
+    assert len(key) == DATA_KEY_BYTES == 32
+    # Fresh per call.
+    assert generate_data_key() != key
+
+
+def test_wrap_unwrap_roundtrip_yields_working_per_story_cipher() -> None:
+    master = _cipher()
+    data_key = generate_data_key()
+    wrapped = wrap_data_key(master, data_key)
+    # The wrapped key is ciphertext — the raw key is not present in it.
+    assert data_key not in wrapped
+
+    per_story = unwrap_data_key(master, wrapped, artifact="_data_key.wrapped")
+    # It is the same key: it decrypts what that key encrypted.
+    token = AesGcmCipher(data_key).encrypt(b"body")
+    assert per_story.decrypt(token, artifact="body") == b"body"
+
+
+def test_wrap_rejects_wrong_length_data_key() -> None:
+    with pytest.raises(EncryptionKeyError, match="data key must be 32 bytes"):
+        wrap_data_key(_cipher(), b"too-short")
+
+
+def test_unwrap_tampered_wrapped_key_fails_closed() -> None:
+    master = _cipher()
+    wrapped = bytearray(wrap_data_key(master, generate_data_key()))
+    wrapped[-1] ^= 0x01
+    with pytest.raises(DecryptionError, match="_data_key.wrapped"):
+        unwrap_data_key(master, bytes(wrapped), artifact="_data_key.wrapped")
+
+
+def test_unwrap_under_wrong_master_fails_closed() -> None:
+    wrapped = wrap_data_key(_cipher(), generate_data_key())
+    with pytest.raises(DecryptionError):
+        unwrap_data_key(_cipher(), wrapped, artifact="_data_key.wrapped")
