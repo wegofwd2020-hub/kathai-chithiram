@@ -17,10 +17,12 @@ from wegofwd_video import VideoRequest, VideoResult
 from wegofwd_video.errors import VideoResponseError
 
 from kathai_chithiram.privacy.pseudonymize import NameMapping
+from kathai_chithiram.rendering.narration import NarrationSynthesizer
 from kathai_chithiram.rendering.pipeline import RenderResult, SceneScriptRenderer
 
-# The deterministic renderer is frame-based, silent, and not AI-generated, so it
-# carries no native audio and no C2PA/SynthID provenance signature.
+# The deterministic renderer is frame-based and not AI-generated, so it carries no
+# C2PA/SynthID provenance signature. Audio is present only when an in-process
+# narration voice is supplied (``has_audio`` reflects the actual output).
 _RESOLUTION = "1080p"
 
 
@@ -43,7 +45,7 @@ def render_result_to_video_result(result: RenderResult, *, model: str) -> VideoR
         asset_uri=result.output_path,
         duration_s=duration_s,
         resolution=_RESOLUTION,
-        has_audio=False,
+        has_audio=result.has_audio,
         c2pa_signed=False,
         raw=result.safety_report,
     )
@@ -56,15 +58,20 @@ def make_render_fn(
     output_path: str,
     model: str,
     mapping: NameMapping | None = None,
+    narration: NarrationSynthesizer | None = None,
 ) -> Callable[[VideoRequest], VideoResult]:
     """Return a ``wegofwd_video`` render_fn that drives ``renderer``.
 
     ``mapping`` is what reinserts the child's real name at render time (KC-2); it
     is deliberately confined to the renderer and never reaches the brief.
+    ``narration`` is an optional in-process voice; the child's name stays local to
+    the renderer for it too, and never reaches the brief.
     """
 
     def _render_fn(_request: VideoRequest) -> VideoResult:
-        result = renderer.render(script, mapping=mapping, output_path=output_path)
+        result = renderer.render(
+            script, mapping=mapping, output_path=output_path, narration=narration
+        )
         return render_result_to_video_result(result, model=model)
 
     return _render_fn

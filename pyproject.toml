@@ -106,3 +106,9 @@ ignore_missing_imports = true
 module = ["generate_animation", "blender_animation"]
 ignore_missing_imports = true
 follow_imports = "skip"
+
+# imageio-ffmpeg (render extra) ships no type stubs; the audio mux only calls its
+# get_ffmpeg_exe(). Ignore its missing imports rather than vendor a stub.
+[[tool.mypy.overrides]]
+module = ["imageio_ffmpeg.*"]
+ignore_missing_imports = true

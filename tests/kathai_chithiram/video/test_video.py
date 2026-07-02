@@ -143,6 +143,45 @@ def test_seam_with_real_matplotlib_renderer_produces_decodable_mp4(tmp_path):
     assert out.provenance["model"] == "matplotlib-stick-v1"
 
 
+def test_seam_threads_narration_and_reports_audio(tmp_path):
+    # generate_story_video passes an in-process voice to the renderer, the mp4 is
+    # muxed with audio, sealed through the store, and has_audio is reported True.
+    import subprocess
+    from collections.abc import Sequence
+
+    pytest.importorskip("matplotlib")
+    pytest.importorskip("imageio_ffmpeg")
+    import imageio_ffmpeg
+    from generate_animation import MatplotlibStickFigureRenderer
+    from tests.kathai_chithiram.rendering.fake_renderer import tiny_script
+
+    class _Voice:
+        def synthesize(self, text: str, *, sample_rate: int, duration_s: float) -> Sequence[float]:
+            return [0.5] * round(duration_s * sample_rate)
+
+    store = StoryArtifactStore(root=tmp_path, cipher=AesGcmCipher(generate_data_key()))
+    store.create_story(
+        "story1", created_at=datetime(2026, 7, 2, tzinfo=timezone.utc), story_text="x"
+    )
+
+    out = generate_story_video(
+        renderer=MatplotlibStickFigureRenderer(),
+        script=tiny_script(fps=8, duration_s=2),
+        store=store,
+        story_id="story1",
+        narration=_Voice(),
+    )
+
+    assert out.result.has_audio is True
+    # Decrypt the stored media and confirm it really carries an audio stream.
+    decrypted = tmp_path / "play.mp4"
+    decrypted.write_bytes(store.read_media("story1", "story.mp4"))
+    probe = subprocess.run(
+        [imageio_ffmpeg.get_ffmpeg_exe(), "-i", str(decrypted)], capture_output=True, text=True
+    )
+    assert any("Audio:" in line for line in probe.stderr.splitlines())
+
+
 def test_adapter_rejects_missing_output(tmp_path):
     # output_path=None path: renderer produces no file → VideoResponseError surfaced.
     from wegofwd_video.errors import VideoResponseError

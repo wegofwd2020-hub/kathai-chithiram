@@ -25,10 +25,12 @@ import wave
 from array import array
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from kathai_chithiram.rendering.pipeline import RenderPlan
 from kathai_chithiram.rendering.safety import guard_audio_levels
+
+if TYPE_CHECKING:
+    from kathai_chithiram.rendering.pipeline import RenderPlan
 
 __all__ = [
     "DEFAULT_SAMPLE_RATE",
