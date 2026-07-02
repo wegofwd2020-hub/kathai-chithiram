@@ -112,7 +112,10 @@ All of the following must land **before** any identity/DOB/account/program code:
 2. **Parent notice + consent updated and re-versioned** (KC-8 mechanism) to cover DOB,
    accounts, and program/progress sharing.
 3. **Retention + erasure design for the new entities** (R15), with a cascade-delete test —
-   the same standard as KC-1/KC-10.
+   the same standard as KC-1/KC-10. **Drafted:** `docs/RETENTION_ERASURE_DESIGN.md`
+   (Design v0.1) — the per-child key tree, cascade rules, proposed retention defaults, and
+   the cascade-delete test spec; its §6/§7 retention periods and the erasure-vs-clinical-
+   retention conflict are DPO decisions.
 4. **The R8/R14 progress-profiling touchpoint (ADR-002 D7.6)** completed with the
    professional collaborator.
 5. **Authentication + credential-storage approach** chosen for the deployment (R11), behind
