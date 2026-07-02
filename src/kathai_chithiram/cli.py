@@ -23,12 +23,13 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import tempfile
 import uuid
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from wegofwd_video.errors import VideoError
 
 from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal, Role
 from kathai_chithiram.errors import KathaiChithiramError
@@ -43,10 +44,14 @@ from kathai_chithiram.privacy import NameMapping
 from kathai_chithiram.rendering import SceneScriptRenderer
 from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
 from kathai_chithiram.storage import StoryArtifactStore, StoryStore
+from kathai_chithiram.video import generate_story_video
 from kathai_chithiram.wegofwd_llm.anthropic_provider import DEFAULT_MODEL
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
 
 __all__ = ["build_arg_parser", "main"]
+
+#: Filename for the review-gated draft animation under a story's ``media/`` dir.
+_DRAFT_MEDIA_FILENAME = "animation.mp4"
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -518,7 +523,7 @@ def _maybe_render(
             mapping=mapping,
             extra_out=args.out,
         )
-    except (RuntimeError, KathaiChithiramError) as exc:
+    except (RuntimeError, KathaiChithiramError, VideoError) as exc:
         print(f"error: render failed: {exc}", file=sys.stderr)
         print("(the scene script was generated and stored; only rendering failed)", file=sys.stderr)
         return 2
@@ -580,16 +585,27 @@ def _render_draft(
     mapping: NameMapping,
     extra_out: Path | None,
 ) -> Path:
-    """Render a guarded draft animation and file it under the story's media dir."""
-    with tempfile.TemporaryDirectory() as tmp:
-        draft = Path(tmp) / "animation.mp4"
-        renderer.render(script, mapping=mapping, output_path=str(draft))
-        data = draft.read_bytes()
-    media_path = store.add_media(story_id, "animation.mp4", data)
+    """Render a guarded draft animation through the shared video seam and file it.
+
+    Routes through :func:`generate_story_video` so ``kc`` produces its draft on the
+    same wegofwd-video path as every other consumer: the brief is capability-checked
+    against the renderer's limits, the media is sealed at rest through the store
+    (KC-5), and a provenance stamp (provider/model/seed/contract versions) is
+    persisted alongside it. The optional ``--out`` copy is the decrypted, playable
+    bytes read back from the store, not the sealed on-disk file.
+    """
+    result = generate_story_video(
+        renderer=renderer,
+        script=script,
+        store=store,
+        story_id=story_id,
+        mapping=mapping,
+        filename=_DRAFT_MEDIA_FILENAME,
+    )
     if extra_out is not None:
         extra_out.parent.mkdir(parents=True, exist_ok=True)
-        extra_out.write_bytes(data)
-    return media_path
+        extra_out.write_bytes(store.read_media(story_id, _DRAFT_MEDIA_FILENAME))
+    return result.media_path
 
 
 def _open_store(store_root: Path, *, warn_if_plaintext: bool = False) -> StoryArtifactStore | None:

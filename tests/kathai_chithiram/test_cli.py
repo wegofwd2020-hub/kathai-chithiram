@@ -383,6 +383,63 @@ def test_generate_bad_storage_key_exits(tmp_path: Path, monkeypatch) -> None:
     assert code == 2
 
 
+# --- rendering through the video seam (ADR-026) --------------------------------
+
+
+def test_generate_renders_through_seam_and_stamps_provenance(tmp_path: Path, monkeypatch) -> None:
+    # kc generate must render on the shared wegofwd-video seam: the draft is filed
+    # under media/, and a provenance stamp is persisted alongside it — the behavior
+    # the seam adds over a bare renderer.render() call. A fast fake renderer stands
+    # in for matplotlib (patched in) so the CLI wiring is what's under test.
+    from tests.kathai_chithiram.rendering.fake_renderer import FakeRenderer
+
+    import kathai_chithiram.cli as cli
+
+    monkeypatch.setattr(cli, "_load_default_renderer", lambda: FakeRenderer())
+    store_root = tmp_path / "store"
+    out = tmp_path / "copy.mp4"
+    code = main(
+        _argv(_write_story(tmp_path), store_root, "--provider-no-train-zdr", "--out", str(out)),
+        provider=_provider(),
+    )
+    assert code == 0
+
+    story_dir = store_root / "test-story"
+    assert (story_dir / "media" / "animation.mp4").is_file()
+    prov = json.loads((story_dir / "cache" / "video_provenance.json").read_text(encoding="utf-8"))
+    assert prov["provider"] == "deterministic-renderer"
+    assert prov["model"] == "fake"  # renderer name flows into provenance
+    # The --out copy is the playable bytes the renderer produced.
+    assert out.read_bytes() == b"draft-bytes"
+
+
+def test_generate_seam_seals_media_and_out_copy_is_decrypted(tmp_path: Path, monkeypatch) -> None:
+    # With a storage key set, the seam-filed media is encrypted at rest (KC-5),
+    # while the --out convenience copy must be the DECRYPTED, playable bytes.
+    from tests.kathai_chithiram.rendering.fake_renderer import FakeRenderer
+
+    import kathai_chithiram.cli as cli
+    from kathai_chithiram.storage import STORAGE_KEY_ENV, generate_key
+
+    monkeypatch.setenv(STORAGE_KEY_ENV, generate_key())
+    monkeypatch.setattr(cli, "_load_default_renderer", lambda: FakeRenderer())
+    store_root = tmp_path / "store"
+    out = tmp_path / "copy.mp4"
+    code = main(
+        _argv(_write_story(tmp_path), store_root, "--provider-no-train-zdr", "--out", str(out)),
+        provider=_provider(),
+    )
+    assert code == 0
+
+    story_dir = store_root / "test-story"
+    # On disk the media is sealed — not the raw renderer bytes.
+    assert (story_dir / "media" / "animation.mp4").read_bytes() != b"draft-bytes"
+    # Provenance is persisted too (sealed; existence is enough here).
+    assert (story_dir / "cache" / "video_provenance.json").is_file()
+    # …but the exported copy is decrypted and directly playable.
+    assert out.read_bytes() == b"draft-bytes"
+
+
 # --- ZDR / no-training credential (KC-6) ---------------------------------------
 
 

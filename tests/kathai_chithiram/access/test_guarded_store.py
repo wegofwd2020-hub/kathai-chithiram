@@ -86,6 +86,19 @@ def test_owner_can_read_and_write_own_content(tmp_path: Path) -> None:
     assert owner_view.mark_delivered("s1").delivered is True
 
 
+def test_add_cache_is_a_guarded_content_write(tmp_path: Path) -> None:
+    # The video seam persists render provenance via add_cache; it must be
+    # authorized like any content write (deny-by-default), not an open side door.
+    store = _store(tmp_path)
+    owner_view = _owned_story(store)
+    path = owner_view.add_cache("s1", "video_provenance.json", b'{"provider":"x"}')
+    assert path.is_file()
+
+    with pytest.raises(AccessDeniedError):
+        GuardedStore(store, _STRANGER).add_cache("s1", "sneak.json", b"nope")
+    assert not (store.story_dir("s1") / "cache" / "sneak.json").exists()
+
+
 # --- deny-by-default -------------------------------------------------------
 
 

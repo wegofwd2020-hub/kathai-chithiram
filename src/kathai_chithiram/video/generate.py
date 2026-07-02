@@ -32,7 +32,7 @@ from wegofwd_video import (
 
 from kathai_chithiram.privacy.pseudonymize import NameMapping
 from kathai_chithiram.rendering.pipeline import SceneScriptRenderer
-from kathai_chithiram.storage.store import StoryArtifactStore
+from kathai_chithiram.storage.protocol import StoryStore
 from kathai_chithiram.video.adapter import make_render_fn
 from kathai_chithiram.video.brief import build_video_brief
 
@@ -62,7 +62,7 @@ def generate_story_video(
     *,
     renderer: SceneScriptRenderer,
     script: Mapping[str, Any],
-    store: StoryArtifactStore,
+    store: StoryStore,
     story_id: str,
     mapping: NameMapping | None = None,
     seed: int | None = None,

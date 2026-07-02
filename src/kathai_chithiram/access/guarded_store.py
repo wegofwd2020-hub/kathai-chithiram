@@ -196,6 +196,16 @@ class GuardedStore:
         self._guard(story_id, Action.WRITE_CONTENT)
         return self._store.add_media(story_id, filename, data)
 
+    def add_cache(self, story_id: str, filename: str, data: bytes) -> Path:
+        """Add a derived cache file (e.g. render provenance), if authorized to write content.
+
+        A cache artifact is non-sensitive but still lands under the story dir, so
+        writing it is an authorized content-write — an unauthorized principal must
+        not be able to drop files there (deny-by-default, ADR-004).
+        """
+        self._guard(story_id, Action.WRITE_CONTENT)
+        return self._store.add_cache(story_id, filename, data)
+
     def append_session_feedback(self, story_id: str, record: Mapping[str, Any]) -> None:
         """Append a session feedback primitive, if authorized to write feedback."""
         self._guard(story_id, Action.WRITE_FEEDBACK)
