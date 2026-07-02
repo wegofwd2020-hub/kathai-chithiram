@@ -122,3 +122,42 @@ def test_warnings_are_returned_and_recorded(tmp_path: Path) -> None:
     assert any("address" in w.lower() for w in result.warnings)
     intake = json.loads((store.story_dir("intake-1") / "intake.json").read_text(encoding="utf-8"))
     assert intake["minimization_warnings"] == list(result.warnings)
+
+
+# --- offline intake (no provider) ----------------------------------------------
+
+
+def test_offline_intake_generates_and_stores_without_a_provider(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    result = submit_intake(
+        _submission(), store=store, story_id="off-1", offline=True, clock=_clock
+    )
+    assert result.story_id == "off-1"
+    assert result.generated.attempts == 0  # no provider attempts were made
+
+    story_dir = store.story_dir("off-1")
+    assert (story_dir / "story.txt").read_text(encoding="utf-8") == STORY  # raw, with name
+    assert CHILD not in (story_dir / "scene_script.json").read_text(encoding="utf-8")
+
+    intake = json.loads((story_dir / "intake.json").read_text(encoding="utf-8"))
+    assert intake["provider_posture"]["provider_id"] == "offline:local-generation"
+    assert intake["consent"]["ai_processing"] is True
+    assert intake["privacy_notice_version"] == PRIVACY_NOTICE_VERSION
+    assert CHILD not in json.dumps(intake)  # record still carries no name
+
+
+def test_offline_intake_still_enforces_consent(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    submission = ParentSubmission(
+        story_text=STORY,
+        child_first_name=CHILD,
+        consent=Consent(is_guardian=True, ai_processing=False, human_review_ack=True),
+    )
+    with pytest.raises(ConsentError):
+        submit_intake(submission, store=store, story_id="off-1", offline=True)
+    assert not store.exists("off-1")  # consent gate runs before any generation
+
+
+def test_missing_provider_without_offline_is_rejected(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="requires a provider"):
+        submit_intake(_submission(), store=_store(tmp_path), story_id="x")

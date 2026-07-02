@@ -167,6 +167,37 @@ def test_intake_happy_path_records_consent(tmp_path: Path) -> None:
     assert CHILD not in provider.requests[0].prompt
 
 
+def test_intake_offline_needs_no_provider(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    args = build_arg_parser().parse_args(
+        [
+            "intake",
+            "--story-id",
+            "off-story",
+            "--store-root",
+            str(store_root),
+            "--no-render",
+            "--offline",
+        ]
+    )
+    code = _cmd_intake(
+        args,
+        provider=None,  # offline path builds no provider and needs no key
+        input_fn=_scripted_input(["y", "y", "y", CHILD, ""]),
+        story_reader=lambda: STORY,
+    )
+    assert code == 0
+
+    script = StoryArtifactStore(store_root).read_scene_script("off-story")
+    assert script["child_token"] == "CHILD"
+    assert CHILD not in str(script)  # name stripped, token-only
+    intake = json.loads((store_root / "off-story" / "intake.json").read_text(encoding="utf-8"))
+    assert intake["provider_posture"]["provider_id"] == "offline:local-generation"
+    assert intake["consent"]["ai_processing"] is True
+
+
 def test_intake_declined_consent_submits_nothing(tmp_path: Path) -> None:
     store_root = tmp_path / "store"
     provider = _provider()
