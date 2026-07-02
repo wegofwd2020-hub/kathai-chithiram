@@ -24,6 +24,7 @@ the gate opens. This package holds exactly that buildable part:
 
 from __future__ import annotations
 
+from kathai_chithiram.progress.config import load_policy, policy_from_mapping
 from kathai_chithiram.progress.engine import (
     IndicatorState,
     ProgressIndicator,
@@ -49,6 +50,7 @@ from kathai_chithiram.progress.review import (
     open_suggestions,
     record_suggestion,
 )
+from kathai_chithiram.progress.run import ProgressOutcome, run_progress
 from kathai_chithiram.progress.suggestion import (
     PremiseSuggestion,
     SuggestionDecision,
@@ -64,6 +66,7 @@ __all__ = [
     "Metric",
     "PremiseSuggestion",
     "ProgressIndicator",
+    "ProgressOutcome",
     "ProgressPolicy",
     "SuggestionDecision",
     "SuggestionStatus",
@@ -72,8 +75,11 @@ __all__ = [
     "build_goal_evidence",
     "compute_metrics",
     "decide_suggestion",
+    "load_policy",
     "measure",
     "open_suggestions",
+    "policy_from_mapping",
     "record_suggestion",
+    "run_progress",
     "suggest",
 ]

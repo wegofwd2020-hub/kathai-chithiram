@@ -41,10 +41,28 @@ the ships-inert scaffolding that engineering may own *before* the gate opens.
   engine that would is gated); this only records a therapist decision and never
   edits a premise, generates a story, or schedules one (Decisions 3/4/8).
 
+## Enabling wire-up — BUILT, gated by config (2026-07-02)
+The measure/suggest interpreter (ADR-003) and now the **wire-up** are landed, but the
+engine still ships **no policy** and does nothing until a collaborator-authored one is
+loaded — so an engineer's cutoff structurally cannot reach a child (ADR-003 D2):
+- `progress/config.py` — `load_policy(path)` / `policy_from_mapping(data)`: the *only*
+  way a real `ProgressPolicy` enters the engine. Ships no policy; every value is the
+  collaborator's, and each clinical invariant is still enforced by the schema types.
+- `progress/run.py` — `run_progress(store, evidence, policy, …)`: `measure → suggest →
+  record_suggestion` (the one permitted effect, **inert** — a therapist decides;
+  Decisions 3/4/8).
+- `kc progress <goal> --policy <file> --story <id>` — runs it. `--policy` is **required**
+  (no default). Recording a suggestion requires the acting principal to hold the
+  **therapist** role on the story (`Action.DECIDE_SUGGESTION`), so it fails closed
+  otherwise (ADR-002 actor model / ADR-004).
+- **Still gated:** *using* this in production remains blocked on 7.1 (collaborator authors
+  the policy), 7.4 (clinical-copy review), 7.6 (DPIA progress-profiling touchpoint). The
+  plumbing exists; a reviewed policy does not.
+
 ## What stays gated (Decision 6/7 — do NOT build here)
-- The progress **measure** (% independent over K, mastery flag, mood trend, any
-  threshold/verdict).
-- The logic that **generates** a premise suggestion from the measure.
+- Authoring a real `ProgressPolicy` (window K, thresholds, copy) — the collaborator's,
+  not engineering's (7.1).
+- Enabling the engine in production before 7.1/7.4/7.6 are met.
 - Any closed auto-adjustment loop (Decision 8) — permanently rejected.
 
 ## Acceptance criteria (for opening the gate later)
