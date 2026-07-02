@@ -17,7 +17,7 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **547
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **551
 tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
 template below). The matplotlib reference renderer (`generate_animation.py`)
 carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
@@ -25,7 +25,7 @@ path (a heavier bpy lift, lower value than the default matplotlib flow).
 
 ## TL;DR
 
-The **product pipeline is built and green** (547 tests): a parent's story becomes a
+The **product pipeline is built and green** (551 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -43,8 +43,9 @@ provisioning.
   `kc assign` / `kc progress` / **`kc author`** CLI.
 - **Three ways to make a story** — `kc intake` (interactive, consented), `kc generate`
   (free text; `--offline` = no LLM/key), and **`kc author`** (a structured story template
-  → scene script, deterministic, no key — ADR-005 part a; `docs/STORY_TEMPLATE.md`). All
-  three strip the child's name to the token (KC-2) and produce a review-gated draft.
+  **from a file or via guided interactive prompts** → scene script, deterministic, no key —
+  ADR-005 part a; `docs/STORY_TEMPLATE.md`). All three strip the child's name to the token
+  (KC-2) and produce a review-gated draft.
 - **Production hardening (KC-1…KC-9)** — verifiable hard-delete (KC-1), identifier
   minimization before the LLM (KC-2), scene-script validation (KC-3), render-time seizure/
   flash safety (KC-4), **encryption at rest** (KC-5), **dedicated ZDR/no-training
