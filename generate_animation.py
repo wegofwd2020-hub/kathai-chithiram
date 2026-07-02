@@ -37,6 +37,7 @@ from kathai_chithiram.rendering.scene_art_hints import (  # noqa: E402
     Expression,
     Gesture,
     art_hint_for,
+    resolve_figure_cues,
 )
 from kathai_chithiram.rendering.transitions import (  # noqa: E402
     BlendSource,
@@ -734,15 +735,23 @@ def _draw_props(ax, props) -> None:
         draw(ax, x, 0.14)
 
 
-def scene_from_content(setting: str, caption: str, props, frame_idx: int) -> np.ndarray:
-    """Draw a scene from its setting + caption + props (for any story)."""
-    hint = art_hint_for(setting, caption)
+def scene_from_content(
+    setting: str, caption: str, props, pose: str, expression: str, frame_idx: int
+) -> np.ndarray:
+    """Draw a scene from its setting, caption, props, and character pose/expression.
+
+    The background comes from the setting/caption; the figure's face and gesture come
+    from the script's character ``pose``/``expression`` when recognized, falling back
+    to the caption otherwise (:func:`resolve_figure_cues`).
+    """
+    background = art_hint_for(setting, caption).background
+    expr, gesture = resolve_figure_cues(pose, expression, caption)
     fig, ax = new_fig()
-    _BACKGROUND_DRAW[hint.background](ax, frame_idx)
+    _BACKGROUND_DRAW[background](ax, frame_idx)
     bob = 0.30 + 0.01 * math.sin(frame_idx * 0.35)  # gentle breathing
-    smile = hint.expression in (Expression.SMILE, Expression.CALM)
-    eyes_closed = hint.expression is Expression.SLEEPY
-    arm_r_angle = -35 if hint.gesture is Gesture.WAVE else -120
+    smile = expr in (Expression.SMILE, Expression.CALM)
+    eyes_closed = expr is Expression.SLEEPY
+    arm_r_angle = -35 if gesture is Gesture.WAVE else -120
     draw_stick_figure(
         ax, 0.50, bob, scale=1.0, smile=smile, eyes_closed=eyes_closed, arm_r_angle=arm_r_angle
     )
@@ -833,7 +842,9 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
         """One scene frame: the demo's bespoke art, else content-driven art."""
         if demo and scene.index in SCENE_ART:
             return SCENE_ART[scene.index](f, scene.caption)
-        return scene_from_content(scene.setting, scene.caption, scene.props, f)
+        return scene_from_content(
+            scene.setting, scene.caption, scene.props, scene.pose, scene.expression, f
+        )
 
     def _composited_frames(self, plan: RenderPlan) -> list[np.ndarray]:
         """Apply each scene's declared transitions, then flatten to a frame list.

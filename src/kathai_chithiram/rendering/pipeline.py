@@ -70,6 +70,10 @@ class PreparedScene:
             bed and placed in this scene's window.
         props: The scene's prop labels (from the script's ``props``); a renderer
             draws recognized props as small icons and ignores the rest.
+        pose: The child character's ``pose`` string (from ``characters``); a
+            renderer may drive the figure's gesture from it.
+        expression: The child character's ``expression`` string (from
+            ``characters``); a renderer may drive the figure's face from it.
         setting: The scene setting (e.g. ``"bathroom"``).
         transition_in: Incoming transition (``cut`` / ``fade`` / ``dissolve``).
         transition_out: Outgoing transition.
@@ -83,6 +87,8 @@ class PreparedScene:
     narration_volume: float
     sfx: tuple[str, ...]
     props: tuple[str, ...]
+    pose: str
+    expression: str
     setting: str
     transition_in: str
     transition_out: str
@@ -124,6 +130,25 @@ class RenderResult:
     has_audio: bool = False
 
 
+def _child_character(raw: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Return the scene's child character (by ``id``, else the first), or ``{}``."""
+    characters: list[Mapping[str, Any]] = list(raw.get("characters") or ())
+    for character in characters:
+        if character.get("id") == "child":
+            return character
+    return characters[0] if characters else {}
+
+
+def _child_pose(raw: Mapping[str, Any]) -> str:
+    """The child character's pose, defaulting to ``"standing"``."""
+    return str(_child_character(raw).get("pose", "standing"))
+
+
+def _child_expression(raw: Mapping[str, Any]) -> str:
+    """The child character's expression, defaulting to ``"calm"``."""
+    return str(_child_character(raw).get("expression", "calm"))
+
+
 def build_render_plan(
     script: Mapping[str, Any], *, mapping: NameMapping | None = None
 ) -> RenderPlan:
@@ -158,6 +183,8 @@ def build_render_plan(
             narration_volume=float(raw["audio"]["narration_volume"]),
             sfx=tuple(raw["audio"]["sfx"]),
             props=tuple(raw["props"]),
+            pose=_child_pose(raw),
+            expression=_child_expression(raw),
             setting=raw["setting"],
             transition_in=raw["transition_in"],
             transition_out=raw["transition_out"],

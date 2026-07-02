@@ -9,6 +9,7 @@ from kathai_chithiram.rendering.scene_art_hints import (
     Expression,
     Gesture,
     art_hint_for,
+    resolve_figure_cues,
 )
 
 
@@ -63,3 +64,37 @@ def test_wave_from_greeting_words():
 
 def test_rest_gesture_by_default():
     assert art_hint_for("room", "She sat down quietly.").gesture is Gesture.REST
+
+
+# ── resolve_figure_cues: script character fields win, caption is the fallback ─────
+def test_script_expression_wins_over_caption():
+    # Caption is neutral; the script's expression decides.
+    expr, _ = resolve_figure_cues("standing", "sleepy", "She looked outside.")
+    assert expr is Expression.SLEEPY
+
+
+def test_worried_expression_maps_to_neutral():
+    expr, _ = resolve_figure_cues("standing", "scared", "She stood still.")
+    assert expr is Expression.NEUTRAL
+
+
+def test_unknown_expression_falls_back_to_caption():
+    # "mysterious" isn't a known expression word → the caption ("smiled") decides.
+    expr, _ = resolve_figure_cues("standing", "mysterious", "She smiled warmly.")
+    assert expr is Expression.SMILE
+
+
+def test_pose_drives_the_wave_gesture():
+    _, gesture = resolve_figure_cues("waving", "calm", "She stood by the door.")
+    assert gesture is Gesture.WAVE
+
+
+def test_gesture_falls_back_to_caption_when_pose_is_generic():
+    _, gesture = resolve_figure_cues("standing", "calm", "She waved hello to him.")
+    assert gesture is Gesture.WAVE
+
+
+def test_calm_expression_and_standing_pose_are_the_quiet_default():
+    expr, gesture = resolve_figure_cues("standing", "calm", "She read a book.")
+    assert expr is Expression.CALM
+    assert gesture is Gesture.REST
