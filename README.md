@@ -112,6 +112,8 @@ fade/dissolve transitions, all under render-time seizure/flash + gentle-audio sa
 | `kc decide <id> <sug> --accept\|--edit\|--dismiss` | Therapist records a decision on a suggestion. |
 | `kc family-create` / `kc child-add` / `kc therapist-add` | Onboard a family / child (age band only) / therapist (ADR-005 b). |
 | `kc assign-child` / `kc consent` | Assign a therapist to a child; record parental consent (the lawful basis). |
+| `kc program-create` | Establish a therapist's program (a set of goals) for a child (ADR-005 c). |
+| `kc erase-child` / `kc erase-family` | Cascade right-to-erasure: hard-delete a child/family + all their stories. |
 | `kc delete <id>` | Owner-only verifiable hard-delete + crypto-shred (right-to-erasure). |
 | `kc retention-sweep [--dry-run]` | Purge undelivered stories past the retention window (ops). |
 

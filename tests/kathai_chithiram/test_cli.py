@@ -1188,3 +1188,71 @@ def test_consent_rejects_a_non_family_parent(tmp_path: Path) -> None:
           "--people-file", pf])
     assert main(["consent", "--child-id", "k", "--parent", "stranger",
                  "--policy-version", "v1", "--people-file", pf]) == 2
+
+
+def test_program_create_via_cli(tmp_path: Path) -> None:
+    from kathai_chithiram.people import PeopleRegistry
+
+    pf = str(tmp_path / "people.json")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    main(["child-add", "--child-id", "k", "--family-id", "f", "--age-band", "6-8",
+          "--people-file", pf])
+    main(["therapist-add", "--therapist-id", "ot", "--people-file", pf])
+    main(["assign-child", "--child-id", "k", "--therapist-id", "ot", "--people-file", pf])
+    assert main(["program-create", "--program-id", "p", "--child-id", "k",
+                 "--therapist-id", "ot", "--goal", "g1", "--goal", "g2", "--people-file", pf]) == 0
+    reg = PeopleRegistry.load(Path(pf))
+    assert reg.get_program("p").goal_ids == frozenset({"g1", "g2"})
+
+
+def test_program_create_rejects_unassigned_therapist(tmp_path: Path) -> None:
+    pf = str(tmp_path / "people.json")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    main(["child-add", "--child-id", "k", "--family-id", "f", "--age-band", "6-8",
+          "--people-file", pf])
+    main(["therapist-add", "--therapist-id", "ot", "--people-file", pf])  # not assigned
+    assert main(["program-create", "--program-id", "p", "--child-id", "k",
+                 "--therapist-id", "ot", "--goal", "g", "--people-file", pf]) == 2
+
+
+def _seed_child_story(tmp_path: Path) -> tuple[str, str]:
+    """Onboard a family/child + consent, create one child-scoped story. Return (pf, sr)."""
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.access import GuardedStore, Principal
+    from kathai_chithiram.people import PeopleRegistry
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    pf, sr = str(tmp_path / "people.json"), str(tmp_path / "store")
+    main(["family-create", "--family-id", "f", "--owner", "mum", "--people-file", pf])
+    main(["child-add", "--child-id", "k", "--family-id", "f", "--age-band", "6-8",
+          "--people-file", pf])
+    main(["consent", "--child-id", "k", "--parent", "mum", "--policy-version", "v1",
+          "--people-file", pf])
+    reg = PeopleRegistry.load(Path(pf))
+    store = StoryArtifactStore(Path(sr))
+    GuardedStore(store, Principal("mum"), registry=reg).create_story_for_child(
+        "s1", child_id="k", created_at=datetime.now(timezone.utc), story_text="x"
+    )
+    return pf, sr
+
+
+def test_erase_child_cascade_via_cli(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    pf, sr = _seed_child_story(tmp_path)
+    assert main(["erase-child", "--child-id", "k", "--yes",
+                 "--store-root", sr, "--people-file", pf]) == 0
+    assert list(StoryArtifactStore(Path(sr)).iter_story_ids()) == []  # story gone
+
+
+def test_erase_child_aborts_without_confirmation(tmp_path: Path) -> None:
+    from kathai_chithiram.cli import _cmd_erase_child, build_arg_parser
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    pf, sr = _seed_child_story(tmp_path)
+    args = build_arg_parser().parse_args(
+        ["erase-child", "--child-id", "k", "--store-root", sr, "--people-file", pf]
+    )
+    assert _cmd_erase_child(args, input_fn=lambda _prompt: "n") == 1  # aborted
+    assert list(StoryArtifactStore(Path(sr)).iter_story_ids()) == ["s1"]  # untouched

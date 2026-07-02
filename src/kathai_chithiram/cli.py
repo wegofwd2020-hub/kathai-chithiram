@@ -347,6 +347,31 @@ def build_arg_parser() -> argparse.ArgumentParser:
     consent.add_argument("--policy-version", required=True, help="Consent version.")
     consent.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
 
+    prog = sub.add_parser("program-create", help="Establish a therapist's program for a child.")
+    prog.add_argument("--program-id", required=True, help="Opaque id for the program.")
+    prog.add_argument("--child-id", required=True, help="The child the program is for.")
+    prog.add_argument("--therapist-id", required=True, help="Owning therapist (assigned).")
+    prog.add_argument("--goal", action="append", required=True, help="A goal id (repeatable).")
+    prog.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+
+    erase_c = sub.add_parser(
+        "erase-child", help="Erase a child: cascade-delete its stories + registry records."
+    )
+    erase_c.add_argument("--child-id", required=True, help="The child to erase.")
+    erase_c.add_argument("--store-root", type=Path, default=Path("kc_store"),
+                         help="Directory the stories live under (default: ./kc_store).")
+    erase_c.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+    erase_c.add_argument("--yes", action="store_true", help="Skip the confirmation prompt.")
+
+    erase_f = sub.add_parser(
+        "erase-family", help="Erase a whole family: cascade-delete every child + their stories."
+    )
+    erase_f.add_argument("--family-id", required=True, help="The family to erase.")
+    erase_f.add_argument("--store-root", type=Path, default=Path("kc_store"),
+                         help="Directory the stories live under (default: ./kc_store).")
+    erase_f.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
+    erase_f.add_argument("--yes", action="store_true", help="Skip the confirmation prompt.")
+
     return parser
 
 
@@ -463,6 +488,12 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_assign_child(args)
     if args.command == "consent":
         return _cmd_consent(args)
+    if args.command == "program-create":
+        return _cmd_program_create(args)
+    if args.command == "erase-child":
+        return _cmd_erase_child(args)
+    if args.command == "erase-family":
+        return _cmd_erase_family(args)
     if args.command == "author":
         return _cmd_author(args)
     if args.command == "delete":
@@ -1083,6 +1114,78 @@ def _cmd_consent(args: argparse.Namespace) -> int:
     print(
         f"✓ consent recorded for child {args.child_id} by parent {args.parent} "
         f"(version {args.policy_version})."
+    )
+    return 0
+
+
+def _cmd_program_create(args: argparse.Namespace) -> int:
+    """Establish a therapist's program for a child (ADR-005 D5)."""
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.people import Program
+
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        reg.add_program(Program(
+            program_id=args.program_id, child_id=args.child_id, therapist_id=args.therapist_id,
+            goal_ids=frozenset(args.goal), created_at=datetime.now(timezone.utc),
+        ))
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"✓ program {args.program_id} created for child {args.child_id} "
+        f"(therapist {args.therapist_id}, {len(set(args.goal))} goal(s))."
+    )
+    return 0
+
+
+def _cmd_erase_child(args: argparse.Namespace, *, input_fn: Callable[[str], str] = input) -> int:
+    """Erase a child: cascade-delete its stories + registry records (irreversible)."""
+    from kathai_chithiram.people import erase_child
+    from kathai_chithiram.storage import BackupPurgeLog, StoryArtifactStore
+
+    if not args.yes:
+        reply = input_fn(f"Permanently erase child {args.child_id} and ALL its stories? [y/N] ")
+        if reply.strip().lower() not in ("y", "yes"):
+            print("aborted.")
+            return 1
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        store = StoryArtifactStore(args.store_root)
+        log = BackupPurgeLog(args.store_root / _BACKUP_PURGE_LOG_FILE)
+        receipt = erase_child(reg, store, args.child_id, purge_log=log)
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: erase failed: {exc}", file=sys.stderr)
+        return 2
+    print(f"✓ erased child {args.child_id}: {len(receipt.story_ids)} story(ies) hard-deleted.")
+    return 0
+
+
+def _cmd_erase_family(args: argparse.Namespace, *, input_fn: Callable[[str], str] = input) -> int:
+    """Erase a whole family: cascade-delete every child + their stories (irreversible)."""
+    from kathai_chithiram.people import erase_family
+    from kathai_chithiram.storage import BackupPurgeLog, StoryArtifactStore
+
+    if not args.yes:
+        reply = input_fn(f"Permanently erase family {args.family_id} and EVERY child+story? [y/N] ")
+        if reply.strip().lower() not in ("y", "yes"):
+            print("aborted.")
+            return 1
+    try:
+        reg = PeopleRegistry.load(args.people_file)
+        store = StoryArtifactStore(args.store_root)
+        log = BackupPurgeLog(args.store_root / _BACKUP_PURGE_LOG_FILE)
+        receipt = erase_family(reg, store, args.family_id, purge_log=log)
+        reg.save(args.people_file)
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: erase failed: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"✓ erased family {args.family_id}: {len(receipt.child_ids)} child(ren), "
+        f"{len(receipt.story_ids)} story(ies) hard-deleted."
     )
     return 0
 
