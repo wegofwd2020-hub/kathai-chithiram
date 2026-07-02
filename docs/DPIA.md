@@ -84,9 +84,9 @@ mitigation. Mitigations cite the implementing control and its **status**.
 |---|---|---|---|---|
 | R1 | Child's name/identifiers leak to the LLM provider | High | Name stripped + pseudonymized before send; residual match is a hard stop (`IdentifierLeakError`). **Built — KC-2.** | Low |
 | R2 | Story text retained or used for training by the provider | High | Provider must be no-training / zero-retention (an org-level configuration of the account the key belongs to); the seam refuses dispatch otherwise and records the posture per request. Backed by a **dedicated, isolated ZDR credential** (`ANTHROPIC_ZDR_API_KEY`) that fails closed if absent — no fallback to a general key. **Built — KC-6.** (Residual assumes the key is provisioned against an org Anthropic has confirmed as no-training / zero-retention — an operational precondition, not something the client can verify.) | Low |
-| R3 | Personal story data readable at rest (disk/backup theft) | High | Artifacts encrypted at rest with AES-256-GCM, key supplied from config (`KC_STORAGE_KEY`), distinct from the LLM key; a stolen disk/backup is ciphertext without the key. **Built — KC-5.** (Residual assumes the key is stored separately from the data/backups; envelope per-story keys for crypto-shredding on delete remain a future enhancement — **KC-10**.) | Low |
+| R3 | Personal story data readable at rest (disk/backup theft) | High | Artifacts encrypted at rest with AES-256-GCM, key supplied from config (`KC_STORAGE_KEY`), distinct from the LLM key; a stolen disk/backup is ciphertext without the key. **Built — KC-5.** Each story is now encrypted under its own random data key, stored only wrapped by the master (envelope encryption); master-key rotation re-wraps the per-story keys **without** re-encrypting artifact bodies, so rotation is incremental and localizes blast radius. **Built — KC-10.** (Residual assumes the master key is stored separately from the data/backups.) | Low |
 | R4 | Data kept longer than needed | Medium | 30-day retention sweep of undelivered content; hard-delete on request. **Built — KC-1.** | Low |
-| R5 | Incomplete deletion leaves recoverable personal content | High | Verifiable hard-delete asserts no artifact remains; backup-cascade log. **Built — KC-1.** | Low |
+| R5 | Incomplete deletion leaves recoverable personal content | High | Verifiable hard-delete asserts no artifact remains; backup-cascade log. **Built — KC-1.** Delete now also destroys the story's wrapped data key, so its artifacts are cryptographically unrecoverable even if raw ciphertext survives in a stale backup (crypto-shredding) — deletion no longer depends on the backup layer dropping every byte. **Built — KC-10.** | Low |
 | R6 | Unsafe/inappropriate output reaches a child | High | Content-safety generation rules + scene-script validation + render-time seizure/flash guards + a human-review gate before delivery. **Built — KC-3/KC-4/KC-7.** | Low |
 | R7 | Consent not informed / not demonstrable | Medium | Explicit consent captured at intake; parent shown a plain-language notice, and the notice version is recorded against the consent. **Built — KC-8.** | Low |
 | R8 | Profiling of a child (feedback) misused or over-collected | High | Fixed primitives only, no free text; keyed to opaque ids; inherits retention + hard-delete; engine that would act on it is gated behind ADR-002 preconditions. **Capture built; engine gated — ADR-002.** | Medium |
@@ -107,7 +107,8 @@ remains before an EU/UK launch is **operational and human**, not unwritten code.
    verify the org's posture).
 3. **R3 key management:** `KC_STORAGE_KEY` is stored in a secret manager separate
    from the data/backups, with a documented rotation plan. (Per-story envelope keys
-   for crypto-shredding on delete are a tracked enhancement — **KC-10**.)
+   for crypto-shredding on delete and incremental master-key rotation are now built
+   — **KC-10**; provisioning the secret manager itself remains operational.)
 4. R10 access-control enforcement is decided (technical control vs. documented
    operational limit) for the intended deployment — tracked as **KC-11**.
 5. If the ADR-002 progress **engine** is enabled, its own DPIA touchpoint (R8) is

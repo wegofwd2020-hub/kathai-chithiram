@@ -1,6 +1,6 @@
 # Kathai Chithiram — State of Play
 
-**As of:** 2026-07-01 · **Owner:** WeGoFwd2020 · **Purpose:** one place to see what is
+**As of:** 2026-07-02 · **Owner:** WeGoFwd2020 · **Purpose:** one place to see what is
 built, what is left, and **who each remaining item is blocked on** — so the next move is
 never ambiguous.
 
@@ -9,13 +9,13 @@ never ambiguous.
 
 ## TL;DR
 
-The **product pipeline is built and green** (332 tests): a parent's story becomes a
+The **product pipeline is built and green** (345 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion. **There is essentially no
-engineering-ownable work left on the two open tracks** (M1 progress engine, KC-11 access
-control) — both are built to the line where the next step is a *person* or *deployment*,
-not code. What blocks launch is external: a professional collaborator, a DPO sign-off, and
-operational provisioning.
+engineering-ownable work left**: the two open tracks (M1 progress engine, KC-11 access
+control) are built to the line where the next step is a *person* or *deployment*, and the
+one remaining pick-up-able item (KC-10 envelope keys) is now built too. What blocks launch
+is external: a professional collaborator, a DPO sign-off, and operational provisioning.
 
 ## What is built (done)
 
@@ -31,6 +31,10 @@ operational provisioning.
 - **Access control (KC-11, ADR-004)** — code-complete: deny-by-default enforcement wired
   through every app flow (CLI/intake/review/progress), a durable log-safe audit trail,
   `kc assign` for reviewer/therapist grants, all role-scoped to the actor model.
+- **Envelope encryption (KC-10)** — each story is encrypted under its own data key,
+  stored wrapped by the master; hard-delete crypto-shreds the wrapped key (undecryptable
+  even from a stale backup), and `rewrap_story` rotates the master without re-encrypting
+  bodies. Backward-compatible with legacy KC-5 stores.
 
 ## Open tracks — status and who they are blocked on
 
@@ -58,10 +62,12 @@ operational provisioning.
 
 ### 3. KC-10 — envelope / per-story keys (crypto-shredding)
 
-- **Status:** open, **P2 enhancement**, and the *one remaining engineering-ownable item*.
-  Not a blocker — KC-5 already satisfies the at-rest obligation. Raises the assurance of
-  R3/R5 (crypto-shred on delete, incremental rotation).
-- **Blocked on — nobody:** buildable now if prioritized.
+- **Built (2026-07-02).** Per-story data keys wrapped by the master; hard-delete
+  crypto-shreds the wrapped key (R5), and `rewrap_story` rotates the master without
+  re-encrypting bodies (R3). Backward-compatible with legacy KC-5 stores; documented
+  rotation procedure in `TICKETS/KC-10-envelope-per-story-keys.md`.
+- **Blocked on — nobody:** done. The only operational follow-on is provisioning the
+  secret manager that holds `KC_STORAGE_KEY` (already tracked as a launch precondition).
 
 ## Launch preconditions (from `docs/DPIA.md` §5) — the critical path
 
@@ -86,17 +92,17 @@ remains on the critical path is human and operational.
 - **Professional collaborator (therapist/OT):** author the `ProgressPolicy` and sign off the
   framing (unblocks M1).
 - **DPO / counsel:** sign off the DPIA (unblocks launch) and the progress-profiling touchpoint.
-- **Engineering:** only **KC-10** is pick-up-able now; everything else waits on the above.
-  When the M1 gate opens, a small policy-wiring task remains.
+- **Engineering:** KC-10 is now built; nothing else is pick-up-able — everything waits on
+  the above. When the M1 gate opens, a small policy-wiring task remains.
 
-## Next-session task queue (pinned 2026-07-01)
+## Next-session task queue (pinned 2026-07-01, updated 2026-07-02)
 
-Resume here. Ordered; #1 is self-contained code, the rest are prep for the external
-blockers above.
+Resume here. The remaining items are prep for the external blockers above — no
+self-contained engineering item is left after KC-10.
 
-1. **Build KC-10 — envelope / per-story keys (crypto-shredding).** The one pick-up-able
-   engineering item (P2, not a blocker). Full spec: `TICKETS/KC-10-envelope-per-story-keys.md`.
-   Verify with `pytest -q`, `ruff check .`, `python -m mypy` (canonical, no path args).
+1. ~~**Build KC-10 — envelope / per-story keys (crypto-shredding).**~~ **Done 2026-07-02.**
+   Per-story data keys wrapped by the master; crypto-shred on delete; incremental
+   master-key rotation. Spec + rotation procedure: `TICKETS/KC-10-envelope-per-story-keys.md`.
 2. **Write the R10 deployment-boundary design note.** Document what boundary drops R10
    from Medium to Low (network/service boundary so operators reach content only through the
    `GuardedStore`-enforced API, never the filesystem; networked `IdentityProvider` behind

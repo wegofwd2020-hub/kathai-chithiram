@@ -1,8 +1,10 @@
 # KC-10 — Envelope encryption with per-story keys (crypto-shredding on delete)
 
 **Labels:** P2, privacy, security, enhancement
-**Status:** ⏳ Open — enhancement to KC-5 (noted there as a future item).
-**Refs:** `docs/DPIA.md` §4 (R3, R5); `storage/crypto.py`; TICKETS/KC-5; PRIVACY.md §5, §7
+**Status:** ✅ Built — envelope encryption with per-story data keys, crypto-shred on
+delete, and incremental master-key rotation are implemented and tested.
+**Refs:** `docs/DPIA.md` §4 (R3, R5); `storage/crypto.py`; `storage/store.py`;
+TICKETS/KC-5; PRIVACY.md §5, §7
 
 ## Why
 KC-5 encrypts every artifact with a single master key (`KC_STORAGE_KEY`). That
@@ -48,3 +50,37 @@ It raises the assurance of R3/R5 rather than closing an unmet control.
   undecryptable; rotation re-wraps without touching bodies; tampered wrapped key
   raises `DecryptionError`.
 - Update `docs/DPIA.md` R3/R5 residual notes once built (crypto-shred is realized).
+
+## What was built
+- `storage/crypto.py`: `generate_data_key`, `wrap_data_key`, `unwrap_data_key`
+  (AES-256-GCM wrapping; `unwrap` fails closed with `DecryptionError`).
+- `storage/store.py`: `create_story` generates a per-story data key and writes it
+  wrapped to `_data_key.wrapped` in the story dir; all artifact bodies are sealed
+  under the per-story cipher (`_story_cipher`), never the master directly. A story
+  with no wrapped-key file (legacy KC-5) transparently falls back to the master —
+  old and new layouts coexist with no plaintext window.
+- Crypto-shred is automatic: hard-delete (KC-1) already sweeps the story dir, so
+  the only wrapped copy of the data key is destroyed on delete.
+- `StoryArtifactStore.rewrap_story(story_id, *, new_master)` re-wraps a story's data
+  key under a new master **without** re-encrypting bodies (see procedure below).
+- Tests: `tests/kathai_chithiram/storage/test_store_envelope.py` and the KC-10
+  cases in `test_crypto.py`.
+
+## Master-key rotation procedure
+The master key (`KC_STORAGE_KEY`) can be rotated without touching artifact bodies:
+
+1. Provision the new master key alongside the current one (both available to the
+   rotation job — e.g. `KC_STORAGE_KEY` and a `KC_STORAGE_KEY_NEXT`).
+2. Build a store bound to the **current** master; build an `AesGcmCipher` for the
+   **new** master.
+3. For every `story_id` in `store.iter_story_ids()`, call
+   `store.rewrap_story(story_id, new_master=<new cipher>)`. Each call unwraps the
+   per-story data key with the current master and re-wraps it under the new one;
+   the artifact bodies are untouched. (Legacy stories with no wrapped key are
+   skipped — migrate those by re-encrypting bodies if needed.)
+4. Once every story is re-wrapped, promote the new key to `KC_STORAGE_KEY` and
+   retire the old one. Reads now succeed only under the new master.
+
+Rotation is incremental and interruptible: a story already re-wrapped reads under
+the new master; one not yet re-wrapped still reads under the old master, so both
+keys must remain available until the sweep completes.

@@ -34,11 +34,15 @@ from typing import Protocol, runtime_checkable
 from kathai_chithiram.errors import DecryptionError, EncryptionKeyError
 
 __all__ = [
+    "DATA_KEY_BYTES",
     "STORAGE_KEY_ENV",
     "AesGcmCipher",
     "StorageCipher",
+    "generate_data_key",
     "generate_key",
     "load_cipher_from_env",
+    "unwrap_data_key",
+    "wrap_data_key",
 ]
 
 #: Environment variable holding the base64-encoded 32-byte storage key.
@@ -46,6 +50,9 @@ STORAGE_KEY_ENV = "KC_STORAGE_KEY"
 
 _KEY_BYTES = 32  # AES-256
 _NONCE_BYTES = 12  # GCM standard nonce length
+
+#: Length of a per-story data key (AES-256), for envelope encryption (KC-10).
+DATA_KEY_BYTES = _KEY_BYTES
 
 
 @runtime_checkable
@@ -107,6 +114,66 @@ class AesGcmCipher:
             return self._aead.decrypt(nonce, ciphertext, None)
         except InvalidTag as exc:
             raise DecryptionError(artifact) from exc
+
+
+def generate_data_key() -> bytes:
+    """Return a fresh 32-byte per-story data key for envelope encryption (KC-10).
+
+    Unlike :func:`generate_key`, this returns raw key bytes (not a base64 string):
+    a data key is never configured by a human — it is generated per story, wrapped
+    under the master key with :func:`wrap_data_key`, and only ever stored wrapped.
+
+    Returns:
+        32 cryptographically-random bytes suitable for :class:`AesGcmCipher`.
+    """
+    return os.urandom(_KEY_BYTES)
+
+
+def wrap_data_key(master: StorageCipher, data_key: bytes) -> bytes:
+    """Wrap a per-story ``data_key`` under the ``master`` cipher (envelope encryption).
+
+    The returned token is authenticated ciphertext (KC-10): destroying it renders
+    the story's artifacts unrecoverable even if their ciphertext bytes survive in a
+    stale backup (crypto-shredding, DPIA R5).
+
+    Args:
+        master: The master cipher (from :data:`STORAGE_KEY_ENV`) that wraps keys.
+        data_key: The 32-byte per-story data key to wrap.
+
+    Returns:
+        The wrapped (encrypted) data key.
+
+    Raises:
+        EncryptionKeyError: If ``data_key`` is not exactly 32 bytes.
+    """
+    if len(data_key) != _KEY_BYTES:
+        raise EncryptionKeyError(f"data key must be {_KEY_BYTES} bytes, got {len(data_key)}")
+    return master.encrypt(data_key)
+
+
+def unwrap_data_key(
+    master: StorageCipher, wrapped: bytes, *, artifact: str
+) -> AesGcmCipher:
+    """Unwrap a wrapped data key and return the per-story artifact cipher.
+
+    Fails closed: a tampered wrapped key, or one wrapped under a different master,
+    raises :class:`DecryptionError` rather than yielding a usable cipher.
+
+    Args:
+        master: The master cipher that wrapped the key.
+        wrapped: The wrapped data-key token from :func:`wrap_data_key`.
+        artifact: A safe label for the wrapped-key artifact, used in the error if
+            unwrapping fails. No key material or story content.
+
+    Returns:
+        An :class:`AesGcmCipher` bound to the unwrapped per-story data key.
+
+    Raises:
+        DecryptionError: If the wrapped key cannot be authenticated/decrypted.
+        EncryptionKeyError: If the unwrapped material is not a valid 32-byte key.
+    """
+    data_key = master.decrypt(wrapped, artifact=artifact)
+    return AesGcmCipher(data_key)
 
 
 def generate_key() -> str:
