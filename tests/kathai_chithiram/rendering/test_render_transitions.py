@@ -70,7 +70,9 @@ def test_cut_leaves_the_first_scene_frame_untouched():
     from generate_animation import scene_from_content
 
     scene = plan.scenes[0]
-    raw = scene_from_content(scene.setting, scene.caption, scene.props, 0)
+    raw = scene_from_content(
+        scene.setting, scene.caption, scene.props, scene.pose, scene.expression, 0
+    )
     assert (frames[plan.fps] == raw).all()
 
 

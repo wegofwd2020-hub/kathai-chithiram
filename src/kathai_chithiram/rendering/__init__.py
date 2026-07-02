@@ -42,6 +42,7 @@ from kathai_chithiram.rendering.scene_art_hints import (
     Gesture,
     SceneArtHint,
     art_hint_for,
+    resolve_figure_cues,
 )
 from kathai_chithiram.rendering.sfx import (
     SfxBed,
@@ -87,6 +88,7 @@ __all__ = [
     "Gesture",
     "SceneArtHint",
     "art_hint_for",
+    "resolve_figure_cues",
     "build_captions",
     "build_narration_track",
     "build_render_plan",

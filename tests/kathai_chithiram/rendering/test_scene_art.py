@@ -100,8 +100,10 @@ def test_recognized_props_change_the_frame():
     _renderer()  # ensure matplotlib/PIL
     from generate_animation import scene_from_content
 
-    with_props = scene_from_content("a park", "She played.", ("ball", "book"), 0)
-    without = scene_from_content("a park", "She played.", (), 0)
+    with_props = scene_from_content(
+        "a park", "She played.", ("ball", "book"), "standing", "calm", 0
+    )
+    without = scene_from_content("a park", "She played.", (), "standing", "calm", 0)
     assert not np.array_equal(with_props, without)  # props were drawn
 
 
@@ -109,9 +111,32 @@ def test_unrecognized_props_are_ignored():
     _renderer()
     from generate_animation import scene_from_content
 
-    unknown = scene_from_content("a park", "She played.", ("spaceship", "dragon"), 0)
-    none = scene_from_content("a park", "She played.", (), 0)
+    unknown = scene_from_content(
+        "a park", "She played.", ("spaceship", "dragon"), "standing", "calm", 0
+    )
+    none = scene_from_content("a park", "She played.", (), "standing", "calm", 0)
     assert np.array_equal(unknown, none)  # nothing recognized → identical frame
+
+
+def test_character_expression_drives_the_face():
+    _renderer()
+    from generate_animation import scene_from_content
+
+    caption = "She looked at the window."  # neutral caption; expression must decide
+    sleepy = scene_from_content("a room", caption, (), "standing", "sleepy", 0)
+    happy = scene_from_content("a room", caption, (), "standing", "happy", 0)
+    assert not np.array_equal(sleepy, happy)  # eyes-closed vs smiling
+
+
+def test_script_expression_overrides_the_caption():
+    _renderer()
+    from generate_animation import scene_from_content
+
+    # Caption says "smiled", but the script's sleepy expression wins.
+    caption = "She smiled a big happy smile."
+    honored = scene_from_content("a room", caption, (), "standing", "sleepy", 0)
+    as_caption = scene_from_content("a room", caption, (), "standing", "happy", 0)
+    assert not np.array_equal(honored, as_caption)
 
 
 def test_render_with_props_passes_the_safety_guard():

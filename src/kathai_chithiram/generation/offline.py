@@ -98,6 +98,31 @@ def _infer_props(caption: str) -> list[str]:
     return props
 
 
+# Caption keywords → the character's expression / pose strings. The strings are the
+# ones the render-time figure resolver recognizes, so an inferred mood is honored.
+_SLEEPY_CAP = ("sleep", "asleep", "nap", "tired", "yawn", "bedtime", "drowsy")
+_WORRIED_CAP = ("scared", "afraid", "worried", "nervous", "upset", "sad", "cried", "anxious")
+_HAPPY_CAP = ("smil", "happ", "laugh", "proud", "glad", "excit", "cheer", "giggle", "joy")
+_WAVE_CAP = ("wave", "hello", "hiya", "goodbye", "greet")
+
+
+def _infer_expression(caption: str) -> str:
+    """Infer the character's expression string from the caption (sleepy>worried>happy)."""
+    text = caption.lower()
+    if any(word in text for word in _SLEEPY_CAP):
+        return "sleepy"
+    if any(word in text for word in _WORRIED_CAP):
+        return "worried"
+    if any(word in text for word in _HAPPY_CAP):
+        return "happy"
+    return "calm"
+
+
+def _infer_pose(caption: str) -> str:
+    """Infer the character's pose string from the caption."""
+    return "waving" if any(word in caption.lower() for word in _WAVE_CAP) else "standing"
+
+
 def _reading_duration_s(caption: str) -> int:
     """Give a caption enough time on screen to be read, within the 2–8 s band.
 
@@ -168,7 +193,13 @@ def build_offline_scene_script(
             "narration": caption,
             "caption": caption,  # contract: caption must match narration verbatim
             "setting": _infer_setting(caption),
-            "characters": [{"id": "child", "pose": "standing", "expression": "calm"}],
+            "characters": [
+                {
+                    "id": "child",
+                    "pose": _infer_pose(caption),
+                    "expression": _infer_expression(caption),
+                }
+            ],
             "props": _infer_props(caption),
             "transition_in": "fade",
             "transition_out": "fade",

@@ -102,6 +102,58 @@ def test_no_props_when_no_keywords_and_cap_respected():
         assert len(scene["props"]) <= 2
 
 
+# ── character expression / pose inference ────────────────────────────────────────
+def _first_character(script: dict) -> dict:
+    return script["scenes"][0]["characters"][0]
+
+
+def test_expression_inferred_sleepy():
+    script = build_offline_scene_script(
+        story_text="That night she was very tired and went to sleep quietly.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    assert _first_character(script)["expression"] == "sleepy"
+
+
+def test_expression_inferred_happy():
+    script = build_offline_scene_script(
+        story_text="She felt so proud and laughed with all of her happy friends today.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    assert _first_character(script)["expression"] == "happy"
+
+
+def test_expression_inferred_worried():
+    script = build_offline_scene_script(
+        story_text="He was scared of the loud dark storm and felt very worried inside.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    assert _first_character(script)["expression"] == "worried"
+
+
+def test_pose_inferred_waving():
+    script = build_offline_scene_script(
+        story_text="She waved hello to her good friend across the whole sunny street.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    assert _first_character(script)["pose"] == "waving"
+
+
+def test_default_character_is_calm_and_standing():
+    script = build_offline_scene_script(
+        story_text="She looked slowly around the whole wide room at everything there.",
+        mapping=_mapping(),
+        story_id="s1",
+    )
+    character = _first_character(script)
+    assert character["expression"] == "calm"
+    assert character["pose"] == "standing"
+
+
 # ── name safety (KC-2) ──────────────────────────────────────────────────────────
 def test_child_name_never_appears_in_the_script():
     script = build_offline_scene_script(story_text=_STORY, mapping=_mapping(), story_id="s1")

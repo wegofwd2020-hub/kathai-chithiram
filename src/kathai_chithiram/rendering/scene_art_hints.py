@@ -16,6 +16,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import TypeVar
+
+_T = TypeVar("_T")
 
 __all__ = [
     "Background",
@@ -23,6 +26,7 @@ __all__ = [
     "Gesture",
     "SceneArtHint",
     "art_hint_for",
+    "resolve_figure_cues",
 ]
 
 
@@ -41,7 +45,8 @@ class Expression(str, Enum):
 
     SMILE = "smile"
     SLEEPY = "sleepy"
-    CALM = "calm"  # neutral-gentle default
+    CALM = "calm"  # gentle default (a soft smile)
+    NEUTRAL = "neutral"  # no smile, eyes open (e.g. worried / sad / scared)
 
 
 class Gesture(str, Enum):
@@ -144,3 +149,55 @@ def _first_match(
 def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
     """Whether any of ``keywords`` occurs in ``text``."""
     return any(keyword in text for keyword in keywords)
+
+
+# The scene script's ``characters[].expression`` / ``pose`` words, mapped to the
+# figure cues. Matched per token so "very happy" still resolves. An unrecognized
+# word falls back to the caption-derived hint, so a generic value never overrides
+# what the caption clearly says.
+_EXPRESSION_WORDS: dict[str, Expression] = {
+    "smile": Expression.SMILE, "smiling": Expression.SMILE, "happy": Expression.SMILE,
+    "proud": Expression.SMILE, "glad": Expression.SMILE, "excited": Expression.SMILE,
+    "cheerful": Expression.SMILE, "joyful": Expression.SMILE, "delighted": Expression.SMILE,
+    "sleepy": Expression.SLEEPY, "tired": Expression.SLEEPY, "sleeping": Expression.SLEEPY,
+    "asleep": Expression.SLEEPY, "drowsy": Expression.SLEEPY,
+    "calm": Expression.CALM, "relaxed": Expression.CALM, "content": Expression.CALM,
+    "focused": Expression.CALM, "gentle": Expression.CALM, "peaceful": Expression.CALM,
+    "neutral": Expression.NEUTRAL, "sad": Expression.NEUTRAL, "scared": Expression.NEUTRAL,
+    "worried": Expression.NEUTRAL, "upset": Expression.NEUTRAL, "nervous": Expression.NEUTRAL,
+    "afraid": Expression.NEUTRAL, "anxious": Expression.NEUTRAL, "serious": Expression.NEUTRAL,
+}
+_POSE_GESTURES: dict[str, Gesture] = {
+    "wave": Gesture.WAVE, "waves": Gesture.WAVE, "waving": Gesture.WAVE, "greeting": Gesture.WAVE,
+}
+
+
+def resolve_figure_cues(pose: str, expression: str, caption: str) -> tuple[Expression, Gesture]:
+    """Resolve the figure's expression + gesture, script-first then caption.
+
+    The scene script's ``characters[].expression`` / ``pose`` win when they name a
+    recognized cue; otherwise the caption's keywords decide, so a generic authored
+    value ("standing", an unknown mood) never suppresses a clear caption.
+
+    Args:
+        pose: The character's ``pose`` string from the script.
+        expression: The character's ``expression`` string from the script.
+        caption: The scene caption (used as the fallback signal).
+
+    Returns:
+        The chosen :class:`Expression` and :class:`Gesture`.
+    """
+    text = caption.lower()
+    expr = _match_token(expression, _EXPRESSION_WORDS) or _expression(text)
+    gesture = _match_token(pose, _POSE_GESTURES)
+    if gesture is None:
+        gesture = Gesture.WAVE if _contains_any(text, _WAVE_KEYWORDS) else Gesture.REST
+    return expr, gesture
+
+
+def _match_token(value: str, table: dict[str, _T]) -> _T | None:
+    """Return the mapping for the first token of ``value`` found in ``table``."""
+    for token in value.lower().split():
+        if token in table:
+            return table[token]
+    return None
