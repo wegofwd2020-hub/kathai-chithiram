@@ -26,7 +26,7 @@ import shlex
 import sys
 import uuid
 from collections.abc import Callable, Sequence
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -68,6 +68,8 @@ __all__ = ["build_arg_parser", "main"]
 
 #: Filename for the review-gated draft animation under a story's ``media/`` dir.
 _DRAFT_MEDIA_FILENAME = "animation.mp4"
+#: Append-only backup-cascade log at the store root (opaque story ids only).
+_BACKUP_PURGE_LOG_FILE = "backup_purge.jsonl"
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -230,6 +232,43 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="The child's name. Used only to strip/reinsert; never stored or logged.",
     )
     _add_common_args(author)
+
+    delete = sub.add_parser(
+        "delete",
+        help="Permanently delete a story and all its artifacts (owner only, irreversible).",
+    )
+    delete.add_argument("story_id", help="Opaque id of the story to delete.")
+    delete.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the story's artifacts live under (default: ./kc_store).",
+    )
+    delete.add_argument(
+        "--yes", action="store_true", help="Skip the confirmation prompt (for scripts)."
+    )
+
+    sweep = sub.add_parser(
+        "retention-sweep",
+        help="Purge undelivered stories older than the retention window (ops/cron).",
+    )
+    sweep.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the stories live under (default: ./kc_store).",
+    )
+    sweep.add_argument(
+        "--max-age-days",
+        type=int,
+        default=None,
+        help="Override the retention window (default: 30 days).",
+    )
+    sweep.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be purged and delete nothing.",
+    )
     return parser
 
 
@@ -334,6 +373,10 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_progress(args)
     if args.command == "author":
         return _cmd_author(args)
+    if args.command == "delete":
+        return _cmd_delete(args)
+    if args.command == "retention-sweep":
+        return _cmd_retention_sweep(args)
     return _cmd_generate(args, provider=provider)
 
 
@@ -587,6 +630,97 @@ def _cmd_assign(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     print(f"✓ Granted {role.value} on {args.story_id} to {args.principal}.")
+    return 0
+
+
+def _cmd_delete(args: argparse.Namespace, *, input_fn: Callable[[str], str] = input) -> int:
+    """Permanently delete one story (owner-only, verifiable KC-1 hard-delete).
+
+    Irreversible, so it confirms first unless ``--yes``. Authorization + audit run
+    through the guarded store (ADR-004); the removal crypto-shreds the per-story key
+    (KC-10) and asserts no artifact remains (KC-1).
+    """
+    from kathai_chithiram.storage import BackupPurgeLog
+
+    if not args.yes:
+        prompt = (
+            f"Permanently delete story {args.story_id} and ALL its artifacts? "
+            "This cannot be undone."
+        )
+        try:
+            answer = input_fn(f"{prompt} (y/n) ").strip().lower()
+        except EOFError:
+            answer = ""
+        if answer not in {"y", "yes"}:
+            print("Aborted; nothing was deleted.")
+            return 0
+
+    store = _open_guarded_store(args.store_root)
+    if store is None:
+        return 2
+    purge_log = BackupPurgeLog(args.store_root / _BACKUP_PURGE_LOG_FILE)
+    try:
+        receipt = store.delete_story(args.story_id, purge_log=purge_log)
+    except KathaiChithiramError as exc:
+        print(f"error: delete failed: {exc}", file=sys.stderr)
+        return 2
+
+    print(
+        f"✓ Deleted {receipt.story_id}: {receipt.removed_file_count} artifact(s) removed, "
+        "per-story key crypto-shredded, backup-purge logged."
+    )
+    return 0
+
+
+def _cmd_retention_sweep(args: argparse.Namespace) -> int:
+    """Purge undelivered stories older than the retention window (system/ops op).
+
+    A cross-story sweep, so it runs on the raw store in a privileged context (like
+    the progress evidence read); ``--dry-run`` reports candidates without deleting.
+    """
+    from kathai_chithiram.storage import (
+        DEFAULT_RETENTION,
+        BackupPurgeLog,
+        purge_undelivered_stories,
+    )
+
+    store = _open_store(args.store_root)
+    if store is None:
+        return 2
+    max_age = (
+        timedelta(days=args.max_age_days) if args.max_age_days is not None else DEFAULT_RETENTION
+    )
+    if max_age < timedelta(0):
+        print("error: --max-age-days must be non-negative", file=sys.stderr)
+        return 2
+    now = datetime.now(timezone.utc)
+
+    if args.dry_run:
+        cutoff = now - max_age
+        candidates = []
+        for story_id in store.iter_story_ids():
+            try:
+                metadata = store.read_metadata(story_id)
+            except KathaiChithiramError:
+                continue
+            if not metadata.delivered and metadata.created_at < cutoff:
+                candidates.append(story_id)
+        print(
+            f"dry-run: {len(candidates)} undelivered story(ies) older than "
+            f"{max_age.days}d would be purged."
+        )
+        for story_id in candidates:
+            print(f"  {story_id}")
+        return 0
+
+    purge_log = BackupPurgeLog(args.store_root / _BACKUP_PURGE_LOG_FILE)
+    receipts = purge_undelivered_stories(store, now=now, purge_log=purge_log, max_age=max_age)
+    print(
+        f"✓ Retention sweep: purged {len(receipts)} undelivered story(ies) older "
+        f"than {max_age.days}d."
+    )
+    for receipt in receipts:
+        print(f"  {receipt.story_id} ({receipt.removed_file_count} artifact(s))")
     return 0
 
 

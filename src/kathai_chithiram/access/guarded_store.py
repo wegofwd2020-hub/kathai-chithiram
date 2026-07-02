@@ -35,6 +35,8 @@ from kathai_chithiram.access.audit import AccessEvent, AccessOutcome, AuditSink
 from kathai_chithiram.access.policy import AccessPolicy, Action, StoryGrants
 from kathai_chithiram.access.principal import Principal, Role
 from kathai_chithiram.errors import AccessDeniedError
+from kathai_chithiram.storage.deletion import BackupPurgeLog, DeletionReceipt
+from kathai_chithiram.storage.deletion import delete_story as _delete_story
 from kathai_chithiram.storage.store import StoryArtifactStore, StoryMetadata
 
 __all__ = ["GuardedStore"]
@@ -127,6 +129,32 @@ class GuardedStore:
             AccessDeniedError: If the caller is not authorized to manage the story.
         """
         return self._guard(story_id, Action.MANAGE_STORY)
+
+    def delete_story(
+        self, story_id: str, *, purge_log: BackupPurgeLog, when: datetime | None = None
+    ) -> DeletionReceipt:
+        """Hard-delete a story (owner-only) with verification + backup-cascade.
+
+        Erasure is an ownership action, so it requires ``MANAGE_STORY`` — the guard
+        both authorizes it and records the access in the audit trail (ADR-004). The
+        actual removal is the verifiable KC-1 hard-delete (crypto-shreds the KC-10
+        per-story key and asserts no artifact remains).
+
+        Args:
+            story_id: The story to delete.
+            purge_log: Backup-cascade log to record the deletion in.
+            when: Optional timestamp recorded in the purge log.
+
+        Returns:
+            The :class:`DeletionReceipt` for the verified deletion.
+
+        Raises:
+            AccessDeniedError: If the caller is not authorized to manage the story.
+            StoryNotFoundError: If the story does not exist.
+            DeletionError: If removal fails or any artifact remains afterwards.
+        """
+        self._guard(story_id, Action.MANAGE_STORY)
+        return _delete_story(self._store, story_id, purge_log=purge_log, when=when)
 
     # --- content reads ------------------------------------------------------
 

@@ -260,6 +260,88 @@ def test_author_interactive_skips_an_overlong_step(tmp_path: Path) -> None:
     assert len(script["scenes"]) == 1  # only the valid step became a scene
 
 
+# --- erasure + retention (kc delete / kc retention-sweep) ----------------------
+
+
+def _seed_owned_story(store_root: Path, story_id: str, *, created, delivered: bool = False) -> None:
+    from kathai_chithiram.cli import _LOCAL_PRINCIPAL_ID
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store = StoryArtifactStore(store_root)
+    store.create_story(story_id, created_at=created, story_text="x", delivered=delivered)
+    store.write_grants(story_id, {"owner_id": _LOCAL_PRINCIPAL_ID, "assignments": {}})
+
+
+def test_delete_removes_a_story(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_owned_story(store_root, "s1", created=datetime.now(timezone.utc))
+    code = main(["delete", "s1", "--store-root", str(store_root), "--yes"])
+    assert code == 0
+    assert not StoryArtifactStore(store_root).exists("s1")
+
+
+def test_delete_prompt_aborts_without_confirmation(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.cli import _cmd_delete
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_owned_story(store_root, "s1", created=datetime.now(timezone.utc))
+    args = build_arg_parser().parse_args(["delete", "s1", "--store-root", str(store_root)])
+    code = _cmd_delete(args, input_fn=lambda _p: "n")
+    assert code == 0
+    assert StoryArtifactStore(store_root).exists("s1")  # not deleted
+
+
+def test_delete_denied_for_non_owner(tmp_path: Path, monkeypatch) -> None:
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_owned_story(store_root, "s1", created=datetime.now(timezone.utc))
+    monkeypatch.setenv("KC_PRINCIPAL", "stranger")  # not the owner
+    code = main(["delete", "s1", "--store-root", str(store_root), "--yes"])
+    assert code == 2
+    assert StoryArtifactStore(store_root).exists("s1")
+
+
+def test_retention_sweep_purges_only_old_undelivered(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    old = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    _seed_owned_story(store_root, "old", created=old)  # undelivered + old → purged
+    _seed_owned_story(store_root, "kept-delivered", created=old, delivered=True)
+    _seed_owned_story(store_root, "kept-recent", created=datetime.now(timezone.utc))
+
+    code = main(["retention-sweep", "--store-root", str(store_root)])
+    assert code == 0
+    store = StoryArtifactStore(store_root)
+    assert not store.exists("old")
+    assert store.exists("kept-delivered")
+    assert store.exists("kept-recent")
+
+
+def test_retention_sweep_dry_run_deletes_nothing(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_owned_story(store_root, "old", created=datetime(2026, 1, 1, tzinfo=timezone.utc))
+    code = main(["retention-sweep", "--store-root", str(store_root), "--dry-run"])
+    assert code == 0
+    assert StoryArtifactStore(store_root).exists("old")  # dry-run left it in place
+
+
 # --- M1 progress engine (kc progress, gated) -----------------------------------
 
 
