@@ -122,6 +122,11 @@ their own child.
 
 ## 6. Consultation & sign-off
 
+A single reviewer entry point — `docs/DPO_REVIEW_PACKAGE.md` — collates this DPIA,
+the parent notice, `PRIVACY.md`, and the supporting evidence, and lists the specific
+decisions and open gaps (international transfer, controller/processor DPA, Art. 22,
+DSAR process) we need a DPO/counsel to rule on.
+
 - **Internal:** WeGoFwd2020 (owner). ADR-001/002 authors for the safety and
   profiling stances.
 - **Required before launch:** DPO / qualified data-protection counsel; where the
