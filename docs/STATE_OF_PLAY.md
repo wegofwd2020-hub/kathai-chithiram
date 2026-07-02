@@ -17,7 +17,7 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **551
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **558
 tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
 template below). The matplotlib reference renderer (`generate_animation.py`)
 carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
@@ -25,7 +25,7 @@ path (a heavier bpy lift, lower value than the default matplotlib flow).
 
 ## TL;DR
 
-The **product pipeline is built and green** (551 tests): a parent's story becomes a
+The **product pipeline is built and green** (558 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -40,7 +40,11 @@ provisioning.
 - **Core pipeline** — scene-script contract + validation, generation behind the
   `wegofwd-llm` seam (Anthropic provider), both reference renderers consume the contract,
   parent intake with consent capture. `kc intake` / `kc generate` / `kc review` /
-  `kc assign` / `kc progress` / **`kc author`** CLI.
+  `kc assign` / `kc progress` / `kc author` / **`kc delete`** / **`kc retention-sweep`** CLI.
+- **Erasure + retention are CLI-invokable** — `kc delete <story>` (owner-only, guarded +
+  audited, verifiable KC-1 hard-delete + KC-10 crypto-shred, confirms unless `--yes`) and
+  `kc retention-sweep` (purge undelivered older than the window; `--dry-run` reports only).
+  The right-to-erasure the DPIA/PRIVACY reference is now user-invokable, not just a function.
 - **Three ways to make a story** — `kc intake` (interactive, consented), `kc generate`
   (free text; `--offline` = no LLM/key), and **`kc author`** (a structured story template
   **from a file or via guided interactive prompts** → scene script, deterministic, no key —
