@@ -1,0 +1,25 @@
+{
+  "policy_id": "SAMPLE-not-clinical-do-not-use-in-production",
+  "window": 6,
+  "min_sessions": 4,
+  "enabled": true,
+  "rules": [
+    {
+      "rule_id": "advance",
+      "conditions": [
+        { "metric": "independence_rate", "comparator": ">=", "threshold": 0.8 },
+        { "metric": "refusal_rate", "comparator": "<=", "threshold": 0.1 }
+      ],
+      "signal": "advance",
+      "suggested_premise": "[SAMPLE - not clinical] Introduce a slightly longer version of the same routine.",
+      "rationale": "[SAMPLE - not clinical] Independence has held across recent sessions with low refusal."
+    },
+    {
+      "rule_id": "hold",
+      "conditions": [
+        { "metric": "refusal_rate", "comparator": ">=", "threshold": 0.5 }
+      ],
+      "signal": "hold"
+    }
+  ]
+}
