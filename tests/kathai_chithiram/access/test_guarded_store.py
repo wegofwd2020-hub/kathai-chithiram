@@ -220,3 +220,108 @@ def test_non_owner_cannot_delete(tmp_path: Path) -> None:
         with pytest.raises(AccessDeniedError):
             GuardedStore(store, principal).delete_story("s1", purge_log=log)
     assert store.exists("s1")  # deletion is owner-only; nothing was removed
+
+
+# --- child-scoped stories (ADR-005 D3) -----------------------------------------
+
+
+def _registry_with_child():
+    """A registry: family mum+dad, child kid, therapist ot assigned, consent on record."""
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.people import (
+        AgeBand,
+        Child,
+        Family,
+        ParentalConsent,
+        PeopleRegistry,
+        Therapist,
+    )
+
+    reg = PeopleRegistry()
+    reg.add_family(Family(family_id="fam", owner_id="mum", member_ids=frozenset({"mum", "dad"})))
+    reg.add_child(Child(child_id="kid", family_id="fam", age_band=AgeBand.AGE_6_8))
+    reg.add_therapist(Therapist(principal_id="ot"))
+    reg.assign("kid", "ot", Role.THERAPIST)
+    reg.record_consent(ParentalConsent(
+        consenting_parent_id="mum", child_id="kid", policy_version="v1",
+        granted_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
+    ))
+    return reg
+
+
+def _child_story(store, reg):
+    mum = GuardedStore(store, Principal("mum"), registry=reg, clock=_clock)
+    mum.create_story_for_child("s1", child_id="kid", created_at=_AT, story_text="calm")
+    mum.write_scene_script("s1", _SCRIPT)
+    return mum
+
+
+def test_child_scoped_access_follows_the_child(tmp_path: Path) -> None:
+    reg = _registry_with_child()
+    store = _store(tmp_path)
+    _child_story(store, reg)
+
+    # The other parent (dad) owns the child's content too.
+    dad = GuardedStore(store, Principal("dad"), registry=reg, clock=_clock)
+    assert dad.read_scene_script("s1") == _SCRIPT
+    # The assigned therapist may read feedback but not write content.
+    ot = GuardedStore(store, Principal("ot"), registry=reg, clock=_clock)
+    assert ot.read_session_feedback("s1") == []
+    with pytest.raises(AccessDeniedError):
+        ot.write_scene_script("s1", _SCRIPT)
+    # A stranger is denied.
+    with pytest.raises(AccessDeniedError):
+        GuardedStore(store, _STRANGER, registry=reg, clock=_clock).read_scene_script("s1")
+
+
+def test_reassigning_a_therapist_propagates_to_existing_stories(tmp_path: Path) -> None:
+    from kathai_chithiram.people import Therapist
+
+    reg = _registry_with_child()
+    store = _store(tmp_path)
+    _child_story(store, reg)
+
+    new_ot = GuardedStore(store, Principal("ot2"), registry=reg, clock=_clock)
+    with pytest.raises(AccessDeniedError):
+        new_ot.read_scene_script("s1")  # not yet assigned
+    reg.add_therapist(Therapist(principal_id="ot2"))
+    reg.assign("kid", "ot2", Role.THERAPIST)
+    assert new_ot.read_scene_script("s1") == _SCRIPT  # live resolution — no re-write
+
+
+def test_create_for_child_needs_consent(tmp_path: Path) -> None:
+
+    from kathai_chithiram.people import AgeBand, Child, Family, PeopleRegistry
+
+    reg = PeopleRegistry()
+    reg.add_family(Family(family_id="fam", owner_id="mum", member_ids=frozenset({"mum"})))
+    reg.add_child(Child(child_id="kid", family_id="fam", age_band=AgeBand.AGE_3_5))
+    mum = GuardedStore(_store(tmp_path), Principal("mum"), registry=reg, clock=_clock)
+    with pytest.raises(AccessDeniedError, match="consent"):
+        mum.create_story_for_child("s1", child_id="kid", created_at=_AT, story_text="x")
+
+
+def test_create_for_child_rejects_a_non_family_principal(tmp_path: Path) -> None:
+    reg = _registry_with_child()
+    outsider = GuardedStore(_store(tmp_path), Principal("ot"), registry=reg, clock=_clock)
+    with pytest.raises(AccessDeniedError, match="family member"):
+        outsider.create_story_for_child("s1", child_id="kid", created_at=_AT, story_text="x")
+
+
+def test_child_scoped_story_without_a_registry_fails_closed(tmp_path: Path) -> None:
+    reg = _registry_with_child()
+    store = _store(tmp_path)
+    _child_story(store, reg)
+    # A guarded view with no registry cannot resolve the child's grants → denied.
+    no_reg = GuardedStore(store, Principal("mum"), clock=_clock)
+    with pytest.raises(AccessDeniedError, match="registry"):
+        no_reg.read_scene_script("s1")
+
+
+def test_assign_role_rejected_on_a_child_scoped_story(tmp_path: Path) -> None:
+    reg = _registry_with_child()
+    store = _store(tmp_path)
+    mum = _child_story(store, reg)
+    with pytest.raises(ValueError, match="via the registry"):
+        mum.assign_role("s1", "ot", Role.THERAPIST)

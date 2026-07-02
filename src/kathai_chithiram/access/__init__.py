@@ -28,6 +28,7 @@ from kathai_chithiram.access.policy import (
     AccessPolicy,
     Action,
     ChildGrants,
+    ChildGrantsSource,
     Grants,
     StoryGrants,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "Principal",
     "Role",
     "ChildGrants",
+    "ChildGrantsSource",
     "Grants",
     "StoryGrants",
 ]

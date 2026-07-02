@@ -24,7 +24,14 @@ from typing import Protocol, runtime_checkable
 from kathai_chithiram.access.principal import Principal, Role
 from kathai_chithiram.errors import AccessDeniedError
 
-__all__ = ["Action", "AccessPolicy", "ChildGrants", "Grants", "StoryGrants"]
+__all__ = [
+    "Action",
+    "AccessPolicy",
+    "ChildGrants",
+    "ChildGrantsSource",
+    "Grants",
+    "StoryGrants",
+]
 
 _ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
@@ -85,6 +92,25 @@ class Grants(Protocol):
 
     def role_of(self, principal: Principal) -> Role | None:
         """Return the principal's role for this resource, or ``None`` if it has none."""
+        ...
+
+
+@runtime_checkable
+class ChildGrantsSource(Protocol):
+    """Resolves a child's grants + consent for the enforcement boundary (ADR-005 D3).
+
+    The store layer authorizes a child-scoped story by asking this source for the
+    child's live :class:`Grants` and whether parental consent is on record — without
+    depending on the ``people`` package (which depends on this one). The concrete
+    ``PeopleRegistry`` satisfies it structurally.
+    """
+
+    def child_grants(self, child_id: str) -> Grants:
+        """Return the child's grants, or raise if the child is unknown."""
+        ...
+
+    def has_consent(self, child_id: str) -> bool:
+        """Whether parental consent is on record for the child."""
         ...
 
 
