@@ -9,6 +9,7 @@ output reaches a child; output that trips a guard is not delivered.
 
 from __future__ import annotations
 
+from kathai_chithiram.rendering.audio_mux import mux_wav_into_mp4
 from kathai_chithiram.rendering.narration import (
     DEFAULT_SAMPLE_RATE,
     NarrationSynthesizer,
@@ -33,11 +34,13 @@ from kathai_chithiram.rendering.safety import (
     guard_frame_rate,
     guard_render,
 )
+from kathai_chithiram.rendering.voices import CliTtsSynthesizer
 
 __all__ = [
     "DEFAULT_SAMPLE_RATE",
     "MAX_NARRATION_VOLUME",
     "MAX_SFX_VOLUME",
+    "CliTtsSynthesizer",
     "NarrationSynthesizer",
     "NarrationTrack",
     "PreparedScene",
@@ -53,4 +56,5 @@ __all__ = [
     "guard_frame_rate",
     "guard_narration_track",
     "guard_render",
+    "mux_wav_into_mp4",
 ]

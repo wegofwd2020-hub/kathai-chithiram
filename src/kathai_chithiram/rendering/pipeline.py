@@ -25,12 +25,18 @@ from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, ClassVar
 
 from kathai_chithiram.errors import UnsupportedSchemaVersionError
 from kathai_chithiram.privacy.pseudonymize import NameMapping, reinsert
+from kathai_chithiram.rendering.audio_mux import mux_wav_into_mp4
+from kathai_chithiram.rendering.narration import (
+    NarrationSynthesizer,
+    NarrationTrack,
+    build_narration_track,
+)
 from kathai_chithiram.rendering.safety import RenderSafetyReport, guard_render
 from kathai_chithiram.scene_script.validation import validate_scene_script
 
@@ -98,11 +104,14 @@ class RenderResult:
         safety_report: The report the render-time guards passed.
         output_path: Where the final artifact was written, or ``None`` if the
             render was produced without emitting a file.
+        has_audio: Whether an audible narration track was produced (and, for a
+            file render, muxed into the output). ``False`` for a silent render.
     """
 
     plan: RenderPlan
     safety_report: RenderSafetyReport
     output_path: str | None
+    has_audio: bool = False
 
 
 def build_render_plan(
@@ -168,6 +177,7 @@ class SceneScriptRenderer(ABC):
         *,
         mapping: NameMapping | None = None,
         output_path: str | None = None,
+        narration: NarrationSynthesizer | None = None,
     ) -> RenderResult:
         """Render ``script`` safely; return a :class:`RenderResult`.
 
@@ -177,6 +187,10 @@ class SceneScriptRenderer(ABC):
             output_path: Where to write the final artifact. If ``None``, frames
                 are produced and guarded but no file is emitted (useful for
                 tests and safety analysis).
+            narration: Optional in-process voice. When given, a narration track is
+                built from the plan, its measured level is safety-guarded, and — for
+                a file render — an audible track is muxed into the output. Defaults
+                to no audio (a silent render), preserving the video-only behavior.
 
         Returns:
             The :class:`RenderResult` for a guard-passing render.
@@ -185,16 +199,22 @@ class SceneScriptRenderer(ABC):
             SceneScriptInvalidError: If the script is invalid.
             UnsupportedSchemaVersionError: If this renderer can't render the
                 script's MAJOR version.
-            RenderSafetyError: If the produced output trips a render-time guard;
-                no final artifact is left behind in that case.
+            RenderSafetyError: If the produced output (video or the narration
+                track) trips a render-time guard; no final artifact is left behind.
+            RuntimeError: If audio was requested but muxing is unavailable/fails.
         """
         plan = build_render_plan(script, mapping=mapping)
         self._require_supported(script)
 
+        track = build_narration_track(plan, narration) if narration is not None else None
+        has_audio = track is not None and not track.is_silent
+
         if output_path is None:
-            report = self._render(plan, draft_path=None)
+            report = self._measured_report(self._render(plan, draft_path=None), track)
             guard_render(report)
-            return RenderResult(plan=plan, safety_report=report, output_path=None)
+            return RenderResult(
+                plan=plan, safety_report=report, output_path=None, has_audio=has_audio
+            )
 
         # Keep the original suffix on the draft (``out.draft.mp4``, not
         # ``out.mp4.draft``): writers like imageio-ffmpeg pick the container from
@@ -202,8 +222,11 @@ class SceneScriptRenderer(ABC):
         out = Path(output_path)
         draft_path = str(out.with_name(f"{out.stem}.draft{out.suffix}"))
         try:
-            report = self._render(plan, draft_path=draft_path)
+            report = self._measured_report(self._render(plan, draft_path=draft_path), track)
             guard_render(report)
+            # Guard the (video) draft first, then mux audio only once it is safe.
+            if has_audio and track is not None:
+                mux_wav_into_mp4(draft_path, track.to_wav_bytes())
         except BaseException:
             # Never leave an unsafe or partial draft behind.
             if os.path.exists(draft_path):
@@ -211,7 +234,24 @@ class SceneScriptRenderer(ABC):
             raise
 
         os.replace(draft_path, output_path)
-        return RenderResult(plan=plan, safety_report=report, output_path=output_path)
+        return RenderResult(
+            plan=plan, safety_report=report, output_path=output_path, has_audio=has_audio
+        )
+
+    @staticmethod
+    def _measured_report(
+        report: RenderSafetyReport, track: NarrationTrack | None
+    ) -> RenderSafetyReport:
+        """Fold a narration track's *measured* peak into the safety report.
+
+        The subclass ``_render`` describes only the video (its narration level is a
+        placeholder); when a track is present, its measured peak becomes the level
+        the shared audio guard checks — so the guarantee is enforced on the signal
+        actually produced, not a self-reported number.
+        """
+        if track is None:
+            return report
+        return replace(report, narration_volume=track.peak)
 
     def _require_supported(self, script: Mapping[str, Any]) -> None:
         """Reject a script whose schema MAJOR this renderer does not support."""
