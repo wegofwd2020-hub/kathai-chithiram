@@ -112,7 +112,9 @@ must land **before** identity/DOB/account code:
 
 7.1 **DPIA revised** — new data categories (child DOB, account/contact identifiers,
 program/progress records), the R-register updated, and the necessity/proportionality of
-DOB (Decision 4) justified (or downgraded to an age band).
+DOB (Decision 4) justified (or downgraded to an age band). **Drafted:**
+`docs/DPIA_ADDENDUM_accounts_and_dob.md` (Draft v0.1) assesses this expansion and lists the
+decisions it needs from the DPO — awaiting that review.
 7.2 **Lawful basis re-examined** — accounts and the therapist⇄family relationship change
 who the controller/processor are; the parent-on-behalf-of-child consent, and any
 therapist-organization data-sharing, need a basis (the DPO package's open "accounts,"

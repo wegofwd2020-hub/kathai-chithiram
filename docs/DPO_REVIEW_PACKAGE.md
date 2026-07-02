@@ -118,6 +118,12 @@ We are surfacing these honestly rather than assuming them closed:
 - **Accounts.** If/when accounts exist, the minimal account/contact data (DPIA §2
   table) needs its own basis and retention.
 
+> **Now assessed:** the proposed **accounts + child-DOB** expansion (ADR-005 parts b/c) —
+> covering these "controller/processor," "retention justification," and "accounts" gaps —
+> is written up in `docs/DPIA_ADDENDUM_accounts_and_dob.md`, with the specific DOB-granularity,
+> lawful-basis, DPA, and Children's-Code decisions it needs from you. That expansion is
+> **gated on your review of the addendum** and is not built.
+
 ## Current posture (what is and isn't live)
 
 - **Prototype.** No EU/UK launch and no multi-user/networked deployment is cleared
