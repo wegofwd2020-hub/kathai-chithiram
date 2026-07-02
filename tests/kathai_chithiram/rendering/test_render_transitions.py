@@ -66,10 +66,11 @@ def test_cut_leaves_the_first_scene_frame_untouched():
     cut = _set_transitions(tiny_script(fps=8, duration_s=2), "cut")
     plan = build_render_plan(cut)
     frames = renderer._composited_frames(plan)
-    # With a hard cut the composited frame is the raw art, unchanged.
-    from generate_animation import SCENE_ART
+    # With a hard cut the composited frame is the raw (content-driven) art, unchanged.
+    from generate_animation import scene_from_content
 
-    raw = SCENE_ART[1](0, plan.scenes[0].caption)
+    scene = plan.scenes[0]
+    raw = scene_from_content(scene.setting, scene.caption, 0)
     assert (frames[plan.fps] == raw).all()
 
 
