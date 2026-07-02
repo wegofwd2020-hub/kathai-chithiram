@@ -76,6 +76,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
     intake = sub.add_parser(
         "intake", help="Interactive parent flow: consent, name, story -> draft."
     )
+    intake.add_argument(
+        "--offline",
+        action="store_true",
+        help=(
+            "Generate the scene script locally by sentence segmentation — no LLM, "
+            "no network, no API key. For manual verification / demos: it does NOT "
+            "adapt or safety-rephrase the story, and the human review gate still "
+            "applies. The child's name is still stripped and never stored."
+        ),
+    )
     _add_common_args(intake)
 
     generate = sub.add_parser(
@@ -496,7 +506,14 @@ def _cmd_intake(
     if submission is None:
         return 2
 
-    if provider is None:
+    use_offline = getattr(args, "offline", False) and provider is None
+    if use_offline:
+        print(
+            "note: --offline generation — deterministic local segmentation, NOT an "
+            "LLM adaptation. For verification/demo; a human must still review the draft.",
+            file=sys.stderr,
+        )
+    elif provider is None:
         provider = _build_anthropic_provider(model=args.model, effort=args.effort)
         if provider is None:
             return 2
@@ -512,8 +529,9 @@ def _cmd_intake(
             story_id=args.story_id,
             model_id=args.model,
             max_attempts=args.max_attempts,
+            offline=use_offline,
         )
-    except KathaiChithiramError as exc:
+    except (KathaiChithiramError, ValueError) as exc:
         print(f"error: intake failed: {exc}", file=sys.stderr)
         return 2
 
