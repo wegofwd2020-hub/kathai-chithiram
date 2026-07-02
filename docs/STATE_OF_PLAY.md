@@ -17,14 +17,15 @@ authoring** side (PRs #47–#59, all merged): in-process narration with **per-ch
 voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
 caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
 — story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **511
-tests pass, ruff + mypy clean**. The matplotlib reference renderer (`generate_animation.py`)
+backdrop, props, character pose/expression, reading-paced duration). Tree is green — **526
+tests pass, ruff + mypy clean** (526 incl. the M1 policy wire-up below). The matplotlib
+reference renderer (`generate_animation.py`)
 carries these; the Blender v2 renderer is intentionally left on the older hard-cut/generic
 path (a heavier bpy lift, lower value than the default matplotlib flow).
 
 ## TL;DR
 
-The **product pipeline is built and green** (511 tests): a parent's story becomes a
+The **product pipeline is built and green** (526 tests): a parent's story becomes a
 validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
 LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
 sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
@@ -78,16 +79,20 @@ provisioning.
 ### 1. M1 — per-child progress → therapist-suggested premises
 
 - **Built:** ADR-002 (stance, Accepted) + ADR-003 (engine design, Accepted). The
-  `ProgressPolicy` schema and the deterministic `measure`/`suggest` interpreter are landed,
-  **default-free and gated off** — the engine has no thresholds and cannot run until a
-  policy is supplied. Collaborator brief is at v0.2.
+  `ProgressPolicy` schema, the deterministic `measure`/`suggest` interpreter, **and the
+  enabling wire-up** are all landed (PR #61) — a policy *loader* (`load_policy`), the runner
+  (`run_progress` = measure→suggest→record), and `kc progress <goal> --policy <file>
+  --story <id>`. It stays **default-free and gated off**: no policy ships, `--policy` is
+  required, recording a suggestion needs the therapist role (fails closed), and the
+  suggestion is inert (a therapist decides). Collaborator brief is at v0.2.
+- **The engineering track is now COMPLETE** — there is no code left to write; the engine
+  runs the moment a reviewed policy file exists. What remains is the policy itself and its
+  clearances:
 - **Blocked on — a professional collaborator (therapist/OT):** authoring the real
-  `ProgressPolicy` — the window K, thresholds, and trend definitions (ADR-002 D7.1), and
-  the framing/copy sign-off (D7.4). *Engineering cannot pick these — they are clinical
+  `ProgressPolicy` file — the window K, thresholds, and trend definitions (ADR-002 D7.1),
+  and the framing/copy sign-off (D7.4). *Engineering cannot pick these — they are clinical
   judgment.*
 - **Also blocked on — DPO/counsel:** the progress-profiling DPIA touchpoint (D7.6).
-- **Then (small, engineering-ownable):** wire the signed policy into the interpreter and to
-  `record_suggestion`. Cannot start until the gate opens.
 
 ### 2. KC-11 — operator access control (DPIA R10)
 
@@ -131,15 +136,18 @@ remains on the critical path is human and operational.
 - **Professional collaborator (therapist/OT):** author the `ProgressPolicy` and sign off the
   framing (unblocks M1).
 - **DPO / counsel:** sign off the DPIA (unblocks launch) and the progress-profiling touchpoint.
-- **Engineering:** KC-10 is now built; nothing else is pick-up-able — everything waits on
-  the above. When the M1 gate opens, a small policy-wiring task remains.
+- **Engineering:** nothing is pick-up-able — everything waits on the above. The M1 policy
+  wire-up (`load_policy` → `run_progress` → `kc progress`) is now built too (PR #61), so
+  even that last "when the gate opens" task is done; the engine runs the moment a reviewed
+  policy file exists.
 
 ## Next-session task queue (pinned 2026-07-01, all cleared 2026-07-02)
 
 **All four queued items are done.** What now remains is entirely external/operational
-(a DPO/counsel sign-off, a professional collaborator, and ops provisioning) plus, when
-the M1 gate opens, a small policy-wiring task. The four completed items are kept below
-for the audit trail.
+(a DPO/counsel sign-off, a professional collaborator, and ops provisioning) — the M1
+policy wire-up that used to be the one "when the gate opens" code task is now built too
+(PR #61), so no engineering task is left. The four completed items are kept below for the
+audit trail.
 
 1. ~~**Build KC-10 — envelope / per-story keys (crypto-shredding).**~~ **Done 2026-07-02.**
    Per-story data keys wrapped by the master; crypto-shred on delete; incremental
