@@ -97,7 +97,7 @@ Ratings are pre-mitigation inherent, then residual after the (proposed) control.
 | R12 | **Child DOB** increases re-identification / is over-collected | High | Child-only, and now **age band only — full DOB never collected** (A8 ruling; DOB discarded at intake). Stored + encrypted at rest (KC-5/KC-10) and swept by erasure (R15). **Minimization + granularity decided (age band).** | Low |
 | R13 | **Therapist over-access** — a therapist assigned to one child sees another family's data | High | Grants lifted from per-story to **child-scoped** (ADR-005 D3); a therapist sees only children they are assigned to; every access audited (ADR-004). **Model decided; child-scoped grants not built.** | Low if built as specified |
 | R14 | **Child-level progress profiling** (aggregation + reporting) misused or over-rich | High | Extends R8: fixed primitives only, no free text, non-clinical framing (CONTENT_SAFETY §3/§7); the engine stays gated (ADR-002 D7) and reports are read-only, therapist-decided. **Needs the D7.6 DPIA progress touchpoint + copy review.** | Medium until D7.6 done |
-| R15 | **Incomplete erasure** of an account / family / child / program / DOB | High | Erasure must **cascade**: deleting a family/child destroys its stories, programs, progress, DOB, and account records, extending KC-1 hard-delete + KC-10 crypto-shred to the new entities, with a test asserting it. **Not built — a precondition (A6).** | High until built + tested |
+| R15 | **Incomplete erasure** of an account / family / child / program / DOB | High | Erasure **cascades**: `erase_child` / `erase_family` hard-delete every child-scoped story (KC-1 delete + KC-10 per-story crypto-shred) and remove the child's registry records (age band, consents, assignments), then assert nothing remains; a cascade-delete test covers it (§8). **Built (people/erasure.py).** Programs/progress fold in when (c) lands; the per-child key tree (§3) is a further hardening. | Low–Medium (registry still plaintext until the key tree) |
 
 Existing risks that shift: **R8** (child profiling) is reinforced by per-child aggregation
 and reporting — its residual stays **Medium** and now also depends on R14. **R10** (operator
@@ -143,9 +143,9 @@ decisions. Recorded here so the basis is traceable:
 **Still open / still required before production use** (build proceeds against **synthetic**
 identities only until these land): A4.2 account-data basis, A4.3 controller/processor + a
 **DPA** for external therapist orgs, A4.4 Children's Code scope; A6.2 the re-versioned
-parent notice + consent; A6.3 the cascade-erasure test (`RETENTION_ERASURE_DESIGN.md`, built
-as part of this work); A6.4 the D7.6 progress touchpoint. The rulings above unblock **building**
-(b)/(c); they do not by themselves authorize processing a **real** child's data.
+parent notice + consent; A6.4 the D7.6 progress touchpoint. (**A6.3 — the cascade-erasure
+test — is now built**, `people/erasure.py`.) The rulings above unblock **building** (b)/(c);
+they do not by themselves authorize processing a **real** child's data.
 
 ## A7. Consultation & sign-off
 
