@@ -231,6 +231,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         required=True,
         help="The child's name. Used only to strip/reinsert; never stored or logged.",
     )
+    author.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what the template lowers to (scenes/settings/props); store and render nothing.",
+    )
     _add_common_args(author)
 
     delete = sub.add_parser(
@@ -504,15 +509,20 @@ def _cmd_author(
             return 2
         template = collected
 
-    store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
-    if store is None:
-        return 2
     mapping = NameMapping.for_child(args.child_name)
-
     try:
         script = template_to_scene_script(template, mapping, story_id=story_id)
     except (ValueError, KathaiChithiramError) as exc:
         print(f"error: could not build a scene script from the template: {exc}", file=sys.stderr)
+        return 2
+
+    if args.dry_run:
+        # Preview only: show what the template lowers to; store nothing, render nothing.
+        _print_script_preview(script)
+        return 0
+
+    store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
+    if store is None:
         return 2
 
     # story.txt keeps the raw authored text (with the name), like the other flows.
@@ -565,6 +575,24 @@ def _collect_template(*, input_fn: Callable[[str], str]) -> StoryTemplate | None
     except ValueError as exc:
         print(f"\nerror: {exc}. Nothing was authored.", file=sys.stderr)
         return None
+
+
+def _print_script_preview(script: dict[str, Any]) -> None:
+    """Print the scene structure a template lowered to (for ``--dry-run``)."""
+    print(
+        f"\ntitle: {script['title']}  |  scenes: {len(script['scenes'])}  |  "
+        f"{script['total_duration_s']}s @ {script['fps']}fps  |  {script['locale']}"
+    )
+    print("scenes (child shown as token; the real name appears only in the rendered video):")
+    for scene in script["scenes"]:
+        character = scene["characters"][0]
+        props = ", ".join(scene["props"]) or "—"
+        print(
+            f"  {scene['index']}. [{scene['duration_s']}s] {scene['setting']} · "
+            f"{character['expression']}/{character['pose']} · props: {props}"
+        )
+        print(f"       {scene['caption']}")
+    print("\n(dry run — nothing was stored or rendered.)")
 
 
 def _cmd_review(args: argparse.Namespace) -> int:

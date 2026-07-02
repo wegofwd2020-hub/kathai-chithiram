@@ -1,0 +1,9 @@
+{
+  "title": "Alex Goes to the Park",
+  "steps": [
+    { "text": "Alex walks to the sunny park and looks around.", "setting": "outdoors" },
+    { "text": "Alex waves hello to a friend near the swings.", "pose": "waving" },
+    { "text": "Alex kicks the ball across the soft green grass.", "props": ["ball"] },
+    { "text": "Alex rests on a bench and feels happy and proud.", "expression": "happy" }
+  ]
+}

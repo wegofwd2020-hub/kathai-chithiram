@@ -125,3 +125,16 @@ def test_invalid_json_is_rejected(tmp_path: Path):
     path.write_text("{not json", encoding="utf-8")
     with pytest.raises(ValueError, match="not valid JSON"):
         load_template(path)
+
+
+# ── shipped examples ─────────────────────────────────────────────────────────────
+def test_shipped_example_templates_lower_to_valid_scripts():
+    # Guard: every example in docs/examples/ must load, lower, validate, and not leak.
+    examples = Path(__file__).resolve().parents[3] / "docs" / "examples"
+    files = sorted(examples.glob("*.json"))
+    assert files, "no example templates found"
+    alex = NameMapping.for_child("Alex")  # the examples' sample name
+    for path in files:
+        script = template_to_scene_script(load_template(path), alex, story_id="ex")
+        validate_scene_script(script)
+        assert "Alex" not in json.dumps(script)  # the sample name is stripped to the token
