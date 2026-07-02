@@ -58,6 +58,10 @@ Each **condition** is `{ "metric", "comparator", "threshold" }`.
 
 ## How to run it
 
+For a full **synthetic** end-to-end run — engine → suggestion → therapist decision,
+plus the cases where the engine *declines* to suggest — see
+[`docs/M1_WALKTHROUGH.md`](M1_WALKTHROUGH.md) (illustrative data, not clinical).
+
 Once you've filled the template and set `"enabled": true`, hand the file over; it runs
 as the therapist assigned to the story:
 
