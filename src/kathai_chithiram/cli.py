@@ -28,7 +28,7 @@ import uuid
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from wegofwd_video.errors import VideoError
 
@@ -60,6 +60,9 @@ from kathai_chithiram.storage import StoryArtifactStore, StoryStore
 from kathai_chithiram.video import generate_story_video
 from kathai_chithiram.wegofwd_llm.anthropic_provider import DEFAULT_MODEL
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
+
+if TYPE_CHECKING:
+    from kathai_chithiram.authoring import StoryTemplate
 
 __all__ = ["build_arg_parser", "main"]
 
@@ -211,10 +214,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
 
     author = sub.add_parser(
-        "author", help="Author a story from a structured template file → a draft video."
+        "author", help="Author a story from a template file — or interactively — → a draft."
     )
     author.add_argument(
-        "template", help="Path to a story-template JSON file (see docs/STORY_TEMPLATE.md)."
+        "template",
+        nargs="?",
+        help=(
+            "Path to a story-template JSON file (see docs/STORY_TEMPLATE.md). Omit to "
+            "author interactively (guided title + step prompts)."
+        ),
     )
     author.add_argument(
         "--child-name",
@@ -427,20 +435,31 @@ def _generate_offline(
     )
 
 
-def _cmd_author(args: argparse.Namespace) -> int:
-    """Author a story from a structured template file, store it, then render.
+def _cmd_author(
+    args: argparse.Namespace,
+    *,
+    input_fn: Callable[[str], str] = input,
+) -> int:
+    """Author a story from a template file — or interactively — store it, then render.
 
     Lowers the template deterministically to a scene script (no LLM, no key); the
     child's name is stripped and the review gate still applies (ADR-005 D6).
+    ``input_fn`` is injectable so the interactive prompts can be driven in tests.
     """
     from kathai_chithiram.authoring import load_template, template_to_scene_script
 
     story_id = args.story_id or uuid.uuid4().hex
-    try:
-        template = load_template(args.template)
-    except (OSError, ValueError) as exc:
-        print(f"error: cannot load template: {exc}", file=sys.stderr)
-        return 2
+    if args.template is not None:
+        try:
+            template = load_template(args.template)
+        except (OSError, ValueError) as exc:
+            print(f"error: cannot load template: {exc}", file=sys.stderr)
+            return 2
+    else:
+        collected = _collect_template(input_fn=input_fn)
+        if collected is None:
+            return 2
+        template = collected
 
     store = _open_guarded_store(args.store_root, warn_if_plaintext=True)
     if store is None:
@@ -463,6 +482,46 @@ def _cmd_author(args: argparse.Namespace) -> int:
     return _maybe_render(
         args, store=store, story_id=story_id, script=script, mapping=mapping
     )
+
+
+def _collect_template(*, input_fn: Callable[[str], str]) -> StoryTemplate | None:
+    """Run the interactive authoring prompts; return a ``StoryTemplate`` or ``None``.
+
+    Asks for a title, then a step's text at a time (one line each; an empty line
+    finishes). Each step's setting / props / mood are inferred from its text — the
+    JSON file is the way to set those explicitly. Returns ``None`` (after printing
+    why) if the title is blank or no steps were entered.
+    """
+    from kathai_chithiram.authoring import StoryStep, StoryTemplate
+
+    print("Kathai Chithiram — author a story\n")
+    print("Tell the story one step at a time, in order, from beginning to end.")
+    print("Keep each step short — one clear moment. The name is only used in the video.\n")
+
+    title = input_fn("Story title: ").strip()
+    print(
+        "\nNow the steps. Type one line per step and press Enter; press Enter on an "
+        "empty line when the story is done."
+    )
+
+    steps: list[StoryStep] = []
+    while True:
+        try:
+            text = input_fn(f"  Step {len(steps) + 1}: ").strip()
+        except EOFError:
+            break
+        if not text:
+            break
+        try:
+            steps.append(StoryStep(text=text))
+        except ValueError as exc:
+            print(f"  (skipped — {exc}; try a shorter line)", file=sys.stderr)
+
+    try:
+        return StoryTemplate(title=title, steps=tuple(steps))
+    except ValueError as exc:
+        print(f"\nerror: {exc}. Nothing was authored.", file=sys.stderr)
+        return None
 
 
 def _cmd_review(args: argparse.Namespace) -> int:

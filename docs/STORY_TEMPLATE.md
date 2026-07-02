@@ -53,6 +53,23 @@ Optional at the top level: `"fps"` (8–30, default 24) and `"locale"` (default
 kc author story.json --child-name Silas --out video.mp4 --captions srt
 ```
 
+### Or author interactively (no file)
+
+Omit the file and `kc author` walks you through it — a title, then one step per
+line, Enter on a blank line to finish. Each step's setting/props/mood are inferred
+from what you type (the JSON file is how you set those by hand).
+
+```bash
+kc author --child-name Silas --out video.mp4
+```
+```
+Story title: Silas Brushes His Teeth
+  Step 1: Silas stands at the sink and takes a slow breath.
+  Step 2: He picks up his toothbrush.
+  Step 3: He rinses and smiles proudly.
+  Step 4:            ← blank line finishes
+```
+
 Add narration or sound the same way as the other flows:
 `--voice 'espeak-ng -w {out} {text}'`, `--sfx ./sounds`, `--character-voice ...`.
 
