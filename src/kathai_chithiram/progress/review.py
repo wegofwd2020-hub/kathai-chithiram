@@ -30,7 +30,7 @@ from kathai_chithiram.progress.suggestion import (
     SuggestionDecision,
     SuggestionStatus,
 )
-from kathai_chithiram.storage import StoryArtifactStore
+from kathai_chithiram.storage import StoryArtifactStore, StoryStore
 
 __all__ = [
     "build_goal_evidence",
@@ -41,7 +41,7 @@ __all__ = [
 
 
 def record_suggestion(
-    store: StoryArtifactStore, story_id: str, suggestion: PremiseSuggestion
+    store: StoryStore, story_id: str, suggestion: PremiseSuggestion
 ) -> None:
     """Persist a premise suggestion awaiting a therapist's decision.
 
@@ -61,7 +61,7 @@ def record_suggestion(
 
 
 def decide_suggestion(
-    store: StoryArtifactStore,
+    store: StoryStore,
     story_id: str,
     *,
     suggestion_id: str,
@@ -115,7 +115,7 @@ def decide_suggestion(
     return decision
 
 
-def open_suggestions(store: StoryArtifactStore, story_id: str) -> list[PremiseSuggestion]:
+def open_suggestions(store: StoryStore, story_id: str) -> list[PremiseSuggestion]:
     """Return the suggestions for ``story_id`` that have no decision yet.
 
     Args:
@@ -142,8 +142,14 @@ def build_goal_evidence(
     returns the raw evidence over the most recent ``window`` sessions. Computes no
     progress measure (ADR-002 Decision 2/6).
 
+    Unlike the per-story functions here, this takes the raw
+    :class:`~kathai_chithiram.storage.store.StoryArtifactStore`, not the guardable
+    ``StoryStore``: it enumerates **every** story (``iter_story_ids``), a cross-story
+    operation that sits outside the per-story authorization model (ADR-004) — the
+    caller is responsible for running it in a suitably privileged context.
+
     Args:
-        store: The artifact store to scan.
+        store: The artifact store to scan (all stories).
         goal_id: The goal to gather evidence for.
         window: The number of most-recent sessions to include (>= 1).
 
@@ -161,7 +167,7 @@ def build_goal_evidence(
 
 
 def _parse_log(
-    store: StoryArtifactStore, story_id: str
+    store: StoryStore, story_id: str
 ) -> tuple[dict[str, PremiseSuggestion], set[str]]:
     """Return (suggestions by id, ids that have a decision) from the log."""
     suggestions: dict[str, PremiseSuggestion] = {}

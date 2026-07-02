@@ -9,13 +9,13 @@ here — that engine is gated behind ADR-002 Decision 7.
 from __future__ import annotations
 
 from kathai_chithiram.feedback.schema import SessionFeedback
-from kathai_chithiram.storage import StoryArtifactStore
+from kathai_chithiram.storage import StoryStore
 
 __all__ = ["load_session_feedback", "record_session_feedback"]
 
 
 def record_session_feedback(
-    *, store: StoryArtifactStore, story_id: str, feedback: SessionFeedback
+    *, store: StoryStore, story_id: str, feedback: SessionFeedback
 ) -> None:
     """Append one session's feedback to ``story_id``'s log.
 
@@ -33,7 +33,7 @@ def record_session_feedback(
 
 
 def load_session_feedback(
-    *, store: StoryArtifactStore, story_id: str
+    *, store: StoryStore, story_id: str
 ) -> list[SessionFeedback]:
     """Return every captured :class:`SessionFeedback` for ``story_id``, in order.
 
