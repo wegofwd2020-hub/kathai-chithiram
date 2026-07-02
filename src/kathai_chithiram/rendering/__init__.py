@@ -9,6 +9,14 @@ output reaches a child; output that trips a guard is not delivered.
 
 from __future__ import annotations
 
+from kathai_chithiram.rendering.narration import (
+    DEFAULT_SAMPLE_RATE,
+    NarrationSynthesizer,
+    NarrationTrack,
+    SilentNarrationSynthesizer,
+    build_narration_track,
+    guard_narration_track,
+)
 from kathai_chithiram.rendering.pipeline import (
     PreparedScene,
     RenderPlan,
@@ -27,16 +35,22 @@ from kathai_chithiram.rendering.safety import (
 )
 
 __all__ = [
+    "DEFAULT_SAMPLE_RATE",
     "MAX_NARRATION_VOLUME",
     "MAX_SFX_VOLUME",
+    "NarrationSynthesizer",
+    "NarrationTrack",
     "PreparedScene",
     "RenderPlan",
     "RenderResult",
     "RenderSafetyReport",
     "SceneScriptRenderer",
+    "SilentNarrationSynthesizer",
+    "build_narration_track",
     "build_render_plan",
     "guard_audio_levels",
     "guard_flashes",
     "guard_frame_rate",
+    "guard_narration_track",
     "guard_render",
 ]
