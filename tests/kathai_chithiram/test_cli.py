@@ -208,6 +208,58 @@ def test_author_rejects_a_bad_template(tmp_path: Path) -> None:
     assert code == 2
 
 
+def _author_interactive_args(store_root: Path) -> object:
+    # No template positional → interactive mode.
+    return build_arg_parser().parse_args(
+        ["author", "--child-name", CHILD, "--story-id", "auth-i",
+         "--store-root", str(store_root), "--no-render"]
+    )
+
+
+def test_author_interactive_builds_a_story(tmp_path: Path) -> None:
+    from kathai_chithiram.cli import _cmd_author
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    answers = iter(
+        ["Robin Brushes", "Robin stands at the sink.", "Robin picks up the toothbrush.", ""]
+    )
+    code = _cmd_author(_author_interactive_args(store_root), input_fn=lambda _p: next(answers))
+    assert code == 0
+
+    script = StoryArtifactStore(store_root).read_scene_script("auth-i")
+    assert len(script["scenes"]) == 2  # two steps → two scenes
+    assert "Robin" not in str(script)  # name stripped, token-only
+
+
+def test_author_interactive_needs_a_title(tmp_path: Path) -> None:
+    from kathai_chithiram.cli import _cmd_author
+
+    answers = iter(["", "a step", ""])  # blank title
+    args = _author_interactive_args(tmp_path / "store")
+    assert _cmd_author(args, input_fn=lambda _p: next(answers)) == 2
+
+
+def test_author_interactive_needs_a_step(tmp_path: Path) -> None:
+    from kathai_chithiram.cli import _cmd_author
+
+    answers = iter(["A title", ""])  # title, then an empty first step ends it
+    args = _author_interactive_args(tmp_path / "store")
+    assert _cmd_author(args, input_fn=lambda _p: next(answers)) == 2
+
+
+def test_author_interactive_skips_an_overlong_step(tmp_path: Path) -> None:
+    from kathai_chithiram.cli import _cmd_author
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    answers = iter(["Title", "x" * 200, "A good short step.", ""])  # 1st step too long → skipped
+    code = _cmd_author(_author_interactive_args(store_root), input_fn=lambda _p: next(answers))
+    assert code == 0
+    script = StoryArtifactStore(store_root).read_scene_script("auth-i")
+    assert len(script["scenes"]) == 1  # only the valid step became a scene
+
+
 # --- M1 progress engine (kc progress, gated) -----------------------------------
 
 
