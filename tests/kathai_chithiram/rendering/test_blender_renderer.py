@@ -20,6 +20,7 @@ def test_module_imports_without_bpy():
     # bpy is loaded lazily, so the module (and its content-art helpers) import fine.
     assert hasattr(ba, "build_scene_content")
     assert hasattr(ba, "_BACKDROP")
+    assert hasattr(ba, "_apply_transitions")  # fade/dissolve overlay is wired
 
 
 def test_demo_is_detected_by_title():
