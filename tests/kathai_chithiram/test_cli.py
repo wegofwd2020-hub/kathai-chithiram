@@ -167,6 +167,89 @@ def test_intake_happy_path_records_consent(tmp_path: Path) -> None:
     assert CHILD not in provider.requests[0].prompt
 
 
+# --- M1 progress engine (kc progress, gated) -----------------------------------
+
+
+def _seed_goal_feedback(store_root: Path, *, therapist: str) -> None:
+    """A story owned by the local operator, with a therapist grant + 3 sessions."""
+    from datetime import datetime, timezone
+
+    from kathai_chithiram.cli import _LOCAL_PRINCIPAL_ID
+    from kathai_chithiram.feedback.schema import MoodCheckin, PromptLevel, SessionFeedback
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store = StoryArtifactStore(store_root)
+    store.create_story("s1", created_at=datetime(2026, 6, 1, tzinfo=timezone.utc), story_text="x")
+    store.write_grants(
+        "s1", {"owner_id": _LOCAL_PRINCIPAL_ID, "assignments": {therapist: "therapist"}}
+    )
+    for day in range(3):
+        store.append_session_feedback(
+            "s1",
+            SessionFeedback(
+                goal_id="g1",
+                story_id="s1",
+                prompt_level=PromptLevel.INDEPENDENT,
+                completed=True,
+                mood_checkin=MoodCheckin.HAPPY,
+                recorded_at=datetime(2026, 6, 1 + day, tzinfo=timezone.utc),
+            ).to_record(),
+        )
+
+
+_POLICY_JSON = {
+    "policy_id": "test-v1", "window": 3, "min_sessions": 2, "enabled": True,
+    "rules": [{
+        "rule_id": "advance", "signal": "advance",
+        "conditions": [{"metric": "independence_rate", "comparator": ">=", "threshold": 0.8}],
+        "suggested_premise": "Try a harder step.", "rationale": "Independence held.",
+    }],
+}
+
+
+def test_progress_requires_a_policy(tmp_path: Path) -> None:
+    # --policy is required: argparse rejects the command before anything runs.
+    with pytest.raises(SystemExit):
+        main(["progress", "g1", "--story", "s1", "--store-root", str(tmp_path / "store")])
+
+
+def test_progress_runs_the_engine_and_records_an_inert_suggestion(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    _seed_goal_feedback(store_root, therapist="dr")
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(json.dumps(_POLICY_JSON), encoding="utf-8")
+    monkeypatch.setenv("KC_PRINCIPAL", "dr")  # the therapist may record suggestions
+
+    code = main(
+        ["progress", "g1", "--policy", str(policy_path), "--story", "s1",
+         "--store-root", str(store_root)]
+    )
+    assert code == 0
+    records = StoryArtifactStore(store_root).read_progress_suggestions("s1")
+    assert any(r.get("kind") == "suggestion" for r in records)  # recorded, inert
+
+
+def test_progress_denied_without_the_therapist_role(tmp_path: Path, monkeypatch) -> None:
+    # The default local operator owns the story but is not its therapist → recording
+    # a suggestion fails closed (ADR-002 actor model / ADR-004).
+    store_root = tmp_path / "store"
+    _seed_goal_feedback(store_root, therapist="dr")
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(json.dumps(_POLICY_JSON), encoding="utf-8")
+    # KC_PRINCIPAL unset → default local-operator (owner, not therapist).
+    monkeypatch.delenv("KC_PRINCIPAL", raising=False)
+
+    code = main(
+        ["progress", "g1", "--policy", str(policy_path), "--story", "s1",
+         "--store-root", str(store_root)]
+    )
+    assert code == 2  # denied
+
+
 def test_intake_offline_needs_no_provider(tmp_path: Path) -> None:
     from kathai_chithiram.storage import StoryArtifactStore
 

@@ -181,6 +181,34 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=Path("kc_store"),
         help="Directory the story's artifacts live under (default: ./kc_store).",
     )
+
+    progress = sub.add_parser(
+        "progress",
+        help="Run the M1 progress engine for a goal against a --policy (gated; see ADR-002 D7).",
+    )
+    progress.add_argument("goal_id", help="Opaque id of the goal to evaluate.")
+    progress.add_argument(
+        "--policy",
+        type=Path,
+        required=True,
+        help=(
+            "Collaborator-authored ProgressPolicy JSON. REQUIRED — no policy ships and "
+            "the engine does nothing without one. Do NOT use a policy that has not "
+            "passed clinical review (ADR-002 D7.1/7.4/7.6)."
+        ),
+    )
+    progress.add_argument(
+        "--story",
+        dest="story_id",
+        required=True,
+        help="Story id a produced suggestion is filed under for a therapist to review.",
+    )
+    progress.add_argument(
+        "--store-root",
+        type=Path,
+        default=Path("kc_store"),
+        help="Directory the stories live under (default: ./kc_store).",
+    )
     return parser
 
 
@@ -281,6 +309,8 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_review(args)
     if args.command == "assign":
         return _cmd_assign(args)
+    if args.command == "progress":
+        return _cmd_progress(args)
     return _cmd_generate(args, provider=provider)
 
 
@@ -445,6 +475,74 @@ def _cmd_assign(args: argparse.Namespace) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     print(f"✓ Granted {role.value} on {args.story_id} to {args.principal}.")
+    return 0
+
+
+def _cmd_progress(args: argparse.Namespace) -> int:
+    """Run the gated M1 progress engine against a collaborator-authored policy.
+
+    The engine runs ONLY the ``--policy`` supplied (no policy ships); a produced
+    suggestion is recorded through the therapist-in-the-loop seam and is inert — a
+    therapist still decides, and any accepted premise re-enters the safety pipeline.
+    Recording requires the acting principal (``KC_PRINCIPAL``) to hold the therapist
+    role on the story (ADR-002 actor model), so it fails closed otherwise.
+    """
+    from kathai_chithiram.progress import build_goal_evidence, load_policy, run_progress
+
+    print(
+        "note: M1 progress engine — runs only your --policy; a produced suggestion is "
+        "INERT (a therapist decides). Do NOT use a policy that has not passed clinical "
+        "review (ADR-002 D7.1/7.4/7.6).",
+        file=sys.stderr,
+    )
+    try:
+        policy = load_policy(args.policy)
+    except (OSError, ValueError) as exc:
+        print(f"error: cannot load policy: {exc}", file=sys.stderr)
+        return 2
+
+    raw = _open_store(args.store_root)
+    if raw is None:
+        return 2
+    guarded = _open_guarded_store(args.store_root)
+    if guarded is None:
+        return 2
+
+    try:
+        # Evidence is a cross-story read (privileged, unguarded — ADR-004); recording
+        # goes through the guard, which requires the therapist role on the story.
+        evidence = build_goal_evidence(raw, args.goal_id, window=policy.window)
+        outcome = run_progress(
+            guarded,
+            evidence=evidence,
+            policy=policy,
+            story_id=args.story_id,
+            suggestion_id=uuid.uuid4().hex,
+            created_at=datetime.now(timezone.utc),
+        )
+    except (KathaiChithiramError, ValueError) as exc:
+        print(f"error: progress run failed: {exc}", file=sys.stderr)
+        return 2
+
+    indicator = outcome.indicator
+    print(f"\ngoal: {args.goal_id}  |  policy: {policy.policy_id}")
+    print(
+        f"sessions in window: {indicator.evidence.session_count}/{policy.window}  |  "
+        f"state: {indicator.state.value}"
+    )
+    if indicator.fired_rule_id is not None:
+        print(f"fired rule: {indicator.fired_rule_id}  |  signal: {indicator.signal}")
+    if indicator.metrics:
+        print("metrics (raw, explainable):")
+        for metric, value in indicator.metrics.items():
+            print(f"  {metric.value}: {value:.3f}")
+    if outcome.recorded and outcome.suggestion is not None:
+        print(
+            f"\nrecorded suggestion {outcome.suggestion.suggestion_id} on story "
+            f"{args.story_id} — INERT, awaiting a therapist decision."
+        )
+    else:
+        print("\nno suggestion produced (the state/rules did not warrant one).")
     return 0
 
 
