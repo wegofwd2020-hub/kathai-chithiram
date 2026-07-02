@@ -540,6 +540,48 @@ def test_no_voice_flag_renders_silent(tmp_path: Path, monkeypatch) -> None:
     assert captured["narration"] is None
 
 
+def test_load_narration_builds_a_voice_cast_for_character_voices():
+    from kathai_chithiram.cli import _load_narration
+    from kathai_chithiram.rendering import VoiceCast
+
+    single = _load_narration("espeak-ng -w {out} {text}", None)
+    assert not isinstance(single, VoiceCast)  # a single narrator voice
+
+    cast = _load_narration(
+        "espeak-ng -w {out} {text}", ["mom=espeak-ng -v en+f3 -w {out} {text}"]
+    )
+    assert isinstance(cast, VoiceCast)
+    assert "mom" in cast.by_character
+
+
+def test_load_narration_rejects_a_bad_character_spec():
+    from kathai_chithiram.cli import _load_narration
+
+    with pytest.raises(ValueError, match="ID=CMD"):
+        _load_narration(None, ["no-equals-sign"])
+
+
+def test_character_voice_flag_threads_a_voice_cast_into_the_seam(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from kathai_chithiram.rendering import VoiceCast
+
+    captured: dict = {}
+    _capture_seam_narration(monkeypatch, captured)
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            tmp_path / "store",
+            "--provider-no-train-zdr",
+            "--character-voice",
+            "mom=espeak-ng -w {out} {text}",
+        ),
+        provider=_provider(),
+    )
+    assert code == 0
+    assert isinstance(captured["narration"], VoiceCast)
+
+
 def test_invalid_voice_template_exits_cleanly(tmp_path: Path) -> None:
     # A template missing {out} is a usage error: exit 2, and no render is attempted.
     code = main(

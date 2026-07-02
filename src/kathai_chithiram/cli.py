@@ -47,7 +47,9 @@ from kathai_chithiram.rendering import (
     NarrationSynthesizer,
     SceneScriptRenderer,
     SfxSynthesizer,
+    SilentNarrationSynthesizer,
     SoundBankSfxSynthesizer,
+    VoiceCast,
     build_captions,
     build_render_plan,
     to_srt,
@@ -233,6 +235,17 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
             "--voice 'espeak-ng -w {out} {text}'. Runs locally — the child's name "
             "stays on this machine — and needs the render extra plus the engine "
             "installed. Omit for a silent (video-only) draft."
+        ),
+    )
+    parser.add_argument(
+        "--character-voice",
+        action="append",
+        metavar="ID=CMD_TEMPLATE",
+        help=(
+            "Give a named character its own local TTS voice: 'ID=<command>' with "
+            "'{out}'/'{text}' tokens, e.g. --character-voice mom='espeak-ng -v en+f3 "
+            "-w {out} {text}'. Repeatable. Each scene is narrated in its foreground "
+            "character's voice; --voice is the narrator/fallback for the rest."
         ),
     )
     parser.add_argument(
@@ -635,9 +648,9 @@ def _maybe_render(
         return 2
 
     try:
-        narration = _load_voice(args.voice)
+        narration = _load_narration(args.voice, args.character_voice)
     except ValueError as exc:
-        print(f"error: invalid --voice template: {exc}", file=sys.stderr)
+        print(f"error: invalid --voice/--character-voice: {exc}", file=sys.stderr)
         return 2
 
     try:
@@ -738,6 +751,40 @@ def _load_voice(spec: str | None) -> NarrationSynthesizer | None:
     return CliTtsSynthesizer(shlex.split(spec))
 
 
+def _load_narration(
+    voice: str | None, character_voices: list[str] | None
+) -> NarrationSynthesizer | VoiceCast | None:
+    """Build the narration voicing from ``--voice`` and any ``--character-voice``.
+
+    With no ``--character-voice`` this is a single narrator voice (or ``None``). With
+    one or more, it is a :class:`VoiceCast`: each named character gets its own voice
+    and ``--voice`` (or silence) is the narrator for the rest.
+
+    Args:
+        voice: The ``--voice`` command template, or ``None``.
+        character_voices: The ``--character-voice`` ``ID=CMD`` specs, or ``None``.
+
+    Returns:
+        A single synthesizer, a :class:`VoiceCast`, or ``None`` for a silent draft.
+
+    Raises:
+        ValueError: If a template is invalid or a ``--character-voice`` spec is not
+            ``ID=CMD``.
+    """
+    narrator = _load_voice(voice)
+    specs = character_voices or []
+    if not specs:
+        return narrator
+
+    by_character: dict[str, NarrationSynthesizer] = {}
+    for spec in specs:
+        character_id, sep, command = spec.partition("=")
+        if not sep or not character_id.strip() or not command.strip():
+            raise ValueError(f"--character-voice must be ID=CMD (got {spec!r})")
+        by_character[character_id.strip()] = CliTtsSynthesizer(shlex.split(command))
+    return VoiceCast(narrator=narrator or SilentNarrationSynthesizer(), by_character=by_character)
+
+
 def _load_sfx(spec: str | None) -> SfxSynthesizer | None:
     """Build a local sound-bank sfx source from a ``--sfx`` directory path.
 
@@ -793,7 +840,7 @@ def _render_draft(
     script: dict[str, Any],
     mapping: NameMapping,
     extra_out: Path | None,
-    narration: NarrationSynthesizer | None = None,
+    narration: NarrationSynthesizer | VoiceCast | None = None,
     sfx: SfxSynthesizer | None = None,
 ) -> Path:
     """Render a guarded draft animation through the shared video seam and file it.
