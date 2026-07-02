@@ -29,6 +29,16 @@ class _ConstantVoice:
         return [self._amplitude] * round(duration_s * sample_rate)
 
 
+class _ConstantSfx:
+    """A deterministic non-silent cue source: every sample is ``amplitude``."""
+
+    def __init__(self, amplitude: float = 0.4) -> None:
+        self._amplitude = amplitude
+
+    def synthesize(self, cue: str, *, sample_rate: int, duration_s: float) -> Sequence[float]:
+        return [self._amplitude] * round(duration_s * sample_rate)
+
+
 def _has_audio_stream(path: Path) -> bool:
     import imageio_ffmpeg
 
@@ -126,3 +136,43 @@ def test_guard_only_render_measures_audio_without_a_file(tmp_path: Path):
     assert result.output_path is None
     assert result.has_audio is True
     assert result.safety_report.narration_volume == pytest.approx(0.5 * 0.7, abs=1e-3)
+
+
+# ── sfx integration (matplotlib) ──────────────────────────────────────────────
+def test_render_with_sfx_muxes_audio(tmp_path: Path):
+    renderer = _matplotlib_renderer()
+    script = tiny_script(fps=8, duration_s=2)
+    script["scenes"][0]["audio"]["sfx"] = ["water_running"]
+    out = tmp_path / "o.mp4"
+    result = renderer.render(script, output_path=str(out), sfx=_ConstantSfx(0.4))
+
+    assert result.has_audio is True
+    assert _has_audio_stream(out)
+    # sfx cues carry no author volume, so the measured peak is the source's own.
+    assert tuple(result.safety_report.sfx_levels) == pytest.approx((0.4,))
+
+
+def test_render_with_narration_and_sfx_mixes_both(tmp_path: Path):
+    renderer = _matplotlib_renderer()
+    script = tiny_script(fps=8, duration_s=2)
+    script["scenes"][0]["audio"]["sfx"] = ["bird"]
+    out = tmp_path / "o.mp4"
+    result = renderer.render(
+        script, output_path=str(out), narration=_ConstantVoice(0.5), sfx=_ConstantSfx(0.3)
+    )
+
+    assert result.has_audio is True
+    assert _has_audio_stream(out)
+    assert result.safety_report.narration_volume == pytest.approx(0.5 * 0.7, abs=1e-3)
+    assert tuple(result.safety_report.sfx_levels) == pytest.approx((0.3,))
+
+
+def test_over_loud_sfx_trips_guard_and_leaves_no_output(tmp_path: Path):
+    renderer = _matplotlib_renderer()
+    script = tiny_script(fps=8, duration_s=2)
+    script["scenes"][0]["audio"]["sfx"] = ["boom"]
+    out = tmp_path / "o.mp4"
+    with pytest.raises(RenderSafetyError, match="sfx"):
+        renderer.render(script, output_path=str(out), sfx=_ConstantSfx(0.9))  # 0.9 > 0.5 cap
+    assert not out.exists()
+    assert not (tmp_path / "o.draft.mp4").exists()
