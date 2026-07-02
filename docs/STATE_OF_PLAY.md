@@ -97,10 +97,12 @@ remains on the critical path is human and operational.
 - **Engineering:** KC-10 is now built; nothing else is pick-up-able — everything waits on
   the above. When the M1 gate opens, a small policy-wiring task remains.
 
-## Next-session task queue (pinned 2026-07-01, updated 2026-07-02)
+## Next-session task queue (pinned 2026-07-01, all cleared 2026-07-02)
 
-Resume here. The remaining items are prep for the external blockers above — no
-self-contained engineering item is left after KC-10.
+**All four queued items are done.** What now remains is entirely external/operational
+(a DPO/counsel sign-off, a professional collaborator, and ops provisioning) plus, when
+the M1 gate opens, a small policy-wiring task. The four completed items are kept below
+for the audit trail.
 
 1. ~~**Build KC-10 — envelope / per-story keys (crypto-shredding).**~~ **Done 2026-07-02.**
    Per-story data keys wrapped by the master; crypto-shred on delete; incremental
@@ -113,9 +115,11 @@ self-contained engineering item is left after KC-10.
    `docs/M1_OUTREACH_SEND_READY.md` — finalized pediatric-OT / advisory / cold-email
    message, three fill-ins left ([Name], signature, optional warm-intro line). **Not
    sent** — outward-facing; needs owner review + go-ahead before sending.
-4. **Assemble the DPO/counsel DPIA review package.** Collate `docs/DPIA.md` +
-   `docs/PARENT_PRIVACY_NOTICE.md` + `PRIVACY.md` + the open-items/questions into one entry
-   point for sign-off. Prepares for, does not substitute, legal review.
+4. ~~**Assemble the DPO/counsel DPIA review package.**~~ **Done 2026-07-02.**
+   `docs/DPO_REVIEW_PACKAGE.md` — one entry point: enclosed-docs inventory, processing
+   at-a-glance, the five sign-off asks, honestly-surfaced open gaps (international
+   transfer, controller/processor DPA, Art. 22, DSAR process, retention justification),
+   and a sign-off record. Prepares for, does not substitute, legal review.
 
 ## Human-in-the-loop stays on
 
