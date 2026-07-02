@@ -34,7 +34,7 @@ from wegofwd_video.errors import VideoError
 
 from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal, Role
 from kathai_chithiram.errors import KathaiChithiramError
-from kathai_chithiram.generation import generate_scene_script
+from kathai_chithiram.generation import build_offline_scene_script, generate_scene_script
 from kathai_chithiram.intake import (
     Consent,
     ParentSubmission,
@@ -97,6 +97,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Assert the provider org is configured for no-training AND "
             "zero-retention. Required to send story text; generation refuses "
             "without it. Backed by a dedicated key in ANTHROPIC_ZDR_API_KEY."
+        ),
+    )
+    generate.add_argument(
+        "--offline",
+        action="store_true",
+        help=(
+            "Generate the scene script locally by sentence segmentation — no LLM, "
+            "no network, no API key. For manual verification / demos: it does NOT "
+            "adapt or safety-rephrase the story, and the human review gate still "
+            "applies. The child's name is still stripped and never stored."
         ),
     )
     _add_common_args(generate)
@@ -266,6 +276,11 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
 
     mapping = NameMapping.for_child(args.child_name)
 
+    if args.offline and provider is None:
+        return _generate_offline(
+            args, store=store, story_id=story_id, story_text=story_text, mapping=mapping
+        )
+
     if provider is None:
         provider = _build_anthropic_provider(model=args.model, effort=args.effort)
         if provider is None:
@@ -304,6 +319,43 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
 
     return _maybe_render(
         args, store=store, story_id=story_id, script=result.script, mapping=mapping
+    )
+
+
+def _generate_offline(
+    args: argparse.Namespace,
+    *,
+    store: StoryStore,
+    story_id: str,
+    story_text: str,
+    mapping: NameMapping,
+) -> int:
+    """Generate the scene script locally (no LLM), store it, then render.
+
+    Segments the story deterministically — no provider, no network, no key — for
+    manual verification. The name is still stripped, the script is contract-valid,
+    and the review gate still applies.
+    """
+    print(
+        "note: --offline generation — deterministic local segmentation, NOT an LLM "
+        "adaptation. For verification/demo; a human must still review the draft.",
+        file=sys.stderr,
+    )
+    try:
+        script = build_offline_scene_script(
+            story_text=story_text, mapping=mapping, story_id=story_id
+        )
+    except (ValueError, KathaiChithiramError) as exc:
+        print(f"error: offline generation failed: {exc}", file=sys.stderr)
+        return 2
+
+    store.create_story(story_id, created_at=datetime.now(timezone.utc), story_text=story_text)
+    store.write_scene_script(story_id, script)
+    print(f"\nStory id: {story_id}")
+    print(f"Scenes:   {len(script['scenes'])} · {script['total_duration_s']}s @ {script['fps']}fps")
+
+    return _maybe_render(
+        args, store=store, story_id=story_id, script=script, mapping=mapping
     )
 
 

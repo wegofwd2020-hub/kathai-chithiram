@@ -662,6 +662,44 @@ def test_captions_requires_out(tmp_path: Path) -> None:
     assert code == 2
 
 
+# --- offline generation (--offline) --------------------------------------------
+
+
+def test_offline_generate_needs_no_provider(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    # No provider passed and no ZDR key: the offline path must still succeed.
+    code = main(_argv(_write_story(tmp_path), store_root, "--offline", "--no-render"))
+    assert code == 0
+
+    script = StoryArtifactStore(store_root).read_scene_script("test-story")
+    assert script["child_token"] == "CHILD"
+    assert len(script["scenes"]) >= 1
+    assert "Robin" not in str(script)  # the child's name is stripped, never stored
+
+
+def test_offline_flag_ignored_when_a_provider_is_supplied(tmp_path: Path) -> None:
+    # An explicit provider (e.g. a test/real LLM) takes precedence over --offline.
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    code = main(
+        _argv(
+            _write_story(tmp_path),
+            store_root,
+            "--offline",
+            "--provider-no-train-zdr",
+            "--no-render",
+        ),
+        provider=_provider(),
+    )
+    assert code == 0
+    # The scripted provider returns EXAMPLE_SCENE_SCRIPT, not the offline segmentation.
+    script = StoryArtifactStore(store_root).read_scene_script("test-story")
+    assert script["scenes"][0]["setting"] != "a calm, quiet place"
+
+
 # --- ZDR / no-training credential (KC-6) ---------------------------------------
 
 
