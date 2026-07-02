@@ -1,0 +1,96 @@
+# Kathai Chithiram — State of Play
+
+**As of:** 2026-07-01 · **Owner:** WeGoFwd2020 · **Purpose:** one place to see what is
+built, what is left, and **who each remaining item is blocked on** — so the next move is
+never ambiguous.
+
+> This is a status snapshot, not a spec. The authoritative detail lives in the ADRs,
+> `docs/DPIA.md`, `PRIVACY.md`, and the `TICKETS/`. Update it when a track changes state.
+
+## TL;DR
+
+The **product pipeline is built and green** (332 tests): a parent's story becomes a
+validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
+LLM seam, with encryption at rest and verifiable deletion. **There is essentially no
+engineering-ownable work left on the two open tracks** (M1 progress engine, KC-11 access
+control) — both are built to the line where the next step is a *person* or *deployment*,
+not code. What blocks launch is external: a professional collaborator, a DPO sign-off, and
+operational provisioning.
+
+## What is built (done)
+
+- **Core pipeline** — scene-script contract + validation, generation behind the
+  `wegofwd-llm` seam (Anthropic provider), both reference renderers consume the contract,
+  parent intake with consent capture. `kc intake` / `kc generate` / `kc review` /
+  `kc assign` CLI.
+- **Production hardening (KC-1…KC-9)** — verifiable hard-delete (KC-1), identifier
+  minimization before the LLM (KC-2), scene-script validation (KC-3), render-time seizure/
+  flash safety (KC-4), **encryption at rest** (KC-5), **dedicated ZDR/no-training
+  credential** (KC-6), **review→approve→deliver** gate (KC-7), **parent privacy notice** +
+  versioned consent (KC-8), **DPIA drafted** (KC-9).
+- **Access control (KC-11, ADR-004)** — code-complete: deny-by-default enforcement wired
+  through every app flow (CLI/intake/review/progress), a durable log-safe audit trail,
+  `kc assign` for reviewer/therapist grants, all role-scoped to the actor model.
+
+## Open tracks — status and who they are blocked on
+
+### 1. M1 — per-child progress → therapist-suggested premises
+
+- **Built:** ADR-002 (stance, Accepted) + ADR-003 (engine design, Accepted). The
+  `ProgressPolicy` schema and the deterministic `measure`/`suggest` interpreter are landed,
+  **default-free and gated off** — the engine has no thresholds and cannot run until a
+  policy is supplied. Collaborator brief is at v0.2.
+- **Blocked on — a professional collaborator (therapist/OT):** authoring the real
+  `ProgressPolicy` — the window K, thresholds, and trend definitions (ADR-002 D7.1), and
+  the framing/copy sign-off (D7.4). *Engineering cannot pick these — they are clinical
+  judgment.*
+- **Also blocked on — DPO/counsel:** the progress-profiling DPIA touchpoint (D7.6).
+- **Then (small, engineering-ownable):** wire the signed policy into the interpreter and to
+  `record_suggestion`. Cannot start until the gate opens.
+
+### 2. KC-11 — operator access control (DPIA R10)
+
+- **Built:** everything in code (ADR-004, PRs #28–#34).
+- **Blocked on — a deployment boundary (operational):** R10's residual drops from Medium to
+  Low only where an operator cannot bypass the app via direct filesystem access to the store
+  (a network boundary / no shared filesystem). In-app enforcement is done; the boundary is
+  infrastructure, not code.
+
+### 3. KC-10 — envelope / per-story keys (crypto-shredding)
+
+- **Status:** open, **P2 enhancement**, and the *one remaining engineering-ownable item*.
+  Not a blocker — KC-5 already satisfies the at-rest obligation. Raises the assurance of
+  R3/R5 (crypto-shred on delete, incremental rotation).
+- **Blocked on — nobody:** buildable now if prioritized.
+
+## Launch preconditions (from `docs/DPIA.md` §5) — the critical path
+
+The DPIA is **Draft v0.1, not signed off**. Before any EU/UK launch, all of:
+
+| # | Precondition | Blocked on | Kind |
+|---|--------------|-----------|------|
+| 1 | DPO / counsel review + sign-off of the DPIA and parent notice | **DPO / counsel** | external |
+| 2 | Confirm the Anthropic org is genuinely no-training / ZDR (R2) | **Owner (ops)** | operational |
+| 3 | `KC_STORAGE_KEY` in a secret manager, separate from data/backups, with rotation (R3) | **Owner (ops)** | operational |
+| 4 | Deployment boundary that removes the local filesystem bypass (R10) | **Owner (ops)** | operational |
+| 5 | Progress-engine DPIA touchpoint, if the engine is enabled (R8) | **Collaborator + DPO** | external |
+
+Code side of the two highest-inherent risks (R2 ZDR, R3 at-rest) is already done; what
+remains on the critical path is human and operational.
+
+## Who owns the next move
+
+- **WeGoFwd2020 (owner):** engage the professional collaborator; commission the DPO/counsel
+  review; provision the secret manager, confirm the ZDR org, and stand up a deployment
+  boundary.
+- **Professional collaborator (therapist/OT):** author the `ProgressPolicy` and sign off the
+  framing (unblocks M1).
+- **DPO / counsel:** sign off the DPIA (unblocks launch) and the progress-profiling touchpoint.
+- **Engineering:** only **KC-10** is pick-up-able now; everything else waits on the above.
+  When the M1 gate opens, a small policy-wiring task remains.
+
+## Human-in-the-loop stays on
+
+Per CLAUDE.md, the human review gate (`kc review`) remains mandatory before any output
+reaches a child until automated safety enforcement is independently tested — regardless of
+the tracks above.
