@@ -117,3 +117,13 @@ def test_shipped_policy_template_loads_and_is_inert():
     assert policy.enabled is False  # inert by construction
     assert policy.window >= 1 and 1 <= policy.min_sessions <= policy.window
     assert len(policy.rules) >= 1
+
+
+def test_shipped_sample_policy_loads_and_is_self_labeling():
+    # The runnable SAMPLE loads/validates, and its id + copy mark it non-clinical so
+    # any run output is obviously not a real policy.
+    examples = Path(__file__).resolve().parents[3] / "docs" / "examples"
+    policy = load_policy(examples / "progress_policy.sample.json")
+    assert "SAMPLE" in policy.policy_id and "production" in policy.policy_id
+    advance = policy.rule("advance")
+    assert advance is not None and "SAMPLE" in (advance.suggested_premise or "")

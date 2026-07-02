@@ -6,40 +6,27 @@
 > *works*; it says nothing about what a real signal should be. A trained therapist / OT
 > authors the real policy (`docs/PROGRESS_POLICY.md`, ADR-002 Decision 7.1); production
 > use also needs the clinical-copy sign-off (D7.4) and the DPIA progress-profiling
-> touchpoint (D7.6). Nothing here ships enabled — the repo's
-> `docs/examples/progress_policy.template.json` stays `enabled: false`.
+> touchpoint (D7.6). The repo ships a **self-labeling enabled sample**
+> (`docs/examples/progress_policy.sample.json`, id + copy marked `SAMPLE … not
+> clinical`) for demos/dev; the fill-in **template** for real use
+> (`docs/examples/progress_policy.template.json`) stays `enabled: false`.
 
 The loop has three CLI steps: **run** the engine (`kc progress`), **see** what it
 proposed (`kc suggestions`), **decide** on it (`kc decide`). Below, one run produces a
 suggestion a therapist accepts; two others show the engine *declining* to suggest.
 
-## 0. A sample policy (save to a scratch file — do not commit)
+## 0. A sample policy
 
-Illustrative only. Save as `/tmp/sample_policy.json`:
+A ready-to-run **sample** ships at
+[`docs/examples/progress_policy.sample.json`](examples/progress_policy.sample.json) —
+`enabled: true`, with `policy_id` `SAMPLE-not-clinical-do-not-use-in-production` and
+`[SAMPLE - not clinical]` baked into its premise copy, so any output it produces is
+obviously not a real policy. Its thresholds are **illustrative, not clinical** — for
+demos and dev only. (The fill-in **template** for the real thing is
+`docs/examples/progress_policy.template.json`, which ships `enabled: false`.)
 
-```json
-{
-  "policy_id": "SAMPLE-synthetic-demo-v1",
-  "window": 6,
-  "min_sessions": 4,
-  "enabled": true,
-  "rules": [
-    {
-      "rule_id": "advance",
-      "conditions": [
-        { "metric": "independence_rate", "comparator": ">=", "threshold": 0.8 },
-        { "metric": "refusal_rate", "comparator": "<=", "threshold": 0.1 }
-      ],
-      "signal": "advance",
-      "suggested_premise": "Introduce a slightly longer version of the same routine.",
-      "rationale": "Independence has held across recent sessions with very low refusal."
-    },
-    { "rule_id": "hold", "conditions": [
-        { "metric": "refusal_rate", "comparator": ">=", "threshold": 0.5 } ],
-      "signal": "hold" }
-  ]
-}
-```
+The commands below use the sample; swap in the collaborator's authored policy for real
+use (`docs/PROGRESS_POLICY.md`).
 
 ## 1. Seed a story + therapist grant + synthetic feedback
 
@@ -70,10 +57,10 @@ The acting principal must hold the **therapist** role on the story (it fails clo
 otherwise). Set `KC_PRINCIPAL` to the granted id:
 
 ```
-$ KC_PRINCIPAL=ot-jane kc progress goal-brush --policy /tmp/sample_policy.json \
+$ KC_PRINCIPAL=ot-jane kc progress goal-brush --policy docs/examples/progress_policy.sample.json \
       --story story-A --store-root kc_store_demo
 
-goal: goal-brush  |  policy: SAMPLE-synthetic-demo-v1
+goal: goal-brush  |  policy: SAMPLE-not-clinical-do-not-use-in-production
 sessions in window: 5/6  |  state: signal_present
 fired rule: advance  |  signal: advance
 metrics (raw, explainable):
@@ -96,8 +83,8 @@ $ KC_PRINCIPAL=ot-jane kc suggestions story-A --store-root kc_store_demo
 1 open suggestion(s) for story-A:
 
   <id>  (goal goal-brush)
-    premise: Introduce a slightly longer version of the same routine.
-    why:     Independence has held across recent sessions with very low refusal.
+    premise: [SAMPLE - not clinical] Introduce a slightly longer version of the same routine.
+    why:     [SAMPLE - not clinical] Independence has held across recent sessions with low refusal.
 ```
 
 ## 4. Decide — `kc decide`
