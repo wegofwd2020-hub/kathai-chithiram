@@ -167,6 +167,47 @@ def test_intake_happy_path_records_consent(tmp_path: Path) -> None:
     assert CHILD not in provider.requests[0].prompt
 
 
+# --- story template (kc author) ------------------------------------------------
+
+
+def test_author_builds_a_story_from_a_template(tmp_path: Path) -> None:
+    from kathai_chithiram.storage import StoryArtifactStore
+
+    store_root = tmp_path / "store"
+    template = tmp_path / "story.json"
+    template.write_text(
+        json.dumps({
+            "title": "Robin Brushes",
+            "steps": [
+                {"text": "Robin stands at the sink."},
+                {"text": "Robin picks up the toothbrush.", "props": ["toothbrush"]},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    code = main(
+        ["author", str(template), "--child-name", CHILD, "--story-id", "auth-story",
+         "--store-root", str(store_root), "--no-render"]
+    )
+    assert code == 0
+
+    script = StoryArtifactStore(store_root).read_scene_script("auth-story")
+    assert len(script["scenes"]) == 2
+    assert script["child_token"] == "CHILD"
+    assert "Robin" not in str(script)  # name stripped, token-only
+    assert script["scenes"][1]["props"] == ["toothbrush"]  # per-step override applied
+
+
+def test_author_rejects_a_bad_template(tmp_path: Path) -> None:
+    template = tmp_path / "bad.json"
+    template.write_text("{not json", encoding="utf-8")
+    code = main(
+        ["author", str(template), "--child-name", CHILD,
+         "--store-root", str(tmp_path / "store"), "--no-render"]
+    )
+    assert code == 2
+
+
 # --- M1 progress engine (kc progress, gated) -----------------------------------
 
 
