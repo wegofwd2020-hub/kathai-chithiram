@@ -131,7 +131,9 @@ def test_invalid_json_is_rejected(tmp_path: Path):
 def test_shipped_example_templates_lower_to_valid_scripts():
     # Guard: every example in docs/examples/ must load, lower, validate, and not leak.
     examples = Path(__file__).resolve().parents[3] / "docs" / "examples"
-    files = sorted(examples.glob("*.json"))
+    # Ready-to-use story examples only; *.template.json are fill-in templates of other
+    # kinds (e.g. the ProgressPolicy template), not valid story templates as-shipped.
+    files = [f for f in sorted(examples.glob("*.json")) if not f.name.endswith(".template.json")]
     assert files, "no example templates found"
     alex = NameMapping.for_child("Alex")  # the examples' sample name
     for path in files:

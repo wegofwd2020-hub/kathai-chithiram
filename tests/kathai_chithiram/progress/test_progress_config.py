@@ -107,3 +107,13 @@ def test_invalid_json_file_is_rejected(tmp_path: Path):
     path.write_text("{not valid json", encoding="utf-8")
     with pytest.raises(ValueError, match="not valid JSON"):
         load_policy(path)
+
+
+def test_shipped_policy_template_loads_and_is_inert():
+    # The collaborator's starter template must load + validate, and ship disabled so
+    # it cannot emit a suggestion until a clinician deliberately turns it on.
+    examples = Path(__file__).resolve().parents[3] / "docs" / "examples"
+    policy = load_policy(examples / "progress_policy.template.json")
+    assert policy.enabled is False  # inert by construction
+    assert policy.window >= 1 and 1 <= policy.min_sessions <= policy.window
+    assert len(policy.rules) >= 1

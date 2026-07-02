@@ -4,6 +4,11 @@
 collaborator (ADR-002 Decision 7.1) · **Owner:** WeGoFwd2020 · **Design:**
 `docs/ADR_003_progress_engine_design.md`
 
+> **To author the policy:** the concrete file format, field-by-field, is in
+> `docs/PROGRESS_POLICY.md`, with a fill-in-the-blanks starter at
+> `docs/examples/progress_policy.template.json` (ships inert — `enabled: false`).
+> This brief is the *why*; that doc is the *how*.
+
 > ADR-002 deliberately leaves the *clinical judgment* out of engineering's hands.
 > The progress engine may not be built until a trained professional defines what
 > counts as a meaningful signal. This brief states exactly what we need from you,

@@ -151,9 +151,11 @@ the ZDR organization, and secret-manager key management.
   engine literally does nothing until a reviewed policy exists.
 - ⏳ **Gated** — *using* it in production stays blocked until ADR-002 Decision 7's non-engineering
   preconditions are met: a professional collaborator authors the `ProgressPolicy` — the signal
-  itself: window K, thresholds, trends (see `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`) — a
-  clinical-language review, and a DPIA progress-profiling touchpoint. The system will only ever
-  *suggest*; a therapist decides, and every accepted premise still re-enters the full safety pipeline.
+  itself: window K, thresholds, trends (**how to author it: `docs/PROGRESS_POLICY.md` + the inert
+  template `docs/examples/progress_policy.template.json`**; context in
+  `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`) — a clinical-language review, and a DPIA
+  progress-profiling touchpoint. The system will only ever *suggest*; a therapist decides
+  (`kc suggestions` / `kc decide`), and every accepted premise still re-enters the full safety pipeline.
 
 ### Where it's heading — a multi-user program platform (ADR-005, gated)
 

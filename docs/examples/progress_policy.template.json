@@ -1,0 +1,25 @@
+{
+  "policy_id": "TEMPLATE-replace-me",
+  "window": 6,
+  "min_sessions": 4,
+  "enabled": false,
+  "rules": [
+    {
+      "rule_id": "advance",
+      "conditions": [
+        { "metric": "independence_rate", "comparator": ">=", "threshold": 0.8 },
+        { "metric": "refusal_rate", "comparator": "<=", "threshold": 0.1 }
+      ],
+      "signal": "advance",
+      "suggested_premise": "PLACEHOLDER - the therapist's wording for a slightly harder next step.",
+      "rationale": "PLACEHOLDER - why, no child identifiers: independence has held with low refusal."
+    },
+    {
+      "rule_id": "hold",
+      "conditions": [
+        { "metric": "refusal_rate", "comparator": ">=", "threshold": 0.5 }
+      ],
+      "signal": "hold"
+    }
+  ]
+}
