@@ -3,6 +3,11 @@
 **Status:** Draft v0.1 (2026-07-01) · **Owner:** WeGoFwd2020 · **Companion to:**
 `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`
 
+> **A finalized, send-ready version exists:** `docs/M1_OUTREACH_SEND_READY.md`
+> (pediatric OT · advisory · cold email — the "decide before sending" choices
+> already resolved, three fill-ins left). This file remains the source of the
+> per-discipline / per-channel variants to draw from for other paths.
+
 > Templates for reaching a trained therapist / professional collaborator to
 > satisfy ADR-002 Decision 7.1 — the precondition that a professional (not
 > engineering) defines the progress signal before the M1 engine is built.

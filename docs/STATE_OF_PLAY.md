@@ -109,9 +109,10 @@ self-contained engineering item is left after KC-10.
    `docs/R10_DEPLOYMENT_BOUNDARY.md`: the gap, the target properties, the threat-model
    delta (before/after), and a §5 acceptance checklist for reassessing R10 Medium → Low.
    Linked from DPIA R10 + §5 precondition 4. Unblocks the ops conversation.
-3. **Prepare the M1 collaborator outreach.** Tailor a send-ready message from
-   `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md` (v0.2) + the outreach templates. Draft only —
-   confirm before sending (outward-facing).
+3. ~~**Prepare the M1 collaborator outreach.**~~ **Drafted 2026-07-02.**
+   `docs/M1_OUTREACH_SEND_READY.md` — finalized pediatric-OT / advisory / cold-email
+   message, three fill-ins left ([Name], signature, optional warm-intro line). **Not
+   sent** — outward-facing; needs owner review + go-ahead before sending.
 4. **Assemble the DPO/counsel DPIA review package.** Collate `docs/DPIA.md` +
    `docs/PARENT_PRIVACY_NOTICE.md` + `PRIVACY.md` + the open-items/questions into one entry
    point for sign-off. Prepares for, does not substitute, legal review.
