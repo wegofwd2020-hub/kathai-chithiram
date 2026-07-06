@@ -1,0 +1,15 @@
+# starter manifest — owners: refine feature list + statuses
+project: Kathai Chithiram
+stage: prototype
+owners: [siva]
+features:
+  - name: Story-to-scene-script generation pipeline (wegofwd-llm)
+    status: done
+  - name: Reference renderers (matplotlib/imageio v1, Blender Grease Pencil v2)
+    status: done
+  - name: Production hardening (encryption at rest, ZDR key, human review gate, DPIA)
+    status: done
+  - name: M1 per-child progress engine (built, gated off pending clinical policy)
+    status: in-progress
+  - name: Multi-user program platform (accounts, therapist programs — ADR-005)
+    status: pending
