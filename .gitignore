@@ -32,6 +32,9 @@ stories/
 story_data/
 *.story.json
 
+# Test-persona real-inbox override (owner's machine only)
+tests/kathai_chithiram/people/personas.local.json
+
 # OS / editor
 .DS_Store
 .idea/

@@ -1,0 +1,5 @@
+{
+  "parent": "you+parent@example.test",
+  "child": "you+child@example.test",
+  "therapist": "you+therapist@example.test"
+}
