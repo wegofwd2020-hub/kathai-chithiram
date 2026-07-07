@@ -65,6 +65,7 @@ from kathai_chithiram.rendering import (
 )
 from kathai_chithiram.review import ReviewDecision, load_review_bundle, review_story
 from kathai_chithiram.storage import StoryArtifactStore, StoryStore
+from kathai_chithiram.storage.crypto import StorageCipher
 from kathai_chithiram.video import generate_story_video
 from kathai_chithiram.wegofwd_llm.anthropic_provider import DEFAULT_MODEL
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
@@ -1064,9 +1065,9 @@ def _cmd_family_create(args: argparse.Namespace) -> int:
     """Create a family with its owning parent plus any additional members."""
     members = frozenset({args.owner, *args.member})
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         reg.add_family(Family(family_id=args.family_id, owner_id=args.owner, member_ids=members))
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1078,9 +1079,9 @@ def _cmd_child_add(args: argparse.Namespace) -> int:
     """Add a child to a family, storing only an age band (never the DOB)."""
     try:
         band = _resolve_age_band(args)
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         reg.add_child(Child(child_id=args.child_id, family_id=args.family_id, age_band=band))
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1094,9 +1095,9 @@ def _cmd_child_add(args: argparse.Namespace) -> int:
 def _cmd_therapist_add(args: argparse.Namespace) -> int:
     """Register a therapist principal."""
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         reg.add_therapist(Therapist(principal_id=args.therapist_id))
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1107,9 +1108,9 @@ def _cmd_therapist_add(args: argparse.Namespace) -> int:
 def _cmd_assign_child(args: argparse.Namespace) -> int:
     """Assign a registered therapist to a child (a child-scoped grant)."""
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         reg.assign(args.child_id, args.therapist_id, Role.THERAPIST)
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1122,12 +1123,12 @@ def _cmd_consent(args: argparse.Namespace) -> int:
     from datetime import datetime, timezone
 
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         reg.record_consent(ParentalConsent(
             consenting_parent_id=args.parent, child_id=args.child_id,
             policy_version=args.policy_version, granted_at=datetime.now(timezone.utc),
         ))
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1145,12 +1146,12 @@ def _cmd_program_create(args: argparse.Namespace) -> int:
     from kathai_chithiram.people import Program
 
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         reg.add_program(Program(
             program_id=args.program_id, child_id=args.child_id, therapist_id=args.therapist_id,
             goal_ids=frozenset(args.goal), created_at=datetime.now(timezone.utc),
         ))
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1172,11 +1173,11 @@ def _cmd_erase_child(args: argparse.Namespace, *, input_fn: Callable[[str], str]
             print("aborted.")
             return 1
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         store = StoryArtifactStore(args.store_root)
         log = BackupPurgeLog(args.store_root / _BACKUP_PURGE_LOG_FILE)
         receipt = erase_child(reg, store, args.child_id, purge_log=log)
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: erase failed: {exc}", file=sys.stderr)
         return 2
@@ -1195,11 +1196,11 @@ def _cmd_erase_family(args: argparse.Namespace, *, input_fn: Callable[[str], str
             print("aborted.")
             return 1
     try:
-        reg = PeopleRegistry.load(args.people_file)
+        reg = _load_people(args.people_file)
         store = StoryArtifactStore(args.store_root)
         log = BackupPurgeLog(args.store_root / _BACKUP_PURGE_LOG_FILE)
         receipt = erase_family(reg, store, args.family_id, purge_log=log)
-        reg.save(args.people_file)
+        _save_people(reg, args.people_file)
     except (KathaiChithiramError, ValueError) as exc:
         print(f"error: erase failed: {exc}", file=sys.stderr)
         return 2
@@ -1661,6 +1662,33 @@ def _open_store(store_root: Path, *, warn_if_plaintext: bool = False) -> StoryAr
     return StoryArtifactStore(store_root, cipher=cipher)
 
 
+def _people_cipher() -> StorageCipher | None:
+    """Resolve the master cipher for the people registry (KC-5), or exit on a bad key.
+
+    Mirrors :func:`_open_store`: reads ``KC_STORAGE_KEY`` from the environment;
+    returns ``None`` for a plaintext registry when unset. A malformed key prints an
+    error and exits cleanly rather than raising an opaque traceback.
+    """
+    from kathai_chithiram.errors import EncryptionKeyError
+    from kathai_chithiram.storage import load_cipher_from_env
+
+    try:
+        return load_cipher_from_env()
+    except EncryptionKeyError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+
+
+def _load_people(path: Path) -> PeopleRegistry:
+    """Load the people registry, decrypting at rest when a key is configured."""
+    return PeopleRegistry.load(path, cipher=_people_cipher())
+
+
+def _save_people(reg: PeopleRegistry, path: Path) -> None:
+    """Save the people registry, encrypting at rest when a key is configured."""
+    reg.save(path, cipher=_people_cipher())
+
+
 #: Env var naming the acting principal; defaults to a single local operator identity.
 _PRINCIPAL_ENV = "KC_PRINCIPAL"
 _LOCAL_PRINCIPAL_ID = "local-operator"
@@ -1705,7 +1733,7 @@ def _open_guarded_store(
     registry = None
     if people_file is not None:
         try:
-            registry = PeopleRegistry.load(people_file)
+            registry = _load_people(people_file)
         except KathaiChithiramError as exc:
             print(f"error: cannot load registry: {exc}", file=sys.stderr)
             return None
