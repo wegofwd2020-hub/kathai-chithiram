@@ -66,6 +66,7 @@ def test_erase_child_shreds_child_key_first_and_fails_closed(tmp_path):
     (a_dir / "_data_key.wrapped").write_bytes(wrapped_story_key)
     (a_dir / "_data_key.parent").write_text("kid-a", encoding="utf-8")
     with pytest.raises(DecryptionError):
-        store._child_cipher("kid-a")
+        # restored fragment: reads _data_key.parent → shredded child key → fails closed
+        store._story_cipher(a_dir)
     # (d) receipt (→ backup-purge log) carries the child + story ids
     assert "a1" in receipt.story_ids and "kid-a" in receipt.child_ids
