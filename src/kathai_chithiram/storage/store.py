@@ -420,6 +420,9 @@ class StoryArtifactStore:
         story_dir.mkdir(parents=True, exist_ok=True)
         if child_id is not None and self._cipher is not None:
             self._init_child_key(child_id)
+            # Invariant: child_id is fixed at story creation. Re-creating the same
+            # story_id with a different child_id would make the story unreadable
+            # (the per-story key is wrapped under the first child's key) — fails closed.
             (story_dir / _PARENT_MARKER_FILE).write_text(
                 _validate_story_id(child_id), encoding="utf-8"
             )
@@ -933,7 +936,7 @@ class StoryArtifactStore:
         if not self._root.is_dir():
             return
         for child in sorted(self._root.iterdir()):
-            if child.is_dir():
+            if child.is_dir() and child.name != _CHILDREN_DIR:
                 yield child.name
 
     def _require(self, story_id: str) -> Path:

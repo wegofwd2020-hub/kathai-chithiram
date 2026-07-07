@@ -98,3 +98,12 @@ def test_shredding_child_key_makes_its_story_unreadable(tmp_path):
     store.shred_child_key("child-1")
     with pytest.raises(DecryptionError):
         store.read_scene_script("s1")
+
+
+def test_iter_story_ids_excludes_reserved_children_dir(tmp_path):
+    """Regression: _children reserved dir must not appear in iter_story_ids()."""
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="x", child_id="child-1")
+    ids = list(store.iter_story_ids())
+    assert "s1" in ids
+    assert "_children" not in ids
