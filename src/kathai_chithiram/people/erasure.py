@@ -1,15 +1,20 @@
 """Cascade erasure for the people/family model (ADR-005; RETENTION_ERASURE_DESIGN §4).
 
-Right-to-erasure for the new entities: erasing a **child** hard-deletes every one of
-the child's stories (the verifiable KC-1 delete, which crypto-shreds each per-story
-KC-10 key) and removes the child's registry records — its age band, consents, and
-assignments — then asserts nothing remains. Erasing a **family** cascades over every
-child, then removes the family. Each removed story is recorded in the backup-purge log.
+Right-to-erasure for the new entities: erasing a **child** first crypto-shreds the
+child's per-child *content* key (§3 property 3) — destroying it in one op renders
+every per-story key wrapped beneath it un-unwrappable, so all of the child's story
+content is unrecoverable before and independent of the delete loop — then hard-deletes
+every one of the child's stories (the verifiable KC-1 delete, which also crypto-shreds
+each per-story KC-10 key) and removes the child's registry records — its age band,
+consents, and assignments — then asserts nothing remains, including the shredded key
+file itself. Erasing a **family** cascades over every child, then removes the family.
+Each removed story is recorded in the backup-purge log.
 
 This is the functional cascade + verifiability the addendum's A6.3 precondition
-requires. The per-child/per-family **key tree** in RETENTION_ERASURE_DESIGN §3 (which
-would crypto-shred the registry subtree too, once it is encrypted at rest) is a further
-hardening on top of this; the registry is plaintext for now (opaque ids + bands only).
+requires, now including the per-child content key tree from RETENTION_ERASURE_DESIGN
+§3. The registry's own records (family/child/consent/assignment) are **not**
+encrypted — they remain plaintext (opaque ids + bands only); encrypting that subtree
+is a further hardening tracked as an explicit follow-up, not done here.
 """
 
 from __future__ import annotations
@@ -57,7 +62,8 @@ def erase_child(
     purge_log: BackupPurgeLog,
     when: datetime | None = None,
 ) -> ErasureReceipt:
-    """Erase a child: hard-delete its stories, then remove its registry records.
+    """Erase a child: crypto-shred its per-child key first, then hard-delete its
+    stories and remove its registry records.
 
     Args:
         registry: The people registry holding the child.
@@ -71,17 +77,25 @@ def erase_child(
 
     Raises:
         PeopleError: If the child is unknown.
-        DeletionError: If a story delete fails, or anything remains afterwards.
+        DeletionError: If a story delete fails, or anything remains afterwards
+            (including the per-child key file).
     """
     registry.get_child(child_id)  # fail closed if unknown
     story_ids = _stories_for_child(store, child_id)
+
+    # Crypto-shred FIRST: destroy the per-child key so all the child's story content
+    # is unrecoverable in one op, before and independent of rmtree (§3 property 3).
+    store.shred_child_key(child_id)
+
     for story_id in story_ids:
         _delete_story(store, story_id, purge_log=purge_log, when=when)
     registry.remove_child(child_id)
 
-    # Verify the cascade: no story and no registry record may remain for the child.
+    # Verify the cascade: no story, no registry record, and the child key is gone.
     if _stories_for_child(store, child_id):
         raise DeletionError(child_id, "stories remained after child erasure")
+    if store._child_key_path(child_id).is_file():
+        raise DeletionError(child_id, "per-child key remained after child erasure")
     return ErasureReceipt(child_ids=(child_id,), story_ids=tuple(story_ids))
 
 

@@ -148,7 +148,11 @@ class GuardedStore:
                 principal_id=self._principal.principal_id, story_id=story_id,
             )
         metadata = self._store.create_story(
-            story_id, created_at=created_at, story_text=story_text, delivered=delivered
+            story_id,
+            created_at=created_at,
+            story_text=story_text,
+            delivered=delivered,
+            child_id=child_id,
         )
         self._store.write_grants(story_id, {"child_id": child_id})
         self._record(story_id, Action.MANAGE_STORY, AccessOutcome.ALLOWED)
