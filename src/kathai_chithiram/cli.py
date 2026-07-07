@@ -1733,7 +1733,7 @@ def _open_guarded_store(
     registry = None
     if people_file is not None:
         try:
-            registry = PeopleRegistry.load(people_file)
+            registry = _load_people(people_file)
         except KathaiChithiramError as exc:
             print(f"error: cannot load registry: {exc}", file=sys.stderr)
             return None

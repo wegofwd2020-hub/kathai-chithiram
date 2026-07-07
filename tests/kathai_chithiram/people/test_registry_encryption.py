@@ -97,3 +97,14 @@ def test_cli_helpers_plaintext_without_key(tmp_path, monkeypatch):
     cli._save_people(_sample(), path)
     json.loads(path.read_bytes())  # no key → plaintext
     assert cli._load_people(path).get_child("kid-1").age_band is AgeBand.AGE_6_8
+
+
+def test_open_guarded_store_reads_encrypted_registry(tmp_path, monkeypatch):
+    """Regression test: _open_guarded_store must thread cipher into registry load."""
+    from kathai_chithiram import cli
+    monkeypatch.setenv(STORAGE_KEY_ENV, generate_key())
+    monkeypatch.setenv("KC_PRINCIPAL", "par-1")
+    people = tmp_path / "people.json"
+    cli._save_people(_sample(), people)  # encrypted on disk
+    guarded = cli._open_guarded_store(tmp_path / "store", people_file=people)
+    assert guarded is not None  # registry loaded despite encryption; would be None if load failed
