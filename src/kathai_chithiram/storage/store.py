@@ -89,6 +89,8 @@ _CACHE_DIR = "cache"
 _CHILDREN_DIR = "_children"
 _CHILD_KEY_FILE = "_child_key.wrapped"
 _PARENT_MARKER_FILE = "_data_key.parent"
+_FAMILIES_DIR = "_families"
+_FAMILY_KEY_FILE = "_family_key.wrapped"
 
 
 @dataclass(frozen=True)
@@ -353,6 +355,99 @@ class StoryArtifactStore:
         if not key_path.is_file():
             return
         data_key = self._cipher.decrypt(key_path.read_bytes(), artifact=_CHILD_KEY_FILE)
+        key_path.write_bytes(wrap_data_key(new_master, data_key))
+
+    def _family_key_path(self, family_id: str) -> Path:
+        """Path to ``family_id``'s wrapped per-family key (store-managed key material)."""
+        return self._root / _FAMILIES_DIR / _validate_story_id(family_id) / _FAMILY_KEY_FILE
+
+    def _init_family_key(self, family_id: str) -> None:
+        """Create ``family_id``'s per-family key, wrapped under the master (idempotent).
+
+        No-op on a plaintext store (no master cipher). If a wrapped key already
+        exists it is left untouched, so re-scoping a child never orphans the
+        family's existing children.
+
+        Args:
+            family_id: Opaque family id (validated).
+
+        Raises:
+            ValueError: If ``family_id`` is unsafe.
+            OSError: If the key file cannot be written.
+        """
+        if self._cipher is None:
+            return
+        key_path = self._family_key_path(family_id)
+        if key_path.is_file():
+            return
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        key_path.write_bytes(wrap_data_key(self._cipher, generate_data_key()))
+
+    def _family_cipher(self, family_id: str) -> StorageCipher | None:
+        """Return ``family_id``'s per-family cipher, unwrapped under the master.
+
+        Returns ``None`` on a plaintext store. Fails closed: a missing or
+        un-unwrappable wrapped family key raises :class:`DecryptionError` — this is
+        what makes shredding the key crypto-shred every child (and story) beneath it.
+
+        Args:
+            family_id: Opaque family id (validated).
+
+        Raises:
+            ValueError: If ``family_id`` is unsafe.
+            DecryptionError: If the wrapped family key is missing or cannot be
+                unwrapped under the configured master.
+        """
+        if self._cipher is None:
+            return None
+        key_path = self._family_key_path(family_id)
+        if not key_path.is_file():
+            raise DecryptionError(_FAMILY_KEY_FILE)
+        return unwrap_data_key(
+            self._cipher, key_path.read_bytes(), artifact=_FAMILY_KEY_FILE
+        )
+
+    def shred_family_key(self, family_id: str) -> None:
+        """Destroy ``family_id``'s wrapped per-family key (crypto-shred, §3).
+
+        Deleting this single file renders every per-child key wrapped under it
+        un-unwrappable, so all of the family's children's story content becomes
+        undecryptable at once — before and independent of ``rmtree`` or the backup
+        cycle. Idempotent: absent key is a no-op. No-op on a plaintext store.
+
+        Args:
+            family_id: Opaque family id (validated).
+
+        Raises:
+            ValueError: If ``family_id`` is unsafe.
+        """
+        key_path = self._family_key_path(family_id)
+        key_path.unlink(missing_ok=True)
+
+    def rewrap_family(self, family_id: str, *, new_master: StorageCipher) -> None:
+        """Re-wrap ``family_id``'s per-family key under ``new_master`` (master rotation).
+
+        Unwraps the per-family key with this store's current master, then re-wraps it
+        under ``new_master`` in place. Per-child keys (wrapped under the family key)
+        and everything beneath are untouched. No-op on a plaintext store or a family
+        with no wrapped key.
+
+        Args:
+            family_id: Opaque family id (validated).
+            new_master: The master cipher to wrap the family key under going forward.
+
+        Raises:
+            ValueError: If ``family_id`` is unsafe.
+            DecryptionError: If the existing wrapped key cannot be unwrapped under
+                this store's current master.
+            OSError: If the key file cannot be rewritten.
+        """
+        if self._cipher is None:
+            return
+        key_path = self._family_key_path(family_id)
+        if not key_path.is_file():
+            return
+        data_key = self._cipher.decrypt(key_path.read_bytes(), artifact=_FAMILY_KEY_FILE)
         key_path.write_bytes(wrap_data_key(new_master, data_key))
 
     @property
