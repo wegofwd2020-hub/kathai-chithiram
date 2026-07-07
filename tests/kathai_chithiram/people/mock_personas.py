@@ -9,8 +9,10 @@ override (see :mod:`resolve_handles`), never committed.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 
 from kathai_chithiram.access.principal import Role
 from kathai_chithiram.people.models import (
@@ -31,6 +33,8 @@ __all__ = [
     "POLICY_VERSION",
     "mock_family",
     "mock_registry",
+    "DEFAULT_LOCAL_PATH",
+    "resolve_handles",
 ]
 
 #: Opaque family id shared by the mock personas.
@@ -110,3 +114,47 @@ def mock_registry() -> PeopleRegistry:
         )
     )
     return reg
+
+
+#: The keys the override file may set; anything else is ignored.
+_PERSONA_KEYS = ("parent", "child", "therapist")
+
+#: Default location of the git-ignored real-inbox override (owner's machine only).
+DEFAULT_LOCAL_PATH = Path(__file__).parent / "personas.local.json"
+
+
+def resolve_handles(path: Path | None = None) -> dict[str, str]:
+    """Return each persona's effective login handle, applying a local override.
+
+    Committed placeholders (``@example.test``) are returned unless a
+    ``personas.local.json`` file exists, in which case its values override the
+    matching keys — for the owner's manual end-to-end runs only. Only the three
+    known persona keys are honoured; any other key in the file is ignored.
+
+    Args:
+        path: Override file location. Defaults to :data:`DEFAULT_LOCAL_PATH`.
+
+    Returns:
+        A dict mapping ``"parent"`` / ``"child"`` / ``"therapist"`` to a handle.
+
+    Raises:
+        ValueError: If the override file exists but is not a JSON object.
+    """
+    handles = {
+        "parent": PARENT.login_handle,
+        "child": CHILD.login_handle,
+        "therapist": THERAPIST.login_handle,
+    }
+    local = path if path is not None else DEFAULT_LOCAL_PATH
+    if not local.exists():
+        return handles
+    try:
+        overrides = json.loads(local.read_text())
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{local} is not valid JSON: {exc}") from exc
+    if not isinstance(overrides, dict):
+        raise ValueError(f"{local} must contain a JSON object of handle overrides")
+    for key in _PERSONA_KEYS:
+        if key in overrides:
+            handles[key] = str(overrides[key])
+    return handles
