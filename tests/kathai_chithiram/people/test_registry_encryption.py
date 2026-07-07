@@ -10,6 +10,7 @@ import pytest
 from kathai_chithiram.errors import PeopleError
 from kathai_chithiram.people.models import AgeBand, Child, Family
 from kathai_chithiram.people.registry import PeopleRegistry
+from kathai_chithiram.storage import STORAGE_KEY_ENV
 from kathai_chithiram.storage.crypto import AesGcmCipher, generate_key
 
 
@@ -76,3 +77,23 @@ def test_wrong_key_fails_closed(tmp_path):
 def test_absent_file_is_empty_registry(tmp_path):
     reg = PeopleRegistry.load(tmp_path / "missing.json", cipher=_cipher())
     assert list(reg.children_of("fam-1")) == []
+
+
+def test_cli_helpers_round_trip_encrypted(tmp_path, monkeypatch):
+    from kathai_chithiram import cli
+    monkeypatch.setenv(STORAGE_KEY_ENV, generate_key())
+    path = tmp_path / "people.json"
+    cli._save_people(_sample(), path)
+    with pytest.raises((UnicodeDecodeError, json.JSONDecodeError)):
+        json.loads(path.read_bytes())  # CLI wrote it encrypted
+    loaded = cli._load_people(path)
+    assert loaded.get_child("kid-1").age_band is AgeBand.AGE_6_8
+
+
+def test_cli_helpers_plaintext_without_key(tmp_path, monkeypatch):
+    from kathai_chithiram import cli
+    monkeypatch.delenv(STORAGE_KEY_ENV, raising=False)
+    path = tmp_path / "people.json"
+    cli._save_people(_sample(), path)
+    json.loads(path.read_bytes())  # no key → plaintext
+    assert cli._load_people(path).get_child("kid-1").age_band is AgeBand.AGE_6_8
