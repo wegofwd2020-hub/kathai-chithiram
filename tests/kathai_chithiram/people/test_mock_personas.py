@@ -76,3 +76,29 @@ def test_committed_module_contains_no_real_email():
     assert emails, "expected the placeholder handles to be present"
     for email in emails:
         assert email.endswith("@example.test"), f"non-placeholder email committed: {email}"
+
+
+def test_resolve_handles_rejects_malformed_and_non_object_json(tmp_path):
+    """Test that resolve_handles raises ValueError for invalid JSON or non-dict JSON."""
+    import pytest
+    bad = tmp_path / "personas.local.json"
+
+    # Test malformed JSON
+    bad.write_text("{ not json")
+    with pytest.raises(ValueError):
+        mp.resolve_handles(bad)
+
+    # Test non-dict JSON (array instead)
+    bad.write_text("[]")
+    with pytest.raises(ValueError):
+        mp.resolve_handles(bad)
+
+
+def test_committed_example_json_contains_no_real_email():
+    """Test that the committed example JSON file contains only placeholder emails."""
+    example = Path(mp.__file__).parent / "personas.local.example.json"
+    text = example.read_text()
+    emails = re.findall(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", text)
+    assert emails, "expected placeholder handles in the example file"
+    for email in emails:
+        assert email.endswith("@example.test"), f"non-placeholder email committed: {email}"
