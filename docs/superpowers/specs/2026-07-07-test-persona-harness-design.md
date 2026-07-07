@@ -59,7 +59,7 @@ email handle lives only here, never on `Parent`/`Child`/`Therapist`.
 @dataclass(frozen=True)
 class Persona:
     key: str            # "parent" | "child" | "therapist" — the override lookup key
-    principal_id: str   # opaque id used in the domain layer
+    subject_id: str     # opaque domain id (principal id for parent/therapist; child_id for the child)
     login_handle: str   # email-shaped; @example.test placeholder by default
 ```
 
