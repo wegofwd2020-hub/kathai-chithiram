@@ -225,8 +225,11 @@ class StoryArtifactStore:
         key_path = story_dir / _WRAPPED_KEY_FILE
         if not key_path.is_file():
             return self._cipher
+        wrapping = self._wrapping_cipher(story_dir)
+        # self._cipher is non-None (guard above), so wrapping is provably non-None
+        assert wrapping is not None
         return unwrap_data_key(
-            self._wrapping_cipher(story_dir),
+            wrapping,
             key_path.read_bytes(),
             artifact=_WRAPPED_KEY_FILE,
         )
@@ -254,6 +257,8 @@ class StoryArtifactStore:
         if key_path.is_file():
             return self._story_cipher(story_dir)
         wrapping = self._wrapping_cipher(story_dir)
+        # self._cipher is non-None (guard above), so wrapping is provably non-None
+        assert wrapping is not None
         key_path.write_bytes(wrap_data_key(wrapping, generate_data_key()))
         return self._story_cipher(story_dir)
 
