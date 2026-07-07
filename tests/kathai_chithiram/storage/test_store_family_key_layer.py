@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime, timezone
 
 import pytest
 
@@ -62,3 +63,59 @@ def test_rewrap_family_rotates_under_new_master(tmp_path):
     store.rewrap_family("fam-1", new_master=new)
     store._cipher = new
     assert store._family_cipher("fam-1").decrypt(probe, artifact="x") == b"x"
+
+
+_NOW = datetime(2026, 7, 7, tzinfo=timezone.utc)
+_SCRIPT = {"schema_version": "1.0", "title": "Calm night", "scenes": []}
+
+
+def test_family_scoped_child_key_wraps_under_family_key(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="a tale",
+                       child_id="kid-1", family_id="fam-1")
+    store.write_scene_script("s1", _SCRIPT)
+    # Family marker written in the child dir; family key exists; body round-trips.
+    child_dir = store._child_key_path("kid-1").parent
+    assert (child_dir / "_family.parent").read_text().strip() == "fam-1"
+    assert store._family_key_path("fam-1").is_file()
+    assert store.read_scene_script("s1") == _SCRIPT
+
+
+def test_legacy_child_key_without_family_stays_master_wrapped(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    # child_id but NO family_id → PR #95 behaviour: child key wrapped under master.
+    store.create_story("s2", created_at=_NOW, story_text="plain", child_id="kid-2")
+    store.write_scene_script("s2", _SCRIPT)
+    assert not (store._child_key_path("kid-2").parent / "_family.parent").exists()
+    assert store.read_scene_script("s2") == _SCRIPT
+
+
+def test_shredding_family_key_makes_child_scoped_story_unreadable(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="secret",
+                       child_id="kid-1", family_id="fam-1")
+    store.write_scene_script("s1", _SCRIPT)
+    store.shred_family_key("fam-1")
+    with pytest.raises(DecryptionError):
+        store.read_scene_script("s1")  # story key ← child key ← shredded family key
+
+
+def test_iter_story_ids_excludes_reserved_dirs(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="x",
+                       child_id="kid-1", family_id="fam-1")
+    ids = list(store.iter_story_ids())
+    assert "s1" in ids
+    assert "_children" not in ids
+    assert "_families" not in ids
+
+
+def test_rewrap_child_is_noop_for_family_wrapped_child(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="x",
+                       child_id="kid-1", family_id="fam-1")
+    store.write_scene_script("s1", _SCRIPT)
+    before = store._child_key_path("kid-1").read_bytes()
+    store.rewrap_child("kid-1", new_master=_cipher())  # family-wrapped → no-op
+    assert store._child_key_path("kid-1").read_bytes() == before
+    assert store.read_scene_script("s1") == _SCRIPT  # story still readable (key untouched)

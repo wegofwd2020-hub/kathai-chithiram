@@ -113,6 +113,10 @@ class ChildGrantsSource(Protocol):
         """Whether parental consent is on record for the child."""
         ...
 
+    def family_id_of(self, child_id: str) -> str:
+        """Return the child's family id, or raise if the child is unknown."""
+        ...
+
 
 @dataclass(frozen=True)
 class ChildGrants:

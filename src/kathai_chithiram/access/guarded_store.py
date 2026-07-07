@@ -147,12 +147,14 @@ class GuardedStore:
                 Action.MANAGE_STORY.value, "no parental consent on record for this child",
                 principal_id=self._principal.principal_id, story_id=story_id,
             )
+        family_id = self._registry.family_id_of(child_id)
         metadata = self._store.create_story(
             story_id,
             created_at=created_at,
             story_text=story_text,
             delivered=delivered,
             child_id=child_id,
+            family_id=family_id,
         )
         self._store.write_grants(story_id, {"child_id": child_id})
         self._record(story_id, Action.MANAGE_STORY, AccessOutcome.ALLOWED)
