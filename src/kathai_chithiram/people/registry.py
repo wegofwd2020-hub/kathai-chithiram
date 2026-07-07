@@ -21,7 +21,7 @@ from typing import Any
 
 from kathai_chithiram.access.policy import ChildGrants
 from kathai_chithiram.access.principal import Role
-from kathai_chithiram.errors import PeopleError
+from kathai_chithiram.errors import DecryptionError, PeopleError
 from kathai_chithiram.people.grants import child_grants
 from kathai_chithiram.people.models import (
     AgeBand,
@@ -31,8 +31,12 @@ from kathai_chithiram.people.models import (
     Program,
     Therapist,
 )
+from kathai_chithiram.storage.crypto import StorageCipher
 
 __all__ = ["PeopleRegistry"]
+
+#: Safe artifact label for a registry decrypt failure (no key/content).
+_REGISTRY_ARTIFACT = "people-registry"
 
 
 class PeopleRegistry:
@@ -272,23 +276,64 @@ class PeopleRegistry:
             ],
         }
 
-    def save(self, path: Path) -> None:
-        """Write the registry to ``path`` as JSON (creating parent dirs)."""
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(self.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+    def save(self, path: Path, *, cipher: StorageCipher | None = None) -> None:
+        """Write the registry to ``path`` (creating parent dirs).
 
-    @classmethod
-    def load(cls, path: Path) -> PeopleRegistry:
-        """Load a registry from ``path``; return an empty one if the file is absent.
+        With ``cipher`` the JSON is encrypted at rest under the master (KC-5 parity);
+        without it the file is plaintext (the documented non-production fallback),
+        byte-compatible with earlier releases.
+
+        Args:
+            path: Destination file.
+            cipher: Optional master cipher; when set the file is written encrypted.
 
         Raises:
-            PeopleError: If the file exists but is not valid registry JSON.
+            OSError: If the file cannot be written.
+        """
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = json.dumps(self.to_dict(), indent=2, sort_keys=True).encode("utf-8")
+        path.write_bytes(cipher.encrypt(payload) if cipher is not None else payload)
+
+    @classmethod
+    def load(cls, path: Path, *, cipher: StorageCipher | None = None) -> PeopleRegistry:
+        """Load a registry from ``path``; return an empty one if the file is absent.
+
+        With a ``cipher`` the file is expected encrypted (KC-5 parity): the bytes are
+        decrypted first, and only if that fails are they treated as legacy plaintext
+        JSON (automatic migration on the next :meth:`save`). Without a cipher the bytes
+        must be plaintext JSON. Fails closed — an encrypted file cannot be read without
+        the right key.
+
+        Args:
+            path: Source file.
+            cipher: Optional master cipher; when set, decryption is attempted first.
+
+        Raises:
+            PeopleError: If the file exists but cannot be decrypted and is not valid
+                registry JSON (fails closed on a missing/wrong key).
         """
         if not path.exists():
             return cls()
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+            raw = path.read_bytes()
+        except OSError as exc:
+            raise PeopleError(f"registry file could not be read: {exc}") from exc
+
+        text: str | None = None
+        if cipher is not None:
+            try:
+                text = cipher.decrypt(raw, artifact=_REGISTRY_ARTIFACT).decode("utf-8")
+            except DecryptionError:
+                text = None  # fall back to legacy plaintext (migration)
+        if text is None:
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise PeopleError(f"registry file is not valid JSON: {exc}") from exc
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
             raise PeopleError(f"registry file is not valid JSON: {exc}") from exc
         return cls.from_dict(data)
 
