@@ -58,7 +58,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from kathai_chithiram.errors import StoryNotFoundError
+from kathai_chithiram.errors import DecryptionError, StoryNotFoundError
 from kathai_chithiram.storage.crypto import (
     StorageCipher,
     generate_data_key,
@@ -86,6 +86,9 @@ _WRAPPED_KEY_FILE = "_data_key.wrapped"
 _META_FILE = "_meta.json"
 _MEDIA_DIR = "media"
 _CACHE_DIR = "cache"
+_CHILDREN_DIR = "_children"
+_CHILD_KEY_FILE = "_child_key.wrapped"
+_PARENT_MARKER_FILE = "_parent.json"
 
 
 @dataclass(frozen=True)
@@ -239,6 +242,99 @@ class StoryArtifactStore:
         data_key = generate_data_key()
         key_path.write_bytes(wrap_data_key(self._cipher, data_key))
         return self._story_cipher(story_dir)
+
+    def _child_key_path(self, child_id: str) -> Path:
+        """Path to ``child_id``'s wrapped per-child key (store-managed key material)."""
+        return self._root / _CHILDREN_DIR / _validate_story_id(child_id) / _CHILD_KEY_FILE
+
+    def _init_child_key(self, child_id: str) -> None:
+        """Create ``child_id``'s per-child key, wrapped under the master (idempotent).
+
+        No-op on a plaintext store (no master cipher). If a wrapped key already
+        exists it is left untouched, so re-creating a child's story never orphans
+        that child's existing stories.
+
+        Args:
+            child_id: Opaque child id (validated).
+
+        Raises:
+            ValueError: If ``child_id`` is unsafe.
+            OSError: If the key file cannot be written.
+        """
+        if self._cipher is None:
+            return
+        key_path = self._child_key_path(child_id)
+        if key_path.is_file():
+            return
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        key_path.write_bytes(wrap_data_key(self._cipher, generate_data_key()))
+
+    def _child_cipher(self, child_id: str) -> StorageCipher | None:
+        """Return ``child_id``'s per-child cipher, unwrapped under the master.
+
+        Returns ``None`` on a plaintext store. Fails closed: a missing or
+        un-unwrappable wrapped child key raises :class:`DecryptionError` — this is
+        what makes shredding the key crypto-shred every story beneath it.
+
+        Args:
+            child_id: Opaque child id (validated).
+
+        Raises:
+            ValueError: If ``child_id`` is unsafe.
+            DecryptionError: If the wrapped child key is missing or cannot be
+                unwrapped under the configured master.
+        """
+        if self._cipher is None:
+            return None
+        key_path = self._child_key_path(child_id)
+        if not key_path.is_file():
+            raise DecryptionError(_CHILD_KEY_FILE)
+        return unwrap_data_key(
+            self._cipher, key_path.read_bytes(), artifact=_CHILD_KEY_FILE
+        )
+
+    def shred_child_key(self, child_id: str) -> None:
+        """Destroy ``child_id``'s wrapped per-child key (crypto-shred, §3).
+
+        Deleting this single file renders every per-story key wrapped under it
+        un-unwrappable, so all of the child's story content becomes undecryptable at
+        once — before and independent of ``rmtree`` or the backup cycle. Idempotent:
+        absent key is a no-op. No-op on a plaintext store.
+
+        Args:
+            child_id: Opaque child id (validated).
+
+        Raises:
+            ValueError: If ``child_id`` is unsafe.
+        """
+        key_path = self._child_key_path(child_id)
+        key_path.unlink(missing_ok=True)
+
+    def rewrap_child(self, child_id: str, *, new_master: StorageCipher) -> None:
+        """Re-wrap ``child_id``'s per-child key under ``new_master`` (master rotation).
+
+        Unwraps the per-child key with this store's current master, then re-wraps it
+        under ``new_master`` in place. Per-story keys (wrapped under the child key)
+        and artifact bodies are untouched. No-op on a plaintext store or a child with
+        no wrapped key.
+
+        Args:
+            child_id: Opaque child id (validated).
+            new_master: The master cipher to wrap the child key under going forward.
+
+        Raises:
+            ValueError: If ``child_id`` is unsafe.
+            DecryptionError: If the existing wrapped key cannot be unwrapped under
+                this store's current master.
+            OSError: If the key file cannot be rewritten.
+        """
+        if self._cipher is None:
+            return
+        key_path = self._child_key_path(child_id)
+        if not key_path.is_file():
+            return
+        data_key = self._cipher.decrypt(key_path.read_bytes(), artifact=_CHILD_KEY_FILE)
+        key_path.write_bytes(wrap_data_key(new_master, data_key))
 
     @property
     def root(self) -> Path:
