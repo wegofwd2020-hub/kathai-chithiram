@@ -88,7 +88,7 @@ _MEDIA_DIR = "media"
 _CACHE_DIR = "cache"
 _CHILDREN_DIR = "_children"
 _CHILD_KEY_FILE = "_child_key.wrapped"
-_PARENT_MARKER_FILE = "_parent.json"
+_PARENT_MARKER_FILE = "_data_key.parent"
 
 
 @dataclass(frozen=True)
@@ -185,17 +185,30 @@ class StoryArtifactStore:
             return stored
         return cipher.decrypt(stored, artifact=artifact)
 
+    def _wrapping_cipher(self, story_dir: Path) -> StorageCipher | None:
+        """The cipher that wraps this story's per-story data key.
+
+        The per-child key if the story is child-scoped (a ``_data_key.parent`` marker
+        names the child), else the master. ``None`` on a plaintext store.
+
+        Raises:
+            DecryptionError: If the named per-child key is missing/un-unwrappable.
+        """
+        if self._cipher is None:
+            return None
+        marker = story_dir / _PARENT_MARKER_FILE
+        if marker.is_file():
+            return self._child_cipher(marker.read_text().strip())
+        return self._cipher
+
     def _story_cipher(self, story_dir: Path) -> StorageCipher | None:
-        """Return the cipher that encrypts ``story_dir``'s artifact bodies.
+        """Return the cipher that encrypts ``story_dir``'s artifact bodies (KC-10 / §3).
 
-        Resolves the three at-rest layouts (KC-10):
-
-        * No master cipher configured → ``None`` (plaintext store).
+        * No master cipher → ``None`` (plaintext store).
         * ``_data_key.wrapped`` present → the per-story data key, unwrapped under
-          the master (envelope encryption). This is the layout for every story
-          created after KC-10.
-        * No wrapped-key file → the master cipher itself (a legacy KC-5 store whose
-          bodies were encrypted under the master directly).
+          its wrapping cipher: the per-child key when a ``_data_key.parent`` marker
+          is present, else the master.
+        * No wrapped-key file → the master itself (a legacy KC-5 store).
 
         Args:
             story_dir: The story's directory (assumed to exist).
@@ -204,8 +217,8 @@ class StoryArtifactStore:
             The per-story artifact cipher, or ``None`` for a plaintext store.
 
         Raises:
-            DecryptionError: If a wrapped key is present but cannot be unwrapped
-                under the configured master (tampered, or a different master).
+            DecryptionError: If a wrapped key (per-story or per-child) cannot be
+                unwrapped under the configured master.
         """
         if self._cipher is None:
             return None
@@ -213,17 +226,17 @@ class StoryArtifactStore:
         if not key_path.is_file():
             return self._cipher
         return unwrap_data_key(
-            self._cipher, key_path.read_bytes(), artifact=_WRAPPED_KEY_FILE
+            self._wrapping_cipher(story_dir),
+            key_path.read_bytes(),
+            artifact=_WRAPPED_KEY_FILE,
         )
 
     def _init_story_cipher(self, story_dir: Path) -> StorageCipher | None:
         """Create (or load) ``story_dir``'s per-story cipher at story creation.
 
-        On a cipher-backed store with no wrapped key yet, generates a fresh
-        per-story data key, writes it wrapped under the master to
-        ``_data_key.wrapped``, and returns the per-story cipher (KC-10). Idempotent:
-        if a wrapped key already exists it is loaded rather than regenerated, so
-        re-creating a story never orphans its existing artifacts.
+        The new per-story data key is wrapped under the story's wrapping cipher (the
+        per-child key if a ``_data_key.parent`` marker is present, else the master).
+        Idempotent: an existing wrapped key is loaded, never regenerated.
 
         Args:
             story_dir: The story's directory (already created).
@@ -232,6 +245,7 @@ class StoryArtifactStore:
             The per-story artifact cipher, or ``None`` for a plaintext store.
 
         Raises:
+            DecryptionError: If an existing/needed wrapping key cannot be resolved.
             OSError: If the wrapped-key file cannot be written.
         """
         if self._cipher is None:
@@ -239,8 +253,8 @@ class StoryArtifactStore:
         key_path = story_dir / _WRAPPED_KEY_FILE
         if key_path.is_file():
             return self._story_cipher(story_dir)
-        data_key = generate_data_key()
-        key_path.write_bytes(wrap_data_key(self._cipher, data_key))
+        wrapping = self._wrapping_cipher(story_dir)
+        key_path.write_bytes(wrap_data_key(wrapping, generate_data_key()))
         return self._story_cipher(story_dir)
 
     def _child_key_path(self, child_id: str) -> Path:
@@ -376,6 +390,7 @@ class StoryArtifactStore:
         created_at: datetime,
         story_text: str,
         delivered: bool = False,
+        child_id: str | None = None,
     ) -> StoryMetadata:
         """Create a story directory with its raw text and metadata.
 
@@ -384,16 +399,25 @@ class StoryArtifactStore:
             created_at: Creation timestamp recorded in metadata.
             story_text: The raw parent-authored story.
             delivered: Initial delivered flag (default ``False``).
+            child_id: If given, the story is child-scoped: its per-story key is
+                wrapped under the child's key (not the master) and a
+                ``_data_key.parent`` marker is written, so erasing the child
+                crypto-shreds this story's content (RETENTION_ERASURE_DESIGN §3).
 
         Returns:
             The written :class:`StoryMetadata`.
 
         Raises:
-            ValueError: If ``story_id`` is unsafe.
+            ValueError: If ``story_id`` or ``child_id`` is unsafe.
             OSError: If the files cannot be written.
         """
         story_dir = self.story_dir(story_id)
         story_dir.mkdir(parents=True, exist_ok=True)
+        if child_id is not None and self._cipher is not None:
+            self._init_child_key(child_id)
+            (story_dir / _PARENT_MARKER_FILE).write_text(
+                _validate_story_id(child_id), encoding="utf-8"
+            )
         cipher = self._init_story_cipher(story_dir)
         (story_dir / _STORY_TEXT_FILE).write_bytes(
             self._seal(story_text.encode("utf-8"), cipher)

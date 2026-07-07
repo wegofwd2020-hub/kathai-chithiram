@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 
 from kathai_chithiram.errors import DecryptionError
@@ -65,3 +67,34 @@ def test_rewrap_child_rotates_under_new_master(tmp_path):
     # Old master can no longer unwrap; new master can, and yields the SAME data key.
     store._cipher = new
     assert store._child_cipher("child-1").decrypt(probe, artifact="x") == b"x"
+
+
+_NOW = datetime(2026, 7, 7, tzinfo=timezone.utc)
+_SCRIPT = {"schema_version": "1.0", "title": "Calm night", "scenes": []}
+
+
+def test_child_scoped_story_wraps_under_child_key_and_reads_back(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="a tale", child_id="child-1")
+    store.write_scene_script("s1", _SCRIPT)
+    # Parent marker written; child key exists; body round-trips through the child key.
+    assert (store.story_dir("s1") / "_data_key.parent").read_text().strip() == "child-1"
+    assert store._child_key_path("child-1").is_file()
+    assert store.read_scene_script("s1") == _SCRIPT
+
+
+def test_non_child_story_stays_master_wrapped(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s2", created_at=_NOW, story_text="plain")
+    store.write_scene_script("s2", _SCRIPT)
+    assert not (store.story_dir("s2") / "_data_key.parent").exists()
+    assert store.read_scene_script("s2") == _SCRIPT
+
+
+def test_shredding_child_key_makes_its_story_unreadable(tmp_path):
+    store = StoryArtifactStore(tmp_path, cipher=_cipher())
+    store.create_story("s1", created_at=_NOW, story_text="secret", child_id="child-1")
+    store.write_scene_script("s1", _SCRIPT)
+    store.shred_child_key("child-1")
+    with pytest.raises(DecryptionError):
+        store.read_scene_script("s1")
