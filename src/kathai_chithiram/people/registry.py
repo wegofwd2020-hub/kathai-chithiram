@@ -133,6 +133,14 @@ class PeopleRegistry:
         """Whether any parental consent is on record for the child."""
         return bool(self._consents.get(child_id))
 
+    def family_id_of(self, child_id: str) -> str:
+        """Return the child's family id (satisfies ``ChildGrantsSource`` structurally).
+
+        Raises:
+            PeopleError: If the child is unknown.
+        """
+        return self.get_child(child_id).family_id
+
     # ── grant resolution ─────────────────────────────────────────────────────────
     def child_grants(self, child_id: str) -> ChildGrants:
         """Resolve the child-scoped grants a story/program inherits (ADR-005 D3).

@@ -7,14 +7,18 @@ content is unrecoverable before and independent of the delete loop — then hard
 every one of the child's stories (the verifiable KC-1 delete, which also crypto-shreds
 each per-story KC-10 key) and removes the child's registry records — its age band,
 consents, and assignments — then asserts nothing remains, including the shredded key
-file itself. Erasing a **family** cascades over every child, then removes the family.
-Each removed story is recorded in the backup-purge log.
+file itself. Erasing a **family** first crypto-shreds the per-family *content* key —
+destroying it in one op renders every child key wrapped beneath it (and so every
+story key wrapped beneath each of those) un-unwrappable — then cascades `erase_child`
+over every child, then removes the family, then asserts the per-family key file
+itself is gone. Each removed story is recorded in the backup-purge log.
 
 This is the functional cascade + verifiability the addendum's A6.3 precondition
-requires, now including the per-child content key tree from RETENTION_ERASURE_DESIGN
-§3. The registry's own records (family/child/consent/assignment) are **not**
-encrypted — they remain plaintext (opaque ids + bands only); encrypting that subtree
-is a further hardening tracked as an explicit follow-up, not done here.
+requires, now including the full family→child→story content key tree from
+RETENTION_ERASURE_DESIGN §3. The registry's own records (family/child/consent/
+assignment) are **not** encrypted — they remain plaintext (opaque ids + bands only);
+encrypting that subtree is a further hardening tracked as an explicit follow-up,
+not done here.
 """
 
 from __future__ import annotations
@@ -107,7 +111,8 @@ def erase_family(
     purge_log: BackupPurgeLog,
     when: datetime | None = None,
 ) -> ErasureReceipt:
-    """Erase a whole family: cascade-erase every child, then remove the family.
+    """Erase a whole family: crypto-shred its per-family key first, then
+    cascade-erase every child, then remove the family.
 
     Args:
         registry: The people registry holding the family.
@@ -121,9 +126,16 @@ def erase_family(
 
     Raises:
         PeopleError: If the family is unknown.
-        DeletionError: If a story delete fails, or anything remains afterwards.
+        DeletionError: If a story delete fails, or anything remains afterwards
+            (including the per-family key file).
     """
     registry.get_family(family_id)  # fail closed if unknown
+
+    # Crypto-shred FIRST: destroy the per-family key so every child's key (wrapped
+    # under it) and thus all their story content is unrecoverable in one op, before
+    # the per-child cascade runs (§3 property 3).
+    store.shred_family_key(family_id)
+
     erased_children: list[str] = []
     erased_stories: list[str] = []
     for child_id in registry.children_of(family_id):
@@ -131,4 +143,7 @@ def erase_family(
         erased_children.extend(receipt.child_ids)
         erased_stories.extend(receipt.story_ids)
     registry.remove_family(family_id)
+
+    if store._family_key_path(family_id).is_file():
+        raise DeletionError(family_id, "per-family key remained after family erasure")
     return ErasureReceipt(child_ids=tuple(erased_children), story_ids=tuple(erased_stories))
