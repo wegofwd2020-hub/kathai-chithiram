@@ -323,7 +323,7 @@ class PeopleRegistry:
         if cipher is not None:
             try:
                 text = cipher.decrypt(raw, artifact=_REGISTRY_ARTIFACT).decode("utf-8")
-            except DecryptionError:
+            except (DecryptionError, UnicodeDecodeError):
                 text = None  # fall back to legacy plaintext (migration)
         if text is None:
             try:
@@ -335,6 +335,8 @@ class PeopleRegistry:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
             raise PeopleError(f"registry file is not valid JSON: {exc}") from exc
+        if not isinstance(data, dict):
+            raise PeopleError("registry file is not a valid registry object")
         return cls.from_dict(data)
 
     @classmethod

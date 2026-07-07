@@ -108,3 +108,18 @@ def test_open_guarded_store_reads_encrypted_registry(tmp_path, monkeypatch):
     cli._save_people(_sample(), people)  # encrypted on disk
     guarded = cli._open_guarded_store(tmp_path / "store", people_file=people)
     assert guarded is not None  # registry loaded despite encryption; would be None if load failed
+
+
+def test_non_dict_json_fails_closed(tmp_path):
+    path = tmp_path / "people.json"
+    path.write_text("123", encoding="utf-8")  # valid JSON, not a dict
+    with pytest.raises(PeopleError):
+        PeopleRegistry.load(path)
+
+
+def test_non_dict_json_fails_closed_encrypted(tmp_path):
+    path = tmp_path / "people.json"
+    cipher = _cipher()
+    path.write_bytes(cipher.encrypt(b"123"))  # decrypts to valid-but-non-dict JSON
+    with pytest.raises(PeopleError):
+        PeopleRegistry.load(path, cipher=cipher)
