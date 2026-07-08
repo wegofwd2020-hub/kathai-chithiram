@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Kathai Chithiram" width="460">
+</p>
+
 # Kathai Chithiram — கதை சித்திரம்
 
 > *Kathai* (கதை, "story") → *Chithiram* (சித்திரம், "picture"). **Story to picture.**
