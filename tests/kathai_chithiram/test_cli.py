@@ -222,7 +222,7 @@ def test_author_dry_run_previews_and_stores_nothing(tmp_path: Path, capsys) -> N
     assert code == 0
     out = capsys.readouterr().out
     assert "dry run" in out
-    assert "a bathroom" in out  # the inferred setting is shown in the preview
+    assert "bathroom" in out  # the inferred setting is shown in the preview
     assert not store_root.exists()  # nothing was stored
 
 

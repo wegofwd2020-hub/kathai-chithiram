@@ -15,8 +15,12 @@ falls back to a calm, neutral scene rather than guessing.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
 from typing import TypeVar
+
+# The art vocabulary is owned by the scene-script registry (ADR-007 D1); this
+# module derives its lookup tables from those members rather than defining a
+# parallel copy. Re-exported here so existing importers keep working.
+from kathai_chithiram.scene_script.vocabulary import Background, Expression, Gesture
 
 _T = TypeVar("_T")
 
@@ -28,33 +32,6 @@ __all__ = [
     "art_hint_for",
     "resolve_figure_cues",
 ]
-
-
-class Background(str, Enum):
-    """The backdrop a scene is drawn against."""
-
-    BATHROOM = "bathroom"
-    BEDROOM = "bedroom"
-    KITCHEN = "kitchen"
-    CLASSROOM = "classroom"
-    OUTDOORS = "outdoors"
-    CALM = "calm"  # the neutral fallback: a soft, quiet backdrop
-
-
-class Expression(str, Enum):
-    """The figure's facial expression."""
-
-    SMILE = "smile"
-    SLEEPY = "sleepy"
-    CALM = "calm"  # gentle default (a soft smile)
-    NEUTRAL = "neutral"  # no smile, eyes open (e.g. worried / sad / scared)
-
-
-class Gesture(str, Enum):
-    """The figure's arm gesture."""
-
-    WAVE = "wave"
-    REST = "rest"  # relaxed arms (default)
 
 
 @dataclass(frozen=True)

@@ -37,6 +37,7 @@ from kathai_chithiram.rendering.scene_art_hints import (
     resolve_figure_cues,
 )
 from kathai_chithiram.rendering.transitions import BlendSource, composite_plan
+from kathai_chithiram.scene_script.vocabulary import Prop
 
 #: Lazily-bound Blender module; ``None`` until :func:`_load_bpy` runs.
 bpy: Any = None
@@ -660,37 +661,115 @@ _BACKDROP = {
 }
 
 
+def _draw_toothbrush(name, x, y, fs, fe):
+    show_between(gp_rect(name, x - 0.45, y - 0.07, 0.9, 0.14, COL_LBLUE, frame=fs), fs, fe)
+
+
+def _draw_toothpaste(name, x, y, fs, fe):
+    show_between(gp_rect(name, x - 0.3, y - 0.12, 0.6, 0.24, COL_PASTE, frame=fs), fs, fe)
+
+
+def _draw_ball(name, x, y, fs, fe):
+    show_between(gp_circle(name, x, y, 0.35, COL_BLUE, frame=fs), fs, fe)
+
+
+def _draw_book(name, x, y, fs, fe):
+    show_between(gp_rect(name, x - 0.4, y - 0.3, 0.8, 0.6, COL_GREEN, frame=fs), fs, fe)
+
+
+def _draw_cup(name, x, y, fs, fe):
+    show_between(gp_rect(name, x - 0.25, y - 0.35, 0.5, 0.7, COL_LBLUE, frame=fs), fs, fe)
+
+
+def _draw_plate(name, x, y, fs, fe):
+    show_between(gp_circle(name, x, y, 0.4, COL_WHITE, stroke_color=COL_GREY, frame=fs), fs, fe)
+
+
+def _draw_apple(name, x, y, fs, fe):
+    show_between(gp_circle(name, x, y, 0.32, COL_RED, frame=fs), fs, fe)
+
+
+def _draw_backpack(name, x, y, fs, fe):
+    show_between(gp_rect(name, x - 0.35, y - 0.4, 0.7, 0.85, COL_BLUE, frame=fs), fs, fe)
+
+
+def _draw_block(name, x, y, fs, fe):
+    for i, col in enumerate((COL_BLUE, COL_GREEN, COL_YELLOW)):
+        show_between(gp_rect(f"{name}_{i}", x - 0.25, y - 0.4 + i * 0.28, 0.5, 0.25,
+                             col, frame=fs), fs, fe)
+
+
+def _draw_toy(name, x, y, fs, fe):
+    show_between(gp_circle(name, x, y, 0.35, COL_HAIR, frame=fs), fs, fe)
+
+
+def _draw_spoon(name, x, y, fs, fe):
+    show_between(gp_circle(name, x, y + 0.2, 0.16, COL_GREY, frame=fs), fs, fe)
+    show_between(gp_rect(f"{name}_h", x - 0.05, y - 0.3, 0.1, 0.5, COL_GREY, frame=fs), fs, fe)
+
+
+def _draw_shoe(name, x, y, fs, fe):
+    show_between(gp_rect(name, x - 0.4, y - 0.18, 0.8, 0.32, COL_DARK, frame=fs), fs, fe)
+
+
+# Canonical Prop value → grease-pencil drawer. The keys ARE this renderer's
+# drawable set, so a Prop added to the registry without a drawer here drops out
+# of ``drawable_props`` and fails renderer conformance (ADR-007 D3).
+_PROP_GP_DRAWERS = {
+    Prop.TOOTHBRUSH.value: _draw_toothbrush,
+    Prop.TOOTHPASTE.value: _draw_toothpaste,
+    Prop.BALL.value: _draw_ball,
+    Prop.BOOK.value: _draw_book,
+    Prop.CUP.value: _draw_cup,
+    Prop.PLATE.value: _draw_plate,
+    Prop.APPLE.value: _draw_apple,
+    Prop.BACKPACK.value: _draw_backpack,
+    Prop.BLOCK.value: _draw_block,
+    Prop.TOY.value: _draw_toy,
+    Prop.SPOON.value: _draw_spoon,
+    Prop.SHOE.value: _draw_shoe,
+}
+
+# Extra scene-label synonyms that resolve to a canonical Prop value, in priority
+# order alongside the canonical names themselves (preserves the original
+# substring-match precedence).
+_PROP_LABELS = (
+    ("toothbrush", Prop.TOOTHBRUSH.value),
+    ("toothpaste", Prop.TOOTHPASTE.value),
+    ("backpack", Prop.BACKPACK.value),
+    ("bag", Prop.BACKPACK.value),
+    ("apple", Prop.APPLE.value),
+    ("fruit", Prop.APPLE.value),
+    ("spoon", Prop.SPOON.value),
+    ("shoe", Prop.SHOE.value),
+    ("ball", Prop.BALL.value),
+    ("book", Prop.BOOK.value),
+    ("cup", Prop.CUP.value),
+    ("drink", Prop.CUP.value),
+    ("block", Prop.BLOCK.value),
+    ("toy", Prop.TOY.value),
+    ("teddy", Prop.TOY.value),
+    ("bear", Prop.TOY.value),
+    ("doll", Prop.TOY.value),
+    ("plate", Prop.PLATE.value),
+    ("food", Prop.PLATE.value),
+)
+
+
 def _prop_shape(name, canonical, x, y, fs, fe):
     """Draw one recognized prop as a small GP shape; skip unknown props."""
-    if canonical in ("ball",):
-        show_between(gp_circle(name, x, y, 0.35, COL_BLUE, frame=fs), fs, fe)
-    elif canonical in ("book",):
-        show_between(gp_rect(name, x - 0.4, y - 0.3, 0.8, 0.6, COL_GREEN, frame=fs), fs, fe)
-    elif canonical in ("cup", "drink"):
-        show_between(gp_rect(name, x - 0.25, y - 0.35, 0.5, 0.7, COL_LBLUE, frame=fs), fs, fe)
-    elif canonical in ("plate", "food"):
-        show_between(gp_circle(name, x, y, 0.4, COL_WHITE, stroke_color=COL_GREY, frame=fs), fs, fe)
-    elif canonical in ("apple", "fruit"):
-        show_between(gp_circle(name, x, y, 0.32, COL_RED, frame=fs), fs, fe)
-    elif canonical in ("backpack", "bag"):
-        show_between(gp_rect(name, x - 0.35, y - 0.4, 0.7, 0.85, COL_BLUE, frame=fs), fs, fe)
-    elif canonical in ("block",):
-        for i, col in enumerate((COL_BLUE, COL_GREEN, COL_YELLOW)):
-            show_between(gp_rect(f"{name}_{i}", x - 0.25, y - 0.4 + i * 0.28, 0.5, 0.25,
-                                 col, frame=fs), fs, fe)
-    elif canonical in ("toy", "teddy", "bear", "doll"):
-        show_between(gp_circle(name, x, y, 0.35, COL_HAIR, frame=fs), fs, fe)
+    drawer = _PROP_GP_DRAWERS.get(canonical)
+    if drawer is not None:
+        drawer(name, x, y, fs, fe)
     # unrecognized props are silently skipped
 
 
 def _canonical_prop(prop):
-    """Map a scene prop label to the canonical key drawn above (or None)."""
+    """Map a scene prop label to the canonical Prop value drawn above (or None)."""
     low = prop.lower()
-    for key in ("toothbrush", "toothpaste", "backpack", "bag", "apple", "fruit", "spoon",
-                "shoe", "ball", "book", "cup", "drink", "block", "toy", "teddy", "bear",
-                "doll", "plate", "food"):
-        if key in low:
-            return key
+    for label, canonical in _PROP_LABELS:
+        if label in low:
+            return canonical
     return None
 
 
@@ -784,7 +863,12 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
     """Reference v2 renderer: Blender Grease-Pencil animation."""
 
     name = "blender-grease-pencil-v2"
-    supported_majors = frozenset({1})
+    supported_majors = frozenset({1, 2})
+
+    def drawable_props(self) -> frozenset[Prop]:
+        # Derived from the drawer table, so adding a Prop without a grease-pencil
+        # drawer drops it from the set and fails conformance.
+        return frozenset(p for p in Prop if p.value in _PROP_GP_DRAWERS)
 
     def _render(self, plan: RenderPlan, *, draft_path: str | None) -> RenderSafetyReport:
         """Build the GP scene from the plan, render it, and return a report.

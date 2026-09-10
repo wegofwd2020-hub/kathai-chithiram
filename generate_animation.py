@@ -43,6 +43,7 @@ from kathai_chithiram.rendering.transitions import (  # noqa: E402
     BlendSource,
     composite_plan,
 )
+from kathai_chithiram.scene_script.vocabulary import Prop  # noqa: E402
 
 FPS = 24
 W, H = 960, 540  # output resolution
@@ -834,7 +835,14 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
     """Reference v1 renderer: silent stick-figure animation via matplotlib."""
 
     name = "matplotlib-stick-v1"
-    supported_majors = frozenset({1})
+    # Renders both majors: v2's canonical vocabulary resolves through the same
+    # keyword machinery as v1's free-text art fields.
+    supported_majors = frozenset({1, 2})
+
+    def drawable_props(self) -> frozenset[Prop]:
+        # Derived from the actual draw table, so adding a Prop without a matching
+        # _PROP_DRAW entry drops it from the set and fails conformance.
+        return frozenset(p for p in Prop if p.value in _PROP_DRAW)
 
     def _render(self, plan: RenderPlan, *, draft_path: str | None) -> RenderSafetyReport:
         """Render every scene's frames, optionally to an mp4, returning a report.

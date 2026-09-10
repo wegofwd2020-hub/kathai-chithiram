@@ -47,7 +47,7 @@ def test_scene_setting_is_inferred_from_content():
         story_id="s1",
     )
     settings = [scene["setting"] for scene in script["scenes"]]
-    assert settings == ["a bathroom", "outdoors"]
+    assert settings == ["bathroom", "outdoors"]
 
 
 def test_duration_scales_with_caption_length_within_the_band():
@@ -122,7 +122,7 @@ def test_expression_inferred_happy():
         mapping=_mapping(),
         story_id="s1",
     )
-    assert _first_character(script)["expression"] == "happy"
+    assert _first_character(script)["expression"] == "smile"
 
 
 def test_expression_inferred_worried():
@@ -131,7 +131,7 @@ def test_expression_inferred_worried():
         mapping=_mapping(),
         story_id="s1",
     )
-    assert _first_character(script)["expression"] == "worried"
+    assert _first_character(script)["expression"] == "neutral"
 
 
 def test_pose_inferred_waving():
@@ -140,10 +140,10 @@ def test_pose_inferred_waving():
         mapping=_mapping(),
         story_id="s1",
     )
-    assert _first_character(script)["pose"] == "waving"
+    assert _first_character(script)["pose"] == "wave"
 
 
-def test_default_character_is_calm_and_standing():
+def test_default_character_is_calm_and_resting():
     script = build_offline_scene_script(
         story_text="She looked slowly around the whole wide room at everything there.",
         mapping=_mapping(),
@@ -151,7 +151,7 @@ def test_default_character_is_calm_and_standing():
     )
     character = _first_character(script)
     assert character["expression"] == "calm"
-    assert character["pose"] == "standing"
+    assert character["pose"] == "rest"
 
 
 # ── name safety (KC-2) ──────────────────────────────────────────────────────────

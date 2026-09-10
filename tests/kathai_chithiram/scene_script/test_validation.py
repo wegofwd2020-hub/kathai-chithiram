@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 
 import pytest
-from mock_scripts import valid_scene_script
+from mock_scripts import valid_scene_script, valid_scene_script_v2
 
 from kathai_chithiram.errors import SceneScriptInvalidError
 from kathai_chithiram.scene_script import validate_scene_script
@@ -36,7 +36,7 @@ def test_non_object_rejected() -> None:
 
 def test_unsupported_major_rejected() -> None:
     script = valid_scene_script()
-    script["schema_version"] = "2.0"
+    script["schema_version"] = "3.0"  # 1 and 2 are supported; 3 is not
     with pytest.raises(SceneScriptInvalidError) as exc:
         validate_scene_script(script)
     assert exc.value.rule == "schema_version.unsupported_major"
@@ -193,3 +193,114 @@ def test_rejection_is_logged_without_text(caplog: pytest.LogCaptureFixture) -> N
     assert "scene-script rejected" in caplog.text
     assert "scene.caption.mismatch" in caplog.text
     assert SECRET not in caplog.text
+
+
+# --- v2: closed art vocabulary (ADR-007 D1/D2) -----------------------------
+
+
+def test_v2_canonical_script_passes() -> None:
+    # A v2 script whose art fields are all registry members validates.
+    assert validate_scene_script(valid_scene_script_v2()) is None
+
+
+def test_v2_unknown_setting_rejected() -> None:
+    script = valid_scene_script_v2()
+    script["scenes"][0]["setting"] = "supermarket"  # real, but undrawable today
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "scene.setting.unknown"
+    assert exc.value.scene_index == 1
+
+
+def test_v2_unknown_prop_rejected() -> None:
+    script = valid_scene_script_v2()
+    script["scenes"][0]["props"] = ["trolley"]
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "scene.props.unknown"
+    assert exc.value.scene_index == 1
+
+
+def test_v2_unknown_pose_rejected() -> None:
+    script = valid_scene_script_v2()
+    script["scenes"][1]["characters"][0]["pose"] = "cartwheel"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "scene.character.pose.unknown"
+    assert exc.value.scene_index == 2
+
+
+def test_v2_unknown_expression_rejected() -> None:
+    script = valid_scene_script_v2()
+    script["scenes"][0]["characters"][0]["expression"] = "furious"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "scene.character.expression.unknown"
+    assert exc.value.scene_index == 1
+
+
+def test_v2_unknown_value_does_not_leak(caplog: pytest.LogCaptureFixture) -> None:
+    script = valid_scene_script_v2()
+    script["scenes"][0]["setting"] = SECRET  # an undrawable value must not be logged
+    with caplog.at_level(logging.WARNING):
+        with pytest.raises(SceneScriptInvalidError) as exc:
+            validate_scene_script(script)
+    assert exc.value.rule == "scene.setting.unknown"
+    assert SECRET not in str(exc.value)
+    assert SECRET not in caplog.text
+
+
+def test_v1_free_text_art_still_allowed() -> None:
+    # The v2 vocabulary rules are inapplicable to major 1: a v1 script may still
+    # name an undrawable setting (it degrades at render time, as before).
+    script = valid_scene_script()
+    script["scenes"][0]["setting"] = "supermarket"
+    assert validate_scene_script(script) is None
+
+
+# --- v2: story grammar (ADR-001 author / perspective / intent) --------------
+
+
+def test_v2_experiential_intent_gated() -> None:
+    script = valid_scene_script_v2()
+    script["intent"] = "experiential"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "story.intent.gated"
+    assert exc.value.field == "intent"
+
+
+def test_v2_instructional_requires_first_person() -> None:
+    script = valid_scene_script_v2()
+    script["perspective"] = "third_person"  # instructional must be first-person
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "story.instructional.requires_first_person"
+    assert exc.value.field == "perspective"
+
+
+def test_v2_child_author_rejected() -> None:
+    # ADR-001 D3 defers child authorship entirely; the enum omits it.
+    script = valid_scene_script_v2()
+    script["author"] = "child"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "schema.enum"
+    assert exc.value.field == "author"
+
+
+def test_v2_missing_intent_rejected() -> None:
+    script = valid_scene_script_v2()
+    del script["intent"]
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "schema.required"
+
+
+def test_v1_has_no_story_grammar_fields() -> None:
+    # The grammar attributes are v2-only; a v1 script must not carry them.
+    script = valid_scene_script()
+    script["intent"] = "instructional"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "schema.additionalProperties"

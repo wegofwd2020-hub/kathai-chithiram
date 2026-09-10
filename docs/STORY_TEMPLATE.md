@@ -20,7 +20,7 @@ A template is a JSON file:
     { "text": "Silas stands at the sink and takes a slow breath." },
     { "text": "He picks up his toothbrush.", "props": ["toothbrush"] },
     { "text": "He brushes gently in small circles." },
-    { "text": "He rinses and smiles proudly at the mirror.", "expression": "happy" }
+    { "text": "He rinses and smiles proudly at the mirror.", "expression": "smile" }
   ]
 }
 ```
@@ -34,18 +34,26 @@ That's all you need. Everything below is optional.
 ## Optional per-step details
 
 Leave any of these out and it's inferred from the step's text; set it to take
-control:
+control. **If you set one, it must be a value from the list below** — the animation
+can only draw a fixed set of things, and a value outside it is refused rather than
+drawn wrong (an honest failure, not a blank room).
 
-| Field | What it does | Example |
+| Field | What it does | Allowed values |
 |---|---|---|
-| `setting` | The backdrop | `"a bathroom"`, `"a bedroom"`, `"a kitchen"`, `"a classroom"`, `"outdoors"` |
-| `props` | Small objects drawn in the scene | `["toothbrush", "cup"]` |
-| `expression` | The child's face | `"happy"`, `"calm"`, `"sleepy"`, `"worried"` |
-| `pose` | The child's pose | `"standing"`, `"waving"` |
-| `sfx` | Sound-effect cue names (need a `--sfx` sound bank to be heard) | `["water_running"]` |
+| `setting` | The backdrop | `bathroom`, `bedroom`, `kitchen`, `classroom`, `outdoors`, `calm` |
+| `props` | Small objects drawn in the scene (up to 2) | `toothbrush`, `toothpaste`, `ball`, `book`, `cup`, `block`, `toy`, `plate`, `apple`, `backpack`, `spoon`, `shoe` |
+| `expression` | The child's face | `smile`, `calm`, `sleepy`, `neutral` (worry/fear/sadness show as `neutral`) |
+| `pose` | The child's pose | `rest`, `wave` |
+| `sfx` | Sound-effect cue names (need a `--sfx` sound bank to be heard) | any cue name |
 
 Optional at the top level: `"fps"` (8–30, default 24) and `"locale"` (default
 `"en-US"`).
+
+> **What if my scene isn't in the list?** The drawable vocabulary is deliberately
+> small and growing. If your routine needs a setting or object that isn't here yet,
+> leave the field out (the scene falls back to a calm backdrop) rather than inventing
+> a value — an invented one is refused, not drawn. New settings and objects are added
+> over time; see ticket KC-13.
 
 ## Make the video
 

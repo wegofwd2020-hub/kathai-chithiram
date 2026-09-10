@@ -12,12 +12,13 @@ from pathlib import Path
 
 import pytest
 from blender_animation import BlenderGreasePencilRenderer
-from fake_renderer import FakeRenderer, tiny_script
+from fake_renderer import FakeRenderer, tiny_script, tiny_script_v2
 from generate_animation import MatplotlibStickFigureRenderer
 
 from kathai_chithiram.errors import SceneScriptInvalidError
 from kathai_chithiram.privacy.pseudonymize import NameMapping
 from kathai_chithiram.rendering import SceneScriptRenderer
+from kathai_chithiram.scene_script.vocabulary import Prop
 
 # Every renderer that claims to consume the contract.
 ALL_RENDERERS = [
@@ -40,6 +41,20 @@ def test_declares_v1_support(renderer: SceneScriptRenderer) -> None:
     assert 1 in renderer.supported_majors
 
 
+def test_declares_v2_support(renderer: SceneScriptRenderer) -> None:
+    # v2 closes the art vocabulary; every renderer draws the same closed set, so
+    # every renderer must accept the v2 major (ADR-007 D2/D3).
+    assert 2 in renderer.supported_majors
+
+
+def test_draws_every_registry_prop(renderer: SceneScriptRenderer) -> None:
+    # ADR-007 D3: every prop in the closed vocabulary must be drawable by every
+    # renderer, so "what the model may ask for" and "what the child can see" stay
+    # identical. Adding a Prop without art anywhere breaks this.
+    missing = set(Prop) - renderer.drawable_props()
+    assert not missing, f"{renderer.name} cannot draw: {sorted(p.value for p in missing)}"
+
+
 def test_rejects_invalid_script_before_drawing(renderer: SceneScriptRenderer) -> None:
     # Caption that doesn't match narration -> contract violation. Must be caught
     # by the shared validation step, before any renderer-specific work or heavy
@@ -48,6 +63,13 @@ def test_rejects_invalid_script_before_drawing(renderer: SceneScriptRenderer) ->
     bad["scenes"][0]["caption"] = "mismatched caption"
     with pytest.raises(SceneScriptInvalidError):
         renderer.render(bad)
+
+
+def test_fake_renders_v2_script() -> None:
+    # The whole pipeline (validate, version-gate, guard) accepts a canonical v2
+    # script end to end.
+    result = FakeRenderer().render(tiny_script_v2())
+    assert result.safety_report.fps == 8
 
 
 # --- renderer-specific -----------------------------------------------------
