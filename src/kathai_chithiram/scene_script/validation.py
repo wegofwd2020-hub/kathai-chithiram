@@ -21,23 +21,36 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, NoReturn
 
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError, best_match
 
 from kathai_chithiram.errors import SceneScriptInvalidError
 from kathai_chithiram.scene_script.schema import (
-    SCENE_SCRIPT_SCHEMA_V1,
-    SUPPORTED_MAJOR_VERSION,
+    SCENE_SCRIPT_SCHEMAS,
+    SUPPORTED_MAJOR_VERSIONS,
 )
 
 __all__ = ["validate_scene_script"]
 
 logger = logging.getLogger(__name__)
 
-# Compiled once at import; reused for every validation call.
-_SCHEMA_VALIDATOR = Draft202012Validator(SCENE_SCRIPT_SCHEMA_V1)
+# One validator per supported major, compiled once at import and reused.
+_SCHEMA_VALIDATORS = {
+    major: Draft202012Validator(schema) for major, schema in SCENE_SCRIPT_SCHEMAS.items()
+}
+
+# When the closed art vocabulary (v2) rejects a value, surface it under a
+# field-specific rule id rather than the generic ``schema.enum``, so a caller can
+# tell an undrawable setting from an undrawable prop. The offending value is
+# still never logged — only the rule id, scene index, and field name.
+_VOCAB_ENUM_RULES = {
+    "setting": "scene.setting.unknown",
+    "props": "scene.props.unknown",
+    "pose": "scene.character.pose.unknown",
+    "expression": "scene.character.expression.unknown",
+}
 
 
 def validate_scene_script(script: Mapping[str, Any]) -> None:
@@ -61,13 +74,13 @@ def validate_scene_script(script: Mapping[str, Any]) -> None:
             f"top-level scene script must be a JSON object, got {type(script).__name__}",
         )
 
-    _check_supported_version(script)
-    _check_structure(script)
+    major = _check_supported_version(script)
+    _check_structure(script, major)
     _check_cross_field_safety(script)
 
 
-def _check_supported_version(script: Mapping[str, Any]) -> None:
-    """Reject schema versions whose MAJOR this validator does not understand."""
+def _check_supported_version(script: Mapping[str, Any]) -> int:
+    """Return the schema MAJOR, rejecting versions this validator cannot handle."""
     raw_version = script.get("schema_version")
     if not isinstance(raw_version, str) or "." not in raw_version:
         _reject(
@@ -75,7 +88,6 @@ def _check_supported_version(script: Mapping[str, Any]) -> None:
             "schema_version must be a 'MAJOR.MINOR' string",
             field="schema_version",
         )
-        return  # unreachable; aids type-narrowing for static checkers
 
     major_text = raw_version.split(".", 1)[0]
     try:
@@ -86,32 +98,38 @@ def _check_supported_version(script: Mapping[str, Any]) -> None:
             "schema_version MAJOR component is not an integer",
             field="schema_version",
         )
-        return  # unreachable
 
-    if major != SUPPORTED_MAJOR_VERSION:
+    if major not in SUPPORTED_MAJOR_VERSIONS:
         _reject(
             "schema_version.unsupported_major",
-            f"unsupported schema MAJOR {major}; this renderer supports {SUPPORTED_MAJOR_VERSION}",
+            f"unsupported schema MAJOR {major}; supported: {sorted(SUPPORTED_MAJOR_VERSIONS)}",
             field="schema_version",
         )
+    return major
 
 
-def _check_structure(script: Mapping[str, Any]) -> None:
+def _check_structure(script: Mapping[str, Any], major: int) -> None:
     """Run the JSON Schema layer, sanitizing any error before it escapes.
 
     ``jsonschema`` error messages embed the offending instance value, which for
     a scene script is exactly the raw caption/narration/name we must never log.
     We therefore reconstruct a message from the *schema-side* constraint only
     (the keyword and its limit) plus the structural path — never the instance.
+
+    The schema is selected by ``major``; a v2 enum violation on an art field is
+    relabelled to its field-specific ``scene.*.unknown`` rule id.
     """
-    error = best_match(_SCHEMA_VALIDATOR.iter_errors(dict(script)))
+    error = best_match(_SCHEMA_VALIDATORS[major].iter_errors(dict(script)))
     if error is None:
         return
 
     scene_index, field = _locate(error)
     constraint = _safe_constraint(error)
+    rule = f"schema.{error.validator}"
+    if error.validator == "enum" and field in _VOCAB_ENUM_RULES:
+        rule = _VOCAB_ENUM_RULES[field]
     _reject(
-        f"schema.{error.validator}",
+        rule,
         f"structural rule '{error.validator}' failed at {_path_str(error)}{constraint}",
         scene_index=scene_index,
         field=field,
@@ -170,7 +188,7 @@ def _reject(
     *,
     scene_index: int | None = None,
     field: str | None = None,
-) -> None:
+) -> NoReturn:
     """Log the rejection (without raw story text) and raise.
 
     Centralizing this guarantees every rejection is logged consistently and

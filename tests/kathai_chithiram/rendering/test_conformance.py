@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 from blender_animation import BlenderGreasePencilRenderer
-from fake_renderer import FakeRenderer, tiny_script
+from fake_renderer import FakeRenderer, tiny_script, tiny_script_v2
 from generate_animation import MatplotlibStickFigureRenderer
 
 from kathai_chithiram.errors import SceneScriptInvalidError
@@ -41,6 +41,12 @@ def test_declares_v1_support(renderer: SceneScriptRenderer) -> None:
     assert 1 in renderer.supported_majors
 
 
+def test_declares_v2_support(renderer: SceneScriptRenderer) -> None:
+    # v2 closes the art vocabulary; every renderer draws the same closed set, so
+    # every renderer must accept the v2 major (ADR-007 D2/D3).
+    assert 2 in renderer.supported_majors
+
+
 def test_draws_every_registry_prop(renderer: SceneScriptRenderer) -> None:
     # ADR-007 D3: every prop in the closed vocabulary must be drawable by every
     # renderer, so "what the model may ask for" and "what the child can see" stay
@@ -57,6 +63,13 @@ def test_rejects_invalid_script_before_drawing(renderer: SceneScriptRenderer) ->
     bad["scenes"][0]["caption"] = "mismatched caption"
     with pytest.raises(SceneScriptInvalidError):
         renderer.render(bad)
+
+
+def test_fake_renders_v2_script() -> None:
+    # The whole pipeline (validate, version-gate, guard) accepts a canonical v2
+    # script end to end.
+    result = FakeRenderer().render(tiny_script_v2())
+    assert result.safety_report.fps == 8
 
 
 # --- renderer-specific -----------------------------------------------------

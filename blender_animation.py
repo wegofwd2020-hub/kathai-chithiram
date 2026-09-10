@@ -863,7 +863,7 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
     """Reference v2 renderer: Blender Grease-Pencil animation."""
 
     name = "blender-grease-pencil-v2"
-    supported_majors = frozenset({1})
+    supported_majors = frozenset({1, 2})
 
     def drawable_props(self) -> frozenset[Prop]:
         # Derived from the drawer table, so adding a Prop without a grease-pencil

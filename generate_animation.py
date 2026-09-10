@@ -835,7 +835,9 @@ class MatplotlibStickFigureRenderer(SceneScriptRenderer):
     """Reference v1 renderer: silent stick-figure animation via matplotlib."""
 
     name = "matplotlib-stick-v1"
-    supported_majors = frozenset({1})
+    # Renders both majors: v2's canonical vocabulary resolves through the same
+    # keyword machinery as v1's free-text art fields.
+    supported_majors = frozenset({1, 2})
 
     def drawable_props(self) -> frozenset[Prop]:
         # Derived from the actual draw table, so adding a Prop without a matching

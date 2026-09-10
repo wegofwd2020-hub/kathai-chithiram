@@ -12,7 +12,15 @@ Keep this module free of any raw story content; it describes *shape*, not data.
 
 from __future__ import annotations
 
+import copy
 from typing import Any
+
+from kathai_chithiram.scene_script.vocabulary import (
+    Background,
+    Expression,
+    Gesture,
+    Prop,
+)
 
 __all__ = [
     "ALLOWED_TRANSITIONS",
@@ -21,12 +29,15 @@ __all__ = [
     "MAX_SCENE_DURATION_S",
     "MIN_SCENE_DURATION_S",
     "SCENE_SCRIPT_SCHEMA_V1",
+    "SCENE_SCRIPT_SCHEMA_V2",
+    "SCENE_SCRIPT_SCHEMAS",
     "SUPPORTED_MAJOR_VERSION",
+    "SUPPORTED_MAJOR_VERSIONS",
 ]
 
 # --- Contract constants (single source of truth, also reused by tests) ---
 
-#: Major schema version this validator understands. Unknown majors are rejected.
+#: The v1 major (kept for back-compat; the version gate uses the set below).
 SUPPORTED_MAJOR_VERSION = 1
 
 #: Allowed scene transitions. ``cut`` is discouraged but legal; no flash/strobe.
@@ -154,4 +165,47 @@ SCENE_SCRIPT_SCHEMA_V1: dict[str, Any] = {
             },
         },
     },
+}
+
+
+def _build_v2_schema() -> dict[str, Any]:
+    """Derive the v2 schema from v1 by closing the art fields to the registry.
+
+    v2 keeps every v1 rule and additionally constrains ``setting`` / ``props`` /
+    ``pose`` / ``expression`` to the drawable vocabulary (ADR-007 D1/D2), so an
+    undrawable value fails structurally instead of degrading silently at render
+    time. ``audio.sfx`` is intentionally left as free strings — closing it is
+    deferred until a real sound-bank vocabulary exists.
+
+    The enum lists are generated from :mod:`kathai_chithiram.scene_script.vocabulary`
+    so the schema cannot drift from what the renderers can draw.
+    """
+    schema = copy.deepcopy(SCENE_SCRIPT_SCHEMA_V1)
+    schema["$id"] = "https://kathai-chithiram.wegofwd/scene-script/v2.json"
+    schema["title"] = "Kathai Chithiram scene script (v2)"
+
+    scene = schema["$defs"]["scene"]["properties"]
+    scene["setting"] = {"type": "string", "enum": [b.value for b in Background]}
+    scene["props"] = {
+        "type": "array",
+        "items": {"type": "string", "enum": [p.value for p in Prop]},
+    }
+
+    character = schema["$defs"]["character"]["properties"]
+    character["pose"] = {"type": "string", "enum": [g.value for g in Gesture]}
+    character["expression"] = {"type": "string", "enum": [e.value for e in Expression]}
+
+    return schema
+
+
+#: The v2 schema: v1 plus a closed art vocabulary (see :func:`_build_v2_schema`).
+SCENE_SCRIPT_SCHEMA_V2: dict[str, Any] = _build_v2_schema()
+
+#: Major schema versions this validator understands. Unknown majors are rejected.
+SUPPORTED_MAJOR_VERSIONS: frozenset[int] = frozenset({1, 2})
+
+#: The schema for each supported major, selected by ``validate_scene_script``.
+SCENE_SCRIPT_SCHEMAS: dict[int, dict[str, Any]] = {
+    1: SCENE_SCRIPT_SCHEMA_V1,
+    2: SCENE_SCRIPT_SCHEMA_V2,
 }
