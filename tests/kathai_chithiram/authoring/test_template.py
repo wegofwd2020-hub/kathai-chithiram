@@ -31,7 +31,7 @@ def _template() -> StoryTemplate:
         steps=(
             StoryStep(text="Silas stands at the sink and takes a slow breath."),
             StoryStep(text="He picks up his toothbrush.", props=("toothbrush",)),
-            StoryStep(text="He smiles proudly at the mirror.", expression="happy"),
+            StoryStep(text="He smiles proudly at the mirror.", expression="smile"),
         ),
     )
 
@@ -72,9 +72,9 @@ def test_child_name_never_appears_in_the_script():
 def test_step_overrides_are_applied_and_the_rest_inferred():
     script = template_to_scene_script(_template(), _mapping(), story_id="s1")
     scenes = script["scenes"]
-    assert scenes[0]["setting"] == "a bathroom"  # inferred from "sink"
+    assert scenes[0]["setting"] == "bathroom"  # inferred from "sink"
     assert scenes[1]["props"] == ["toothbrush"]  # explicit override
-    assert scenes[2]["characters"][0]["expression"] == "happy"  # explicit override
+    assert scenes[2]["characters"][0]["expression"] == "smile"  # explicit override
 
 
 def test_leak_is_a_hard_stop(monkeypatch):
@@ -138,5 +138,6 @@ def test_shipped_example_templates_lower_to_valid_scripts():
     alex = NameMapping.for_child("Alex")  # the examples' sample name
     for path in files:
         script = template_to_scene_script(load_template(path), alex, story_id="ex")
+        assert script["schema_version"] == "2.0"  # emits the closed-vocabulary contract
         validate_scene_script(script)
         assert "Alex" not in json.dumps(script)  # the sample name is stripped to the token

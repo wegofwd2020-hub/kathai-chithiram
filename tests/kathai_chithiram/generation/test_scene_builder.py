@@ -16,7 +16,7 @@ from kathai_chithiram.privacy.pseudonymize import NameMapping
 # ── build_scene_dict: inference vs overrides ────────────────────────────────────
 def test_infers_setting_props_expression_from_the_caption():
     scene = build_scene_dict(1, "CHILD brushes his teeth at the sink.")
-    assert scene["setting"] == "a bathroom"
+    assert scene["setting"] == "bathroom"
     assert "toothbrush" in scene["props"]
     assert scene["caption"] == scene["narration"]
     assert 2 <= scene["duration_s"] <= 8
@@ -25,8 +25,8 @@ def test_infers_setting_props_expression_from_the_caption():
 def test_infers_the_classroom_setting():
     from kathai_chithiram.generation.scene_builder import _infer_setting
 
-    assert _infer_setting("CHILD sits at the desk in the classroom.") == "a classroom"
-    assert _infer_setting("CHILD walks to school.") == "a classroom"
+    assert _infer_setting("CHILD sits at the desk in the classroom.") == "classroom"
+    assert _infer_setting("CHILD walks to school.") == "classroom"
 
 
 def test_infers_the_new_props():
@@ -35,7 +35,7 @@ def test_infers_the_new_props():
     assert "apple" in _infer_props("CHILD eats an apple.")
     assert "backpack" in _infer_props("CHILD packs the backpack.")
     assert "spoon" in _infer_props("CHILD holds the spoon.")
-    assert "shoes" in _infer_props("CHILD puts on their shoes.")
+    assert "shoe" in _infer_props("CHILD puts on their shoes.")
 
 
 def test_explicit_overrides_win_over_inference():
@@ -68,6 +68,32 @@ def test_assemble_produces_a_contract_valid_script():
     assert script["story_id"] == "s1"
     assert script["child_token"] == "CHILD"
     assert script["total_duration_s"] == sum(s["duration_s"] for s in script["scenes"])
+
+
+def test_assemble_emits_v2_with_default_story_grammar():
+    scenes = [build_scene_dict(1, "CHILD waves hello.")]
+    script = assemble_scene_script(scenes=scenes, story_id="s1", title="CHILD's day")
+    assert script["schema_version"] == "2.0"
+    # The only shippable track: a parent's first-person instructional narrative.
+    assert script["author"] == "parent"
+    assert script["perspective"] == "first_person"
+    assert script["intent"] == "instructional"
+
+
+def test_inferred_art_values_are_registry_members():
+    from kathai_chithiram.scene_script.vocabulary import (
+        Background,
+        Expression,
+        Gesture,
+        Prop,
+    )
+
+    scene = build_scene_dict(1, "CHILD brushes teeth at the sink then waves happily.")
+    character = scene["characters"][0]
+    assert scene["setting"] in {b.value for b in Background}
+    assert character["pose"] in {g.value for g in Gesture}
+    assert character["expression"] in {e.value for e in Expression}
+    assert all(prop in {p.value for p in Prop} for prop in scene["props"])
 
 
 def test_assemble_rejects_an_invalid_script():

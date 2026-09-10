@@ -5,6 +5,6 @@
     { "text": "Alex picks up the toothbrush with a full-hand grip.", "props": ["toothbrush"] },
     { "text": "Alex squeezes a small pea-sized bit of toothpaste on.", "props": ["toothpaste"] },
     { "text": "Alex brushes gently in small circles, counting slowly." },
-    { "text": "Alex rinses, looks in the mirror, and smiles proudly.", "expression": "happy" }
+    { "text": "Alex rinses, looks in the mirror, and smiles proudly.", "expression": "smile" }
   ]
 }

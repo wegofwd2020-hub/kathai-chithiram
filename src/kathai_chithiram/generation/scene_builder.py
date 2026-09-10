@@ -24,6 +24,12 @@ from typing import Any
 from kathai_chithiram.errors import IdentifierLeakError
 from kathai_chithiram.privacy.pseudonymize import NameMapping, count_identifiers
 from kathai_chithiram.scene_script.validation import validate_scene_script
+from kathai_chithiram.scene_script.vocabulary import (
+    Background,
+    Expression,
+    Gesture,
+    Prop,
+)
 
 __all__ = [
     "DEFAULT_FPS",
@@ -34,34 +40,37 @@ __all__ = [
 
 #: Default frames per second for a generated script.
 DEFAULT_FPS = 24
-_DEFAULT_SETTING = "a calm, quiet place"
+_DEFAULT_SETTING = Background.CALM.value
 
-# Ordered (keywords, setting) — first match wins. The setting strings deliberately
-# contain the keywords the render-time art layer recognizes (e.g. "a bathroom" holds
-# "bath"), so an inferred setting and its backdrop stay aligned.
-_SETTING_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("bath", "sink", "toilet", "toothbrush", "teeth", "brush"), "a bathroom"),
-    (("bed", "sleep", "asleep", "nap", "pillow", "bedtime", "night"), "a bedroom"),
-    (("kitchen", "cook", "meal", "breakfast", "dinner", "lunch", "eat"), "a kitchen"),
-    (("classroom", "school", "teacher", "lesson", "desk"), "a classroom"),
-    (("park", "garden", "outside", "outdoor", "playground", "tree", "beach", "yard"), "outdoors"),
+# Ordered (keywords, Background) — first match wins. Inference resolves to a
+# registry member (ADR-007 D1), so an inferred setting is one the renderer can
+# actually draw rather than a free string that only sometimes matches.
+_SETTING_KEYWORDS: tuple[tuple[tuple[str, ...], Background], ...] = (
+    (("bath", "sink", "toilet", "toothbrush", "teeth", "brush"), Background.BATHROOM),
+    (("bed", "sleep", "asleep", "nap", "pillow", "bedtime", "night"), Background.BEDROOM),
+    (("kitchen", "cook", "meal", "breakfast", "dinner", "lunch", "eat"), Background.KITCHEN),
+    (("classroom", "school", "teacher", "lesson", "desk"), Background.CLASSROOM),
+    (
+        ("park", "garden", "outside", "outdoor", "playground", "tree", "beach", "yard"),
+        Background.OUTDOORS,
+    ),
 )
 
-# Ordered (keywords, canonical prop). The canonical names match the render-time prop
-# registry, so an inferred prop is one the renderer knows how to draw.
-_PROP_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("toothbrush", "brush", "teeth"), "toothbrush"),
-    (("toothpaste", "paste"), "toothpaste"),
-    (("ball",), "ball"),
-    (("book", "reading"), "book"),
-    (("block",), "blocks"),
-    (("teddy", "bear", "doll", " toy", "toys"), "toy"),
-    (("cup", "juice", "milk", "bottle"), "cup"),
-    (("apple", "fruit"), "apple"),
-    (("backpack", "school bag", "rucksack"), "backpack"),
-    (("spoon",), "spoon"),
-    (("shoe", "sneaker", "trainer"), "shoes"),
-    (("plate", "lunch", "dinner", "breakfast", "meal", "food"), "plate"),
+# Ordered (keywords, Prop) — first match wins. Every value is a registry member,
+# so an inferred prop is one the renderer knows how to draw.
+_PROP_KEYWORDS: tuple[tuple[tuple[str, ...], Prop], ...] = (
+    (("toothbrush", "brush", "teeth"), Prop.TOOTHBRUSH),
+    (("toothpaste", "paste"), Prop.TOOTHPASTE),
+    (("ball",), Prop.BALL),
+    (("book", "reading"), Prop.BOOK),
+    (("block",), Prop.BLOCK),
+    (("teddy", "bear", "doll", " toy", "toys"), Prop.TOY),
+    (("cup", "juice", "milk", "bottle"), Prop.CUP),
+    (("apple", "fruit"), Prop.APPLE),
+    (("backpack", "school bag", "rucksack"), Prop.BACKPACK),
+    (("spoon",), Prop.SPOON),
+    (("shoe", "sneaker", "trainer"), Prop.SHOE),
+    (("plate", "lunch", "dinner", "breakfast", "meal", "food"), Prop.PLATE),
 )
 _MAX_INFERRED_PROPS = 2
 
@@ -130,8 +139,16 @@ def assemble_scene_script(
     title: str,
     fps: int = DEFAULT_FPS,
     locale: str = "en-US",
+    author: str = "parent",
+    perspective: str = "first_person",
+    intent: str = "instructional",
 ) -> dict[str, Any]:
     """Wrap ``scenes`` in the top-level script fields, validate, and return it.
+
+    Emits a v2 script: the art fields the scenes carry are registry members, and
+    the story grammar (``author`` / ``perspective`` / ``intent``) is recorded.
+    The defaults match the only shippable track — a parent's first-person
+    instructional narrative (ADR-001 D2) — and never the gated experiential one.
 
     Args:
         scenes: The scene dicts (from :func:`build_scene_dict`), in order.
@@ -139,6 +156,11 @@ def assemble_scene_script(
         title: The story title (already pseudonymized).
         fps: Frames per second (8–30).
         locale: BCP-47-ish locale tag.
+        author: Who authored the story (``parent`` or ``therapist``).
+        perspective: Grammatical person; instructional stories must be
+            ``first_person``.
+        intent: ``instructional`` (shippable) — ``experiential`` is gated and
+            will be rejected by validation.
 
     Returns:
         A validated scene-script document.
@@ -148,11 +170,14 @@ def assemble_scene_script(
             validation.
     """
     script: dict[str, Any] = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "story_id": story_id,
         "title": title,
         "child_token": "CHILD",
         "locale": locale,
+        "author": author,
+        "perspective": perspective,
+        "intent": intent,
         "total_duration_s": sum(scene["duration_s"] for scene in scenes),
         "fps": fps,
         "safety": {"max_flash_hz": 3, "max_scene_cuts_per_min": 20, "reviewed_by_human": False},
@@ -181,41 +206,42 @@ def guard_no_identifier(captions: Sequence[str], mapping: NameMapping) -> None:
 
 
 def _infer_setting(caption: str) -> str:
-    """Infer a scene ``setting`` string from the caption's keywords."""
+    """Infer a scene ``setting`` (a ``Background`` value) from the caption."""
     text = caption.lower()
     for keywords, setting in _SETTING_KEYWORDS:
         if any(keyword in text for keyword in keywords):
-            return setting
+            return setting.value
     return _DEFAULT_SETTING
 
 
 def _infer_props(caption: str) -> list[str]:
-    """Infer up to ``_MAX_INFERRED_PROPS`` prop labels from the caption's keywords."""
+    """Infer up to ``_MAX_INFERRED_PROPS`` ``Prop`` values from the caption."""
     text = caption.lower()
     props: list[str] = []
     for keywords, prop in _PROP_KEYWORDS:
         if any(keyword in text for keyword in keywords):
-            props.append(prop)
+            props.append(prop.value)
         if len(props) >= _MAX_INFERRED_PROPS:
             break
     return props
 
 
 def _infer_expression(caption: str) -> str:
-    """Infer the character's expression from the caption (sleepy > worried > happy)."""
+    """Infer the character's ``Expression`` value (sleepy > worried > happy)."""
     text = caption.lower()
     if any(word in text for word in _SLEEPY_CAP):
-        return "sleepy"
+        return Expression.SLEEPY.value
     if any(word in text for word in _WORRIED_CAP):
-        return "worried"
+        return Expression.NEUTRAL.value  # worry/fear/sadness render as a neutral face
     if any(word in text for word in _HAPPY_CAP):
-        return "happy"
-    return "calm"
+        return Expression.SMILE.value
+    return Expression.CALM.value
 
 
 def _infer_pose(caption: str) -> str:
-    """Infer the character's pose from the caption."""
-    return "waving" if any(word in caption.lower() for word in _WAVE_CAP) else "standing"
+    """Infer the character's ``Gesture`` value from the caption."""
+    waving = any(word in caption.lower() for word in _WAVE_CAP)
+    return Gesture.WAVE.value if waving else Gesture.REST.value
 
 
 def _reading_duration_s(caption: str) -> int:
