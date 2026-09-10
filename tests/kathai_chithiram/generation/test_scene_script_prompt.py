@@ -12,6 +12,7 @@ import copy
 
 from kathai_chithiram.generation.scene_script_prompt import (
     EXAMPLE_SCENE_SCRIPT,
+    build_scene_script_system_prefix,
     build_scene_script_system_prompt,
 )
 from kathai_chithiram.scene_script.validation import validate_scene_script
@@ -52,3 +53,33 @@ def test_repair_feedback_is_appended_only_when_present() -> None:
     )
     assert "previous attempt was rejected" in repaired
     assert "scene.caption.mismatch" in repaired
+
+
+# --- KC-12: cacheable prefix / volatile suffix split -----------------------
+
+
+def test_prefix_is_stable_and_excludes_repair_feedback() -> None:
+    # The static prefix is byte-identical across attempts (so it can be cached)
+    # and never carries the volatile repair feedback.
+    prefix = build_scene_script_system_prefix(child_token="CHILD")
+    assert prefix == build_scene_script_system_prefix(child_token="CHILD")
+    assert "previous attempt was rejected" not in prefix
+    # It still carries the static contract material.
+    assert "You MUST" in prefix
+    assert "total_duration_s" in prefix
+
+
+def test_full_prompt_is_prefix_plus_repair_suffix() -> None:
+    prefix = build_scene_script_system_prefix(child_token="CHILD")
+    # First attempt (no feedback) is exactly the prefix — nothing volatile yet.
+    assert build_scene_script_system_prompt(child_token="CHILD") == prefix
+    # A repair attempt keeps the prefix byte-for-byte and only adds the suffix.
+    full = build_scene_script_system_prompt(
+        child_token="CHILD",
+        repair_feedback="validation rule 'scene.caption.mismatch' (scene 2) failed",
+    )
+    assert full.startswith(prefix)
+    suffix = full[len(prefix) :]
+    assert "scene.caption.mismatch" in suffix
+    # The changed part a repair re-asks is far smaller than the cached prefix.
+    assert len(suffix) < len(prefix)

@@ -24,7 +24,11 @@ from kathai_chithiram.generation.system_prompt import build_generation_system_pr
 from kathai_chithiram.privacy.pseudonymize import DEFAULT_CHILD_TOKEN
 from kathai_chithiram.scene_script.schema import SCENE_SCRIPT_SCHEMA_V1
 
-__all__ = ["EXAMPLE_SCENE_SCRIPT", "build_scene_script_system_prompt"]
+__all__ = [
+    "EXAMPLE_SCENE_SCRIPT",
+    "build_scene_script_system_prefix",
+    "build_scene_script_system_prompt",
+]
 
 #: A synthetic, fully contract-valid example shown to the model so it has a
 #: concrete target shape. Wholly fictional; the child appears only as the token
@@ -91,29 +95,24 @@ def _cross_field_rules(child_token: str) -> str:
     )
 
 
-def build_scene_script_system_prompt(
-    *,
-    child_token: str = DEFAULT_CHILD_TOKEN,
-    repair_feedback: str | None = None,
-) -> str:
-    """Build the full system prompt for one scene-script generation attempt.
+def build_scene_script_system_prefix(*, child_token: str = DEFAULT_CHILD_TOKEN) -> str:
+    """Build the static, cacheable part of the system prompt (no repair feedback).
 
-    Layers the contract/output instructions on top of the content-safety prompt
-    so a single string carries every rule the model must honour.
+    This is everything that does not change between the attempts for one story:
+    the content-safety rules, the JSON Schema, the cross-field rules, and the
+    worked example. It is deliberately free of the volatile repair feedback, so
+    it is byte-identical across a story's attempts and can be marked cacheable on
+    a provider that supports prompt caching (KC-12), turning the bulk of the
+    prompt into a cache read on every repair attempt.
 
     Args:
         child_token: The placeholder the model must use in place of any real
             name. Defaults to the pipeline's ``CHILD`` token; pass the active
             mapping's token so the example and rules agree with what the seam
             substitutes.
-        repair_feedback: Optional log-safe description of why a *previous*
-            attempt failed validation (rule id and field, never raw story text).
-            When present, it is appended so the model avoids repeating the same
-            violation. ``None`` on the first attempt.
 
     Returns:
-        A system-prompt string: the content-safety rules, the JSON Schema, the
-        cross-field rules, a worked example, and any repair feedback.
+        The static system-prompt prefix.
     """
     safety = build_generation_system_prompt(child_token=child_token)
     schema = json.dumps(SCENE_SCRIPT_SCHEMA_V1, indent=2, sort_keys=True)
@@ -135,12 +134,44 @@ def build_scene_script_system_prompt(
         "Here is a complete, valid example to follow (your story will differ):",
         example,
     ]
-
-    if repair_feedback:
-        sections += [
-            "",
-            "Your previous attempt was rejected. Fix it and emit a corrected "
-            f"JSON object. Reason: {repair_feedback}",
-        ]
-
     return "\n".join(sections)
+
+
+def _repair_suffix(repair_feedback: str | None) -> str:
+    """Render the volatile repair-feedback suffix, or ``""`` on the first attempt."""
+    if not repair_feedback:
+        return ""
+    return (
+        "\n\nYour previous attempt was rejected. Fix it and emit a corrected "
+        f"JSON object. Reason: {repair_feedback}"
+    )
+
+
+def build_scene_script_system_prompt(
+    *,
+    child_token: str = DEFAULT_CHILD_TOKEN,
+    repair_feedback: str | None = None,
+) -> str:
+    """Build the full system prompt for one scene-script generation attempt.
+
+    The full prompt is the cacheable prefix
+    (:func:`build_scene_script_system_prefix`) followed by the volatile repair
+    suffix. On the first attempt the two coincide; on a repair attempt only the
+    suffix changes, which is what makes the prefix cacheable.
+
+    Args:
+        child_token: The placeholder the model must use in place of any real
+            name. Defaults to the pipeline's ``CHILD`` token; pass the active
+            mapping's token so the example and rules agree with what the seam
+            substitutes.
+        repair_feedback: Optional log-safe description of why a *previous*
+            attempt failed validation (rule id and field, never raw story text).
+            When present, it is appended so the model avoids repeating the same
+            violation. ``None`` on the first attempt.
+
+    Returns:
+        A system-prompt string: the static prefix plus any repair feedback.
+    """
+    return build_scene_script_system_prefix(child_token=child_token) + _repair_suffix(
+        repair_feedback
+    )

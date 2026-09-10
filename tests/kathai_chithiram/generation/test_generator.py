@@ -95,6 +95,32 @@ def test_json_wrapped_in_fences_and_prose_is_parsed() -> None:
     assert result.attempts == 1
 
 
+def test_repair_reuses_a_byte_identical_cacheable_prefix() -> None:
+    # KC-12: across a repair, the static prefix is byte-identical (cacheable) and
+    # only the volatile feedback suffix changes.
+    provider = ScriptedProvider(
+        replies=[json.dumps(_invalid_script()), json.dumps(_valid_script())]
+    )
+    result = generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+        clock=_clock,
+    )
+    assert result.attempts == 2
+    first, second = provider.requests
+    assert first.system_prefix and first.system_prefix == second.system_prefix
+    assert first.system_prompt.startswith(first.system_prefix)
+    assert second.system_prompt.startswith(second.system_prefix)
+    # First attempt carries no volatile suffix; the repair adds only the feedback.
+    assert first.system_prompt == first.system_prefix
+    suffix = second.system_prompt[len(second.system_prefix) :]
+    assert "scene.caption.mismatch" in suffix
+    assert len(suffix) < len(second.system_prefix)
+
+
 def test_invalid_then_valid_repairs_with_feedback() -> None:
     provider = ScriptedProvider(
         replies=[json.dumps(_invalid_script()), json.dumps(_valid_script())]

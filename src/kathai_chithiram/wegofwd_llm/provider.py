@@ -65,11 +65,17 @@ class LLMRequest:
         config: The provider configuration governing this request.
         system_prompt: Optional system instructions (e.g. the content-safety
             prompt). Static policy text, so it carries no child identifier.
+        system_prefix: Optional cacheable leading substring of ``system_prompt``.
+            When set (and a genuine prefix of ``system_prompt``), a provider that
+            supports prompt caching may mark it cacheable so repeated requests
+            re-read rather than re-process it; providers without caching ignore
+            it and use ``system_prompt`` in full. Carries no child identifier.
     """
 
     prompt: str
     config: ProviderConfig
     system_prompt: str = ""
+    system_prefix: str = ""
 
 
 @dataclass(frozen=True)

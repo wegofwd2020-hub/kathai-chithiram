@@ -58,6 +58,7 @@ def run_generation(
     config: ProviderConfig,
     request_id: str,
     system_prompt: str = "",
+    system_prefix: str = "",
     clock: Callable[[], datetime] | None = None,
 ) -> GenerationResult:
     """Pseudonymize, guard, dispatch, and record a single generation request.
@@ -72,6 +73,9 @@ def run_generation(
         system_prompt: Optional system instructions forwarded to the provider
             (e.g. the content-safety prompt from
             :func:`kathai_chithiram.generation.build_generation_system_prompt`).
+        system_prefix: Optional cacheable leading substring of ``system_prompt``,
+            forwarded so a caching-capable provider can re-read rather than
+            re-process it across repeated requests (KC-12).
         clock: Optional callable returning the current time, used to stamp the
             record. Injectable for deterministic tests; if ``None`` the record
             carries no timestamp.
@@ -123,7 +127,12 @@ def run_generation(
         len(prompt),
     )
     response = provider.complete(
-        LLMRequest(prompt=prompt, config=config, system_prompt=system_prompt)
+        LLMRequest(
+            prompt=prompt,
+            config=config,
+            system_prompt=system_prompt,
+            system_prefix=system_prefix,
+        )
     )
 
     # 5. Record the privacy posture this request ran under.
