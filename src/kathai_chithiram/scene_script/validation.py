@@ -77,6 +77,8 @@ def validate_scene_script(script: Mapping[str, Any]) -> None:
     major = _check_supported_version(script)
     _check_structure(script, major)
     _check_cross_field_safety(script)
+    if major >= 2:
+        _check_story_grammar(script)
 
 
 def _check_supported_version(script: Mapping[str, Any]) -> int:
@@ -179,6 +181,32 @@ def _check_cross_field_safety(script: Mapping[str, Any]) -> None:
             "total_duration_s.mismatch",
             f"declared total_duration_s={declared_total} != sum of scene durations={duration_sum}",
             field="total_duration_s",
+        )
+
+
+def _check_story_grammar(script: Mapping[str, Any]) -> None:
+    """Enforce the ADR-001 story-grammar gate (v2 only).
+
+    Structure is already valid here, so ``author`` / ``perspective`` / ``intent``
+    exist and hold enum-valid values. Two rules apply:
+
+    * ``intent == "experiential"`` is gated (ADR-001 D2/D4) — the experiential
+      track stays deferred until its preconditions are met, and encoding the gate
+      in the contract keeps it alive across a prompt edit or a provider swap.
+    * the instructional track must be first-person (ADR-001 D2).
+    """
+    if script["intent"] == "experiential":
+        _reject(
+            "story.intent.gated",
+            "experiential intent is gated (ADR-001 D4) until its preconditions are met",
+            field="intent",
+        )
+
+    if script["intent"] == "instructional" and script["perspective"] != "first_person":
+        _reject(
+            "story.instructional.requires_first_person",
+            "instructional stories must be authored in the first person (ADR-001 D2)",
+            field="perspective",
         )
 
 

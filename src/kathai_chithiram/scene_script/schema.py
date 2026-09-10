@@ -31,6 +31,9 @@ __all__ = [
     "SCENE_SCRIPT_SCHEMA_V1",
     "SCENE_SCRIPT_SCHEMA_V2",
     "SCENE_SCRIPT_SCHEMAS",
+    "STORY_AUTHORS",
+    "STORY_INTENTS",
+    "STORY_PERSPECTIVES",
     "SUPPORTED_MAJOR_VERSION",
     "SUPPORTED_MAJOR_VERSIONS",
 ]
@@ -42,6 +45,19 @@ SUPPORTED_MAJOR_VERSION = 1
 
 #: Allowed scene transitions. ``cut`` is discouraged but legal; no flash/strobe.
 ALLOWED_TRANSITIONS: tuple[str, ...] = ("cut", "fade", "dissolve")
+
+# --- Story grammar (v2 only; ADR-001 D1–D4, ADR-007 D4) ---
+
+#: Who authored the story. Child authorship is deferred entirely (ADR-001 D3),
+#: so the enum omits it rather than accepting-and-refusing it.
+STORY_AUTHORS: tuple[str, ...] = ("parent", "therapist")
+
+#: Grammatical person the story is told in.
+STORY_PERSPECTIVES: tuple[str, ...] = ("first_person", "second_person", "third_person")
+
+#: What the story is for. ``experiential`` is structurally valid but gated in
+#: ``validation.py`` (ADR-001 D2/D4) until its preconditions are met.
+STORY_INTENTS: tuple[str, ...] = ("instructional", "experiential")
 
 #: Captions and narration must be short, plain language.
 MAX_CAPTION_CHARS = 140
@@ -183,6 +199,12 @@ def _build_v2_schema() -> dict[str, Any]:
     schema = copy.deepcopy(SCENE_SCRIPT_SCHEMA_V1)
     schema["$id"] = "https://kathai-chithiram.wegofwd/scene-script/v2.json"
     schema["title"] = "Kathai Chithiram scene script (v2)"
+
+    # Story grammar (ADR-001 D1): required top-level author/perspective/intent.
+    schema["required"] = [*schema["required"], "author", "perspective", "intent"]
+    schema["properties"]["author"] = {"type": "string", "enum": list(STORY_AUTHORS)}
+    schema["properties"]["perspective"] = {"type": "string", "enum": list(STORY_PERSPECTIVES)}
+    schema["properties"]["intent"] = {"type": "string", "enum": list(STORY_INTENTS)}
 
     scene = schema["$defs"]["scene"]["properties"]
     scene["setting"] = {"type": "string", "enum": [b.value for b in Background]}

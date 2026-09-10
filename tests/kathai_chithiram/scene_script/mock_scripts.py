@@ -69,6 +69,9 @@ def valid_scene_script_v2() -> dict[str, Any]:
         "title": "CHILD Brushes at the Sink",
         "child_token": "CHILD",
         "locale": "en-US",
+        "author": "parent",
+        "perspective": "first_person",
+        "intent": "instructional",
         "total_duration_s": 7,
         "fps": 24,
         "safety": {

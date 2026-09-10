@@ -256,3 +256,51 @@ def test_v1_free_text_art_still_allowed() -> None:
     script = valid_scene_script()
     script["scenes"][0]["setting"] = "supermarket"
     assert validate_scene_script(script) is None
+
+
+# --- v2: story grammar (ADR-001 author / perspective / intent) --------------
+
+
+def test_v2_experiential_intent_gated() -> None:
+    script = valid_scene_script_v2()
+    script["intent"] = "experiential"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "story.intent.gated"
+    assert exc.value.field == "intent"
+
+
+def test_v2_instructional_requires_first_person() -> None:
+    script = valid_scene_script_v2()
+    script["perspective"] = "third_person"  # instructional must be first-person
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "story.instructional.requires_first_person"
+    assert exc.value.field == "perspective"
+
+
+def test_v2_child_author_rejected() -> None:
+    # ADR-001 D3 defers child authorship entirely; the enum omits it.
+    script = valid_scene_script_v2()
+    script["author"] = "child"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "schema.enum"
+    assert exc.value.field == "author"
+
+
+def test_v2_missing_intent_rejected() -> None:
+    script = valid_scene_script_v2()
+    del script["intent"]
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "schema.required"
+
+
+def test_v1_has_no_story_grammar_fields() -> None:
+    # The grammar attributes are v2-only; a v1 script must not carry them.
+    script = valid_scene_script()
+    script["intent"] = "instructional"
+    with pytest.raises(SceneScriptInvalidError) as exc:
+        validate_scene_script(script)
+    assert exc.value.rule == "schema.additionalProperties"

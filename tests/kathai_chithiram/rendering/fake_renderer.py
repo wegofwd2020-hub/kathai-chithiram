@@ -47,6 +47,9 @@ def tiny_script_v2(*, fps: int = 8, duration_s: int = 2) -> dict[str, Any]:
     """Return a minimal valid v2 script (canonical vocabulary, CHILD token)."""
     script = tiny_script(fps=fps, duration_s=duration_s)
     script["schema_version"] = "2.0"
+    script["author"] = "parent"
+    script["perspective"] = "first_person"
+    script["intent"] = "instructional"
     scene = script["scenes"][0]
     scene["setting"] = "bedroom"
     scene["characters"] = [{"id": "child", "pose": "rest", "expression": "calm"}]
