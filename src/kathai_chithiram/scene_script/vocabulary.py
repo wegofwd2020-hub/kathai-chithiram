@@ -23,6 +23,7 @@ __all__ = [
     "Background",
     "Expression",
     "Gesture",
+    "Prop",
 ]
 
 
@@ -51,3 +52,25 @@ class Gesture(str, Enum):
 
     WAVE = "wave"
     REST = "rest"  # relaxed arms (default)
+
+
+class Prop(str, Enum):
+    """A small object a scene may show the figure with.
+
+    A renderer draws at most a couple of props per scene as simple icons. Every
+    member here must be drawable by every registered renderer (ADR-007 D3); the
+    conformance suite enforces that, so a member cannot be added without art.
+    """
+
+    TOOTHBRUSH = "toothbrush"
+    TOOTHPASTE = "toothpaste"
+    BALL = "ball"
+    BOOK = "book"
+    CUP = "cup"
+    BLOCK = "block"
+    TOY = "toy"
+    PLATE = "plate"
+    APPLE = "apple"
+    BACKPACK = "backpack"
+    SPOON = "spoon"
+    SHOE = "shoe"

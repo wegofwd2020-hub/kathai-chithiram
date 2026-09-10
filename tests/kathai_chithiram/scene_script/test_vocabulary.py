@@ -35,6 +35,25 @@ def test_gesture_members_at_parity() -> None:
     assert {g.value for g in vocabulary.Gesture} == {"wave", "rest"}
 
 
+def test_prop_members_at_parity() -> None:
+    # The twelve props both reference renderers draw today (matplotlib's
+    # _PROP_DRAW canonical set; Blender levelled up to match under KC-13).
+    assert {p.value for p in vocabulary.Prop} == {
+        "toothbrush",
+        "toothpaste",
+        "ball",
+        "book",
+        "cup",
+        "block",
+        "toy",
+        "plate",
+        "apple",
+        "backpack",
+        "spoon",
+        "shoe",
+    }
+
+
 def test_scene_art_hints_reuses_registry_enums_no_parallel_copy() -> None:
     # ADR-007 D1: the renderer's lookup tables derive from the registry rather
     # than holding a parallel copy. Identity, not equality, is the check that a

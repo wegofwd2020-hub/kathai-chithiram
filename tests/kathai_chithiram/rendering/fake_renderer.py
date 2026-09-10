@@ -12,6 +12,7 @@ from typing import Any
 
 from kathai_chithiram.rendering.pipeline import RenderPlan, SceneScriptRenderer
 from kathai_chithiram.rendering.safety import RenderSafetyReport
+from kathai_chithiram.scene_script.vocabulary import Prop
 
 
 def tiny_script(*, fps: int = 8, duration_s: int = 2) -> dict[str, Any]:
@@ -54,6 +55,11 @@ class FakeRenderer(SceneScriptRenderer):
 
     name = "fake"
     supported_majors = frozenset({1})
+
+    def drawable_props(self) -> frozenset[Prop]:
+        # The fake fabricates a safety report instead of drawing, so it trivially
+        # "supports" the whole vocabulary; it is not the conformance guardrail.
+        return frozenset(Prop)
 
     def __init__(
         self,

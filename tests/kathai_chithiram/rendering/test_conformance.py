@@ -18,6 +18,7 @@ from generate_animation import MatplotlibStickFigureRenderer
 from kathai_chithiram.errors import SceneScriptInvalidError
 from kathai_chithiram.privacy.pseudonymize import NameMapping
 from kathai_chithiram.rendering import SceneScriptRenderer
+from kathai_chithiram.scene_script.vocabulary import Prop
 
 # Every renderer that claims to consume the contract.
 ALL_RENDERERS = [
@@ -38,6 +39,14 @@ def test_is_scene_script_renderer(renderer: SceneScriptRenderer) -> None:
 
 def test_declares_v1_support(renderer: SceneScriptRenderer) -> None:
     assert 1 in renderer.supported_majors
+
+
+def test_draws_every_registry_prop(renderer: SceneScriptRenderer) -> None:
+    # ADR-007 D3: every prop in the closed vocabulary must be drawable by every
+    # renderer, so "what the model may ask for" and "what the child can see" stay
+    # identical. Adding a Prop without art anywhere breaks this.
+    missing = set(Prop) - renderer.drawable_props()
+    assert not missing, f"{renderer.name} cannot draw: {sorted(p.value for p in missing)}"
 
 
 def test_rejects_invalid_script_before_drawing(renderer: SceneScriptRenderer) -> None:

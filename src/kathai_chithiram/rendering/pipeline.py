@@ -43,6 +43,7 @@ from kathai_chithiram.rendering.narration import (
 from kathai_chithiram.rendering.safety import RenderSafetyReport, guard_render
 from kathai_chithiram.rendering.sfx import SfxBed, SfxSynthesizer, build_sfx_bed
 from kathai_chithiram.scene_script.validation import validate_scene_script
+from kathai_chithiram.scene_script.vocabulary import Prop
 
 __all__ = [
     "PreparedScene",
@@ -251,6 +252,19 @@ class SceneScriptRenderer(ABC):
 
     name: ClassVar[str] = "renderer"
     supported_majors: ClassVar[frozenset[int]] = frozenset({1})
+
+    def drawable_props(self) -> frozenset[Prop]:
+        """Return the props this renderer can actually draw (ADR-007 D3).
+
+        Each concrete renderer overrides this, deriving the set from its own
+        draw table so the declaration cannot drift from what it draws. The
+        conformance suite asserts every registry :class:`Prop` is in this set,
+        so a member cannot be added to the vocabulary without art everywhere.
+
+        The base returns the empty set: a renderer that forgets to declare its
+        vocabulary fails conformance rather than silently claiming support.
+        """
+        return frozenset()
 
     def render(
         self,
