@@ -30,8 +30,8 @@
 | 007 | Scene-script v2: a closed art vocabulary and a checkable authoring grammar | Proposed (2026-09-10) | kathai-chithiram |
 | 008 | Training corpus: wholly synthetic, clinician-adjudicated, provenance-carrying | Proposed (2026-09-10) | kathai-chithiram |
 | 009 | One knowledge asset, two surfaces — and the educate/never-advise line | Proposed (2026-09-10) | kathai-chithiram |
-| 010 | Retrieval-first: facts live in the corpus, never in the weights | Proposed (2026-09-10) | → corpus repo |
-| 011 | Corpus rights and freshness: what may be ingested, and how it stays true | Proposed (2026-09-10) | → corpus repo |
+| 010 | Retrieval-first: facts live in the corpus, never in the weights | Proposed (2026-09-10) | `wegofwd-arivu` (moved) |
+| 011 | Corpus rights and freshness: what may be ingested, and how it stays true | Proposed (2026-09-10) | `wegofwd-arivu` (moved) |
 | 012 | Repository topology: where everything lives as the family grows | Proposed (2026-09-10) | kathai-chithiram |
 
 001–005 predate this round of work. 006–012 were written in September 2026 and **none of
