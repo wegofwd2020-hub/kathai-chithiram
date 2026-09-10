@@ -24,7 +24,10 @@ from datetime import datetime
 from typing import Any
 
 from kathai_chithiram.errors import SceneScriptGenerationError, SceneScriptInvalidError
-from kathai_chithiram.generation.scene_script_prompt import build_scene_script_system_prompt
+from kathai_chithiram.generation.scene_script_prompt import (
+    build_scene_script_system_prefix,
+    build_scene_script_system_prompt,
+)
 from kathai_chithiram.privacy.pseudonymize import NameMapping
 from kathai_chithiram.scene_script.validation import validate_scene_script
 from kathai_chithiram.wegofwd_llm.gateway import run_generation
@@ -100,6 +103,10 @@ def generate_scene_script(
     feedback: str | None = None
     last_failure = "no attempt produced a parseable scene script"
 
+    # The prefix is constant across a story's attempts, so build it once and mark
+    # it cacheable; only the repair feedback varies (KC-12).
+    system_prefix = build_scene_script_system_prefix(child_token=mapping.token)
+
     for attempt in range(1, max_attempts + 1):
         system_prompt = build_scene_script_system_prompt(
             child_token=mapping.token,
@@ -112,6 +119,7 @@ def generate_scene_script(
             config=config,
             request_id=f"{request_id}#{attempt}",
             system_prompt=system_prompt,
+            system_prefix=system_prefix,
             clock=clock,
         )
         records.append(result.record)

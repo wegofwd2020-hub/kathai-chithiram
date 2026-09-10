@@ -65,6 +65,33 @@ def _load_anthropic_module() -> Any:
     return importlib.import_module("anthropic")
 
 
+def _system_param(request: LLMRequest) -> Any:
+    """Build the Anthropic ``system`` parameter, marking the cacheable prefix.
+
+    Returns ``None`` when there is no system prompt (the caller omits the field).
+    When ``system_prefix`` is a genuine leading substring of ``system_prompt``, the
+    prefix is emitted as a cache-marked text block (``cache_control: ephemeral``,
+    KC-12) and any remainder as a plain block, so a repeat request re-reads the
+    prefix instead of re-processing it. Otherwise the whole system prompt is sent
+    as a plain string, exactly as before.
+    """
+    system = request.system_prompt
+    if not system:
+        return None
+
+    prefix = request.system_prefix
+    if not prefix or not system.startswith(prefix):
+        return system
+
+    blocks: list[dict[str, Any]] = [
+        {"type": "text", "text": prefix, "cache_control": {"type": "ephemeral"}}
+    ]
+    remainder = system[len(prefix) :]
+    if remainder:
+        blocks.append({"type": "text", "text": remainder})
+    return blocks
+
+
 class AnthropicProvider:
     """An :class:`LLMProvider` that completes requests via the Anthropic API.
 
@@ -140,8 +167,9 @@ class AnthropicProvider:
             "output_config": {"effort": self._effort},
             "messages": [{"role": "user", "content": request.prompt}],
         }
-        if request.system_prompt:
-            kwargs["system"] = request.system_prompt
+        system = _system_param(request)
+        if system is not None:
+            kwargs["system"] = system
 
         with self._client.messages.stream(**kwargs) as stream:
             message = stream.get_final_message()

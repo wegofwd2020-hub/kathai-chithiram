@@ -95,6 +95,42 @@ def test_empty_system_prompt_is_omitted() -> None:
     assert "system" not in client.messages.calls[0]
 
 
+def test_cacheable_prefix_becomes_two_system_blocks() -> None:
+    # A repair attempt: system_prompt is prefix + volatile remainder. The prefix
+    # is emitted as a cache-marked block; the remainder as a plain block.
+    client = FakeClient(FakeMessage(content=[FakeBlock("text", "ok")]))
+    req = LLMRequest(
+        prompt="CHILD brushes teeth.",
+        config=CONFIG,
+        system_prompt="RULESfeedback",
+        system_prefix="RULES",
+    )
+    AnthropicProvider(client=client).complete(req)
+    assert client.messages.calls[0]["system"] == [
+        {"type": "text", "text": "RULES", "cache_control": {"type": "ephemeral"}},
+        {"type": "text", "text": "feedback"},
+    ]
+
+
+def test_prefix_equal_to_whole_system_is_one_cached_block() -> None:
+    # First attempt: system_prompt == system_prefix, so there is no remainder.
+    client = FakeClient(FakeMessage(content=[FakeBlock("text", "ok")]))
+    req = LLMRequest(prompt="p", config=CONFIG, system_prompt="RULES", system_prefix="RULES")
+    AnthropicProvider(client=client).complete(req)
+    assert client.messages.calls[0]["system"] == [
+        {"type": "text", "text": "RULES", "cache_control": {"type": "ephemeral"}},
+    ]
+
+
+def test_prefix_ignored_when_not_a_prefix_of_system() -> None:
+    # Defensive: if system_prefix isn't actually a leading substring, send the
+    # whole system as a plain string rather than risk mangling it.
+    client = FakeClient(FakeMessage(content=[FakeBlock("text", "ok")]))
+    req = LLMRequest(prompt="p", config=CONFIG, system_prompt="RULES", system_prefix="XYZ")
+    AnthropicProvider(client=client).complete(req)
+    assert client.messages.calls[0]["system"] == "RULES"
+
+
 def test_non_text_blocks_are_ignored() -> None:
     client = FakeClient(
         FakeMessage(content=[FakeBlock("thinking", "hmm"), FakeBlock("text", "answer")])
