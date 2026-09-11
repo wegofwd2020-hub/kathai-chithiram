@@ -3,7 +3,7 @@
 **Status:** **Copy approved by owner (2026-07-02).** Not yet sent — sending still
 needs a recipient (name + email), the signature block, and the warm-intro choice
 below. The message text itself is final and requires no further edits.
-**Date:** 2026-07-02 · **Owner:** WeGoFwd2020
+**Date:** 2026-07-02 · **Owner:** Sivakumar (Siva) Mambakkam
 **Companion (attach after a positive reply):** `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md` (v0.2)
 **Source templates:** `docs/M1_COLLABORATOR_OUTREACH.md`
 

@@ -1,6 +1,6 @@
 # Kathai Chithiram — Knowledge base programme plan
 
-**As of:** 2026-09-10 · **Owner:** WeGoFwd2020 · **Shaping ADRs:** `ADR_009_knowledge_asset_and_surfaces.md`,
+**As of:** 2026-09-10 · **Owner:** Sivakumar (Siva) Mambakkam · **Shaping ADRs:** `ADR_009_knowledge_asset_and_surfaces.md`,
 `ADR_010_retrieval_first_practice_assistant.md`, `ADR_011_corpus_rights_and_freshness.md`
 **Companion to:** `docs/LLM_PROGRAM_PLAN.md` (the domain-model programme)
 

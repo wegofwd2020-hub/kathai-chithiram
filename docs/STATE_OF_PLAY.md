@@ -1,6 +1,6 @@
 # WeGoFwd — State of Play
 
-**As of:** 2026-09-11 · **Owner:** WeGoFwd2020 · **Purpose:** the **front door** to the whole
+**As of:** 2026-09-11 · **Owner:** Sivakumar (Siva) Mambakkam · **Purpose:** the **front door** to the whole
 project — the high-level view of *what we're building, where everything lives, what's built,
 what's next, and who each remaining item is blocked on*, so the next move is never ambiguous.
 

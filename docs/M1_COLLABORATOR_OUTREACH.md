@@ -1,6 +1,6 @@
 # M1 professional-collaborator outreach — templates
 
-**Status:** Draft v0.1 (2026-07-01) · **Owner:** WeGoFwd2020 · **Companion to:**
+**Status:** Draft v0.1 (2026-07-01) · **Owner:** Sivakumar (Siva) Mambakkam · **Companion to:**
 `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`
 
 > **A finalized, send-ready version exists:** `docs/M1_OUTREACH_SEND_READY.md`

@@ -1,6 +1,6 @@
 # Kathai Chithiram — Privacy & Data-Handling Policy
 
-**Status:** Draft v0.1 (2026-06-11) · **Owner:** WeGoFwd2020 · **Review cadence:** quarterly, and before any release that changes data flow.
+**Status:** Draft v0.1 (2026-06-11) · **Owner:** Sivakumar (Siva) Mambakkam · **Review cadence:** quarterly, and before any release that changes data flow.
 
 > Kathai Chithiram processes deeply personal information — a parent's written story about *their own child*, often a child with special needs. That makes the data here special-category, child-related data. This document defines how that data is collected, used, stored, retained, and deleted. It is a **commitment**, and the implementation tickets that accompany it exist to make the product match this document.
 

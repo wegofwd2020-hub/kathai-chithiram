@@ -1,6 +1,6 @@
 # Kathai Chithiram — Domain model programme plan
 
-**As of:** 2026-09-10 · **Owner:** WeGoFwd2020 · **Shaping ADRs:** `ADR_006_domain_model_strategy.md`,
+**As of:** 2026-09-10 · **Owner:** Sivakumar (Siva) Mambakkam · **Shaping ADRs:** `ADR_006_domain_model_strategy.md`,
 `ADR_007_scene_script_v2_authoring_grammar.md`, `ADR_008_training_corpus_provenance.md`
 
 > A phased plan to move generation from a rented frontier model to an owned, clinically

@@ -1,6 +1,6 @@
 # DPIA Addendum — accounts, families, and child date of birth (ADR-005 parts b/c)
 
-**Status:** Draft v0.1 (2026-07-02) · **Owner:** WeGoFwd2020 · **Assesses:** the
+**Status:** Draft v0.1 (2026-07-02) · **Owner:** Sivakumar (Siva) Mambakkam · **Assesses:** the
 **proposed, not-yet-built** multi-user expansion in
 `docs/ADR_005_multi_user_program_platform.md` (parts b + c).
 
@@ -155,7 +155,7 @@ here) and reviewed alongside `docs/DPIA.md`.
 
 | Role | Name | Decision | Conditions | Date |
 |---|---|---|---|---|
-| Owner | WeGoFwd2020 | Directed the build; A3/A4.1/A6.5 ruled (see A8) | Build against synthetic identities; A4.2–4.4 + A6.2–6.4 still required before real-child processing | 2026-07-02 |
+| Owner | Sivakumar (Siva) Mambakkam | Directed the build; A3/A4.1/A6.5 ruled (see A8) | Build against synthetic identities; A4.2–4.4 + A6.2–6.4 still required before real-child processing | 2026-07-02 |
 | DPO / counsel | _pending_ | _pending_ | _pending_ | — |
 | Professional collaborator (progress touchpoint) | _pending_ | _pending_ | _pending_ | — |
 

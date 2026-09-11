@@ -1,6 +1,6 @@
 # Data Protection Impact Assessment — Kathai Chithiram
 
-**Status:** Draft v0.1 (2026-07-01) · **Owner:** WeGoFwd2020 · **Review cadence:** quarterly, and before any change to data flow or any launch.
+**Status:** Draft v0.1 (2026-07-01) · **Owner:** Sivakumar (Siva) Mambakkam · **Review cadence:** quarterly, and before any change to data flow or any launch.
 
 > This DPIA is an internal assessment for alignment and is **not legal advice**
 > and **not a sign-off**. It must be reviewed by a Data Protection Officer /
@@ -141,7 +141,7 @@ DSAR process) we need a DPO/counsel to rule on.
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| Owner | WeGoFwd2020 | Draft prepared | 2026-07-01 |
+| Owner | Sivakumar (Siva) Mambakkam | Draft prepared | 2026-07-01 |
 | DPO / counsel | _pending_ | _pending_ | — |
 
 *Review this DPIA quarterly, and whenever the data flow, the provider
