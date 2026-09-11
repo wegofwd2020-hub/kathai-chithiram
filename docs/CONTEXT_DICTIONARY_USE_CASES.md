@@ -27,6 +27,11 @@ serve the next need, not just the question in front.
 - **Navigate, never determine.** Eligibility-flavoured questions ("will insurance cover
   this?", "does he qualify?") are navigated (what the term means, what the plan's own
   documents say, the appeal path, who decides) — never adjudicated.
+- **Entitlement discovery (ADR-009 D10).** Regulations also map assistance the government has
+  *already allocated*; surfacing "what exists for a situation like this, its stated criteria,
+  the source, and who decides" is a first-class navigational capability — dated and
+  jurisdiction-specific, never an eligibility determination. It is the navigational layer
+  running through UC-2, UC-3, UC-4, UC-7 and UC-8.
 - **No personal data (ADR-009 D6).** A question describing a specific real individual is
   declined and redirected, not answered or stored. Entries below use generic personas.
 - **Risk-of-harm routes to a human (ADR-009 D7).** "What do I do when he hits himself" is not
