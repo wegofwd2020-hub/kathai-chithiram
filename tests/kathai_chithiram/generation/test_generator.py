@@ -220,3 +220,17 @@ def test_non_positive_max_attempts_rejected() -> None:
             request_id="req-1",
             max_attempts=0,
         )
+
+
+def test_generation_constrains_output_to_v2_schema() -> None:
+    from kathai_chithiram.scene_script.schema import SCENE_SCRIPT_SCHEMA_V2
+
+    provider = ScriptedProvider(replies=[json.dumps(_valid_script())])
+    generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+    )
+    assert provider.requests[0].output_schema == SCENE_SCRIPT_SCHEMA_V2

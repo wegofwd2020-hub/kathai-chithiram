@@ -29,6 +29,7 @@ from kathai_chithiram.generation.scene_script_prompt import (
     build_scene_script_system_prompt,
 )
 from kathai_chithiram.privacy.pseudonymize import NameMapping
+from kathai_chithiram.scene_script.schema import SCENE_SCRIPT_SCHEMA_V2
 from kathai_chithiram.scene_script.validation import validate_scene_script
 from kathai_chithiram.wegofwd_llm.gateway import run_generation
 from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig, ProviderRequestRecord
@@ -66,6 +67,11 @@ def generate_scene_script(
     clock: Callable[[], datetime] | None = None,
 ) -> GeneratedSceneScript:
     """Generate a contract-valid scene script from a parent's story.
+
+    Each generation attempt is constrained to the v2 schema via the seam's
+    ``output_schema`` parameter; validation and the repair loop remain the
+    guarantee that only fully-valid scripts are returned (structured output is a
+    partial constraint).
 
     Args:
         story_text: The raw parent-authored story. Pseudonymized by the seam
@@ -120,6 +126,7 @@ def generate_scene_script(
             request_id=f"{request_id}#{attempt}",
             system_prompt=system_prompt,
             system_prefix=system_prefix,
+            output_schema=SCENE_SCRIPT_SCHEMA_V2,
             clock=clock,
         )
         records.append(result.record)
