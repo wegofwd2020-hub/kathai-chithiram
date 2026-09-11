@@ -192,6 +192,13 @@ built-environment / housing accessibility, each with its own rights check (Decis
 reframes the *why*, not the build order (Decision 5) or the educate-cite-never-advise law
 (Decision 3).
 
+**Entitlement discovery (Decision 10):** regulations are treated not only as a compliance
+boundary but as a **map of assistance the government has already allocated** — surfacing what
+exists, its stated criteria, the source and who decides, so families stop having to
+reverse-engineer statutes to claim what is theirs. Navigational only (never an eligibility
+determination), dated for freshness, and state-specific. The mission ("address, not label")
+made concrete.
+
 **The product law:** *educate, always cite, never advise.* No recommendation about a specific
 person, no eligibility decisions, no assessment or diagnosis. An answer with no source is not
 produced.

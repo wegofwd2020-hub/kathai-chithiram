@@ -249,6 +249,36 @@ special-needs-specific roles — the home-accessibility questioner is a P2/P3 qu
 accessibility domain. Decision 2's persona order and Decision 3's boundary are unchanged;
 only the domains those personas ask across widen.
 
+**Decision 10 — Entitlement discovery: regulation is a map of allocated assistance, surfaced
+navigationally.**
+A government regulation is not only a compliance boundary for *this product* (device rules,
+FTC, privacy); for a family it is also a record of the assistance the state has **already
+allocated** — benefits, services and rights that go unclaimed because the rule that grants
+them is never read. Families routinely have to reverse-engineer statutes to obtain what is
+theirs. So the regulation sources Decision 4 already ingests (IDEA/OSEP, CMS/Medicaid, SSA,
+state agencies) are treated as an **entitlement map**, and *"what has been allocated for a
+situation like this?"* is a first-class query. This is the mission (Mission; "address, not
+label") in its most concrete form.
+
+It runs entirely inside Decision 3's navigational permission **and its limit**: surface the
+**program, its stated criteria, the source, and who decides** — and **never determine or
+predict eligibility for a specific person** ("you qualify", "you'll receive $X"). The
+determination belongs to the agency; the assistant's job ends at *"here is what exists, here
+are the criteria as written, here is how and where to apply."* Holding that line is also what
+keeps the surface out of the EU AI Act's high-risk "eligibility for essential services"
+category (Decision 3's reasoning). The trap is that the more useful entitlement discovery
+becomes, the harder users press for "so do I qualify?" — the handoff to the agency or a
+benefits counsellor is a designed feature, not an afterthought.
+
+Two properties this capability makes non-negotiable: **freshness** — benefit amounts, income
+limits and waitlists change often, and a stale entitlement answer a family *acts on* is
+actively harmful, so every entitlement answer is dated and carries "verify current with the
+agency" (ADR-011); and **jurisdiction** — benefits are heavily state-specific (Michigan first,
+Decision 4). The corpus-side mechanism — tagging regulation sources with a benefits schema
+(program · criteria-as-written · jurisdiction · who-decides · how-to-apply) so retrieval can
+answer entitlement queries — is an ingestion/retrieval concern for ADR-010 / ADR-011 and the
+corpus package (`wegofwd-arivu`), noted here as the requirement, not designed here.
+
 ## Consequences
 
 ### Positive
@@ -267,6 +297,10 @@ only the domains those personas ask across widen.
 - Naming the asset the "context dictionary" and the primary goal (Decision 8) gives a solo
   build one north-star to defend scope against — worth more than any single surface, and it
   makes the finished animation legible as a first surface rather than an abandoned direction.
+- Entitlement discovery (Decision 10) turns the corpus's regulation sources from a compliance
+  cost into direct value: it surfaces assistance families are entitled to but never told
+  about, which is high-impact, needs no personal data, and lives inside the navigational
+  boundary already drawn.
 - Decision 6 keeps a large privacy surface from opening at all, which is far cheaper than
   managing one.
 
