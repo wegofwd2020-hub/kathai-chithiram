@@ -87,13 +87,23 @@ serve the next need, not just the question in front.
 - **Sources needed:** audiology practice guidance, device/consumable references, **local clinic directories** (stale-fast local data, ADR-011 freshness).
 - **Status:** captured — the owner's worked example of "address, not label" and the dependency chain.
 
+### UC-4 — Aging out: the school-to-adult-services transition
+- **Persona:** P3 lifespan navigator (a parent/carer of a teen with disabilities approaching adulthood)
+- **Query (as asked):** "My daughter has an intellectual disability and turns 16 — what happens when she ages out of school, and what do I need to do now?"
+- **Domain(s):** special-needs practice + lifespan/transition + adult-services navigation (US; Michigan-first per ADR-009 D4)
+- **Immediate need:** understand the "cliff" — school-based IDEA services are an **entitlement** that ends (through age 21/22 depending on state); adult services are **eligibility-based** and often waitlisted. What changes, and on what timeline.
+- **Dependencies / what comes next:** transition planning written into the IEP (starts ~14–16); legal decision-making status settled **before 18** (guardianship vs supported decision-making vs power of attorney); adult-services applications filed **early** because waitlists are long — Medicaid HCBS waivers, the state developmental-disability agency, vocational rehabilitation, SSI reassessed as an adult at 18, an ABLE account; pediatric→adult healthcare transfer; day programs / supported employment / housing (also waitlisted). *The buried dependency society misses: you must apply years early, and almost no one tells families that in time — the clearest case of "address, not label".*
+- **Answer layers:** education (what the transition is, the entitlement-vs-eligibility shift, cited) · navigation (the applications, timelines, waitlists, who decides, the state DD agency and VR office) · products: minimal — this is services, not products.
+- **Boundary flags:** **heavy navigate-not-determine** — waiver / SSI / VR eligibility is explained and navigated, **never adjudicated** ("does she qualify?" → what it is, the application, the waitlist, who decides); guardianship is legal information plus *who to ask* (an attorney), not advice; **strongly state-specific** (ADR-009 D4, Michigan first); carer distress possible (route per D7).
+- **Sources needed:** IDEA/OSEP transition guidance (federal, public domain), CMS Medicaid HCBS-waiver material, SSA SSI/SSDI adult rules, Michigan developmental-disability agency + Vocational Rehabilitation guidance and directories (state-level, freshness-sensitive — ADR-011).
+- **Status:** captured — **high priority.** ADR-009 D2/P3: "highest real-world need, hardest corpus, highest hazard."
+
 ---
 
 ## Backlog — use-cases to detail over time
 
 Seed list; expand as scenarios come up. Each becomes a full entry above when detailed.
 
-- School-to-adult-services transition at 18/22 (P3; the classic lifespan cliff — ADR-009 D2/P3).
 - Respite care and carer burnout — what support exists for the *carer*.
 - Communication aids (AAC) for a non-speaking person — devices, training, dependencies.
 - Mobility and fall-prevention in the home for a senior (built-environment + aging).
