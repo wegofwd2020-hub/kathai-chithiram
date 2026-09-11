@@ -1,6 +1,6 @@
 # R10 deployment boundary — what drops the residual from Medium to Low
 
-**Status:** Design note (operational). **Owner:** WeGoFwd2020.
+**Status:** Design note (operational). **Owner:** Sivakumar (Siva) Mambakkam.
 **Date:** 2026-07-02.
 **Refs:** `docs/DPIA.md` R10 + §5 precondition 4; `docs/ADR_004_operator_access_control.md`;
 `src/kathai_chithiram/access/` (`GuardedStore`, `IdentityProvider`, `AuditSink`);

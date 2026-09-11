@@ -1,7 +1,7 @@
 # M1 progress engine — brief for the professional collaborator
 
 **Status:** Draft v0.2 (2026-07-01) · **For:** a trained therapist / professional
-collaborator (ADR-002 Decision 7.1) · **Owner:** WeGoFwd2020 · **Design:**
+collaborator (ADR-002 Decision 7.1) · **Owner:** Sivakumar (Siva) Mambakkam · **Design:**
 `docs/ADR_003_progress_engine_design.md`
 
 > **To author the policy:** the concrete file format, field-by-field, is in

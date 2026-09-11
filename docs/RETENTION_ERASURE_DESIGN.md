@@ -1,6 +1,6 @@
 # Retention & erasure design — accounts, families, children, programs, DOB
 
-**Status:** Design v0.1 (2026-07-02) · **Owner:** WeGoFwd2020 · **Scope:** the
+**Status:** Design v0.1 (2026-07-02) · **Owner:** Sivakumar (Siva) Mambakkam · **Scope:** the
 **proposed, not-yet-built** multi-user entities in ADR-005 parts b/c.
 
 > This is a **design note**, not code and not a policy sign-off. It satisfies precondition

@@ -1,6 +1,6 @@
 # DPO / counsel review package — Kathai Chithiram
 
-**Status:** Prepared for review (2026-07-02) · **Owner:** WeGoFwd2020
+**Status:** Prepared for review (2026-07-02) · **Owner:** Sivakumar (Siva) Mambakkam
 **Prepared by:** engineering, for a Data Protection Officer / qualified data-protection counsel.
 
 > **One entry point for the data-protection review.** This collates everything a
@@ -138,7 +138,7 @@ We are surfacing these honestly rather than assuming them closed:
 
 | Role | Name | Decision | Conditions | Date |
 |---|---|---|---|---|
-| Owner | WeGoFwd2020 | Package prepared | — | 2026-07-02 |
+| Owner | Sivakumar (Siva) Mambakkam | Package prepared | — | 2026-07-02 |
 | DPO / counsel | _pending_ | _pending_ | _pending_ | — |
 | Professional collaborator (if engine in scope) | _pending_ | _pending_ | _pending_ | — |
 

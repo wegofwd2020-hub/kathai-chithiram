@@ -1,6 +1,6 @@
 # Per-child key tree — content-cascade crypto-shred — design
 
-**Date:** 2026-07-07 · **Status:** approved (brainstorm) · **Owner:** WeGoFwd2020
+**Date:** 2026-07-07 · **Status:** approved (brainstorm) · **Owner:** Sivakumar (Siva) Mambakkam
 
 ## Problem
 
