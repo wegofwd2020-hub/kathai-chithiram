@@ -120,13 +120,23 @@ serve the next need, not just the question in front.
 - **Sources needed:** ASHA AAC guidance, AAC practice/research, Medicaid/Medicare speech-generating-device coverage rules, IDEA assistive-technology provisions, local SLP / AAC clinic directories (state/local, freshness-sensitive — ADR-011).
 - **Status:** captured — the case where the ADR-013 commercial boundary does the most work (assessment decides, not the store).
 
+### UC-7 — Mobility and fall-prevention in the home for a senior
+- **Persona:** P2 helper-learner (an adult child / carer) with a P3 lifespan thread — needs increase as mobility declines.
+- **Query (as asked):** "My mother is unsteady on her feet — how do I make her home safer so she doesn't fall?"
+- **Domain(s):** aging + built-environment accessibility + mobility (crosses into health / fall risk)
+- **Immediate need:** home modifications that reduce falls — grab bars (bathroom, by stairs), removing trip hazards (loose rugs, cords), lighting (night and motion-activated), non-slip surfaces, stair rails, a shower chair and raised toilet seat, threshold ramps.
+- **Dependencies / what comes next:** a professional **home-safety / occupational-therapy assessment** that matches modifications to the person; the person's **own fall-risk factors, which the home can't fix** — a medication review (many drugs affect balance), a vision check, proper footwear, and **strength/balance training** (PT, evidence-based programmes) — so the home is one lever among several; **mobility-aid fitting and training** (a badly fitted cane or walker *causes* falls); an **emergency-response plan** (a medical-alert / personal-emergency-response device) for the fall that happens anyway; **funding** for modifications (Medicaid-waiver home-mod benefits, the Area Agency on Aging, VA) → navigate, don't determine; who installs (a contractor or a certified aging-in-place specialist). *The dependency society misses: people grab-bar the bathroom and stop there, skipping the medication review and balance training that move the risk more.*
+- **Answer layers:** education (home-safety measures and the multi-factorial nature of falls, cited) · navigation (an OT home assessment, PT/balance programmes, local aging-in-place installers, funding, medical-alert options, who to ask) · products (Layer B: grab bars, ramps, shower chairs, walkers, medical-alert devices — labelled, ADR-013).
+- **Boundary flags:** **crosses into health — stays educational, never medical advice.** "Some medications affect balance — ask a pharmacist or doctor to review them" is fine; naming a drug to stop is not (ADR-009 D3; CONTENT_SAFETY §3 — no medical claims). A **recurring-subscription commercial angle** appears here (medical-alert monitoring) — a nuance for ADR-013's disclosure (an ongoing fee, not a one-off purchase); some devices are DME → ADR-013 D4 tier. Funding eligibility is navigate-not-determine. A recent fall with injury is **urgent** — route to emergency services, don't answer as a corpus query (D7-adjacent). Decline descriptions of a specific real person (ADR-009 D6).
+- **Sources needed:** CDC STEADI fall-prevention materials (federal, public domain), ACL / Area Agency on Aging, Medicaid-waiver home-modification provisions, aging-in-place / CAPS resources, PT/OT fall-prevention practice, local OT and contractor directories (state/local, freshness-sensitive — ADR-011).
+- **Status:** captured — the case that most tests the health/education line and introduces subscription-based commercial listings.
+
 ---
 
 ## Backlog — use-cases to detail over time
 
 Seed list; expand as scenarios come up. Each becomes a full entry above when detailed.
 
-- Mobility and fall-prevention in the home for a senior (built-environment + aging).
 - "What changes when my child turns 18" — guardianship vs supported decision-making (navigate, never determine).
 - Employment supports and workplace accommodations (ADA, accessibility domain).
 
