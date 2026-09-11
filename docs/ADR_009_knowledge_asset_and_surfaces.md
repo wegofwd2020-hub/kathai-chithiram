@@ -1,8 +1,9 @@
-# ADR-009 — One knowledge asset, two surfaces: widening from a story generator to a practice knowledge base
+# ADR-009 — The context dictionary: one knowledge asset, two surfaces
 
 **Date:** 2026-09-10
 **Status:** Proposed
 **Branch at decision:** main
+**Revised:** 2026-09-11 — adopted the primary-goal framing and the name "context dictionary"; broadened scope to disability + aging + accessibility with a domain-incremental discipline (Decisions 8–9). The build sequence (Decision 5) and the educate-cite-never-advise law (Decision 3) are unchanged.
 
 ---
 
@@ -49,6 +50,19 @@ autocomplete over a domain where being plausible and wrong is the specific harm.
 
 This ADR fixes the scope, the personas, the boundary and the sequence. ADR-010 fixes the
 architecture; ADR-011 fixes the rights and freshness regime.
+
+**Framing (2026-09-11): the asset is the product's primary goal, and its name is the
+"context dictionary."** The north-star is neither the animation nor a chat box; it is the
+dictionary itself — given a scenario involving a person with a disability, bring together the
+relevant, cited possibilities: what practices or accommodations exist, what a term means,
+what typically changes across a life stage, and who to ask next. A worked example: *"what
+capabilities does a house need for a senior with a hearing disability?"* resolves to the
+visual and tactile alerting, signalling and layout accommodations that homes for people with
+hearing loss commonly use — each cited, with a pointer to a home-assessment professional, and
+never "buy this house." This is a framing decision, not a roadmap change: it re-centres and
+names the asset (Decision 8) and widens its scope (Decision 9) without altering the build
+sequence (Decision 5) or the educate-cite-never-advise law (Decision 3), which the example
+above already obeys.
 
 ## Decision
 
@@ -167,6 +181,45 @@ one: no assistant surface ships until the escalation route exists, is authored w
 professional collaborator, and routes to a person and to real resources. Per ADR-001 D5 the
 model detects and routes; it never triages and never decides.
 
+**Decision 8 — The primary goal is the context dictionary; the surfaces serve it.**
+The corpus is not a means to a better story product and not the back end of a future chat
+product; it is the product's primary goal, and **"context dictionary"** is its name. Kathai
+Chithiram (the animation) and the practice assistant are both *surfaces* that consume it —
+replaceable, while the dictionary is not (Decision 1). This restates the emphasis of Decision
+1 as the project's north-star rather than a discovery about scope.
+
+It changes the *why*, not the *when*. Decision 5's sequence stands unchanged: build the
+corpus now, keep shipping Kathai Chithiram, and ship the assistant surface only after the
+story product ships and the risk-of-harm path exists (Decision 7). Naming the dictionary the
+primary goal is precisely *not* the rejected "pause the story product and pivot" alternative
+— the finished generation pipeline still ships, now understood as the dictionary's first
+surface. `wegofwd-arivu` (Decision 1) remains the package/repository name; "context
+dictionary" is the user-facing name for what it holds.
+
+**Decision 9 — Scope is broad by vision, incremental by domain.**
+The dictionary's stated scope is **disability, aging, and accessibility across life
+contexts** — not special-needs children alone. The house-accessibility example is the proof:
+a person making a home work for an aging relative with hearing loss is a legitimate user, and
+their question is educational and citable (Decision 3), though the child-story product never
+touched aging or the built environment.
+
+Breadth of *vision* is not breadth of *corpus on day one*. The corpus expands one **domain**
+at a time, mirroring Decision 4's one-state-first discipline. It **starts** in special-needs
+practice — where Decision 4 already scopes the sources (CDC, IDEA/OSEP, NIH/NICHD, CMS) and
+where grounded generation pays off for the existing product — then adds **aging / lifespan**,
+then **built-environment and housing accessibility**, each as a deliberate expansion with its
+own rights, freshness and jurisdiction check (Decision 4; ADR-011 D6). Each new domain brings
+a different source universe — housing accessibility means the ADA, the Fair Housing Act and
+state/local building codes, not IDEA and CMS — so a domain is added only once its sources are
+identified and rights-cleared, never by widening a search. This keeps a broad promise honest
+against a solo, ~$25k build: the north-star is wide; the ingested corpus is only ever as wide
+as its cleared sources.
+
+Personas generalise accordingly. P2 (helper-learner) and P3 (lifespan navigator) are not
+special-needs-specific roles — the home-accessibility questioner is a P2/P3 query in the
+accessibility domain. Decision 2's persona order and Decision 3's boundary are unchanged;
+only the domains those personas ask across widen.
+
 ## Consequences
 
 ### Positive
@@ -182,6 +235,9 @@ model detects and routes; it never triages and never decides.
   than a disclaimer, and it happens to be the same architecture that makes the answers
   trustworthy and that satisfies the corpus's own attribution obligations (ADR-011 D3).
 - Deferring P4 avoids the unbounded commitment while still serving it later for free.
+- Naming the asset the "context dictionary" and the primary goal (Decision 8) gives a solo
+  build one north-star to defend scope against — worth more than any single surface, and it
+  makes the finished animation legible as a first surface rather than an abandoned direction.
 - Decision 6 keeps a large privacy surface from opening at all, which is far cheaper than
   managing one.
 
@@ -197,6 +253,10 @@ model detects and routes; it never triages and never decides.
 - The corpus's highest-value practice layer is rights-encumbered (ADR-011 D5), so the first
   version will be stronger on policy and research than on step-by-step how-to.
 - Making the risk-of-harm path a precondition is correct and will delay the surface.
+- A broad north-star (disability + aging + accessibility) invites scope creep. Decision 9's
+  domain-at-a-time, rights-first discipline is the only thing holding it, and it has to be
+  enforced rather than admired — each new domain is a fresh rights and freshness burden, not
+  a wider query over the same corpus.
 
 ### Neutral
 

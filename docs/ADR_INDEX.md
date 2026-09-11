@@ -29,7 +29,7 @@
 | 006 | Domain model: capability layers before weights, on a permissive small base | Proposed (2026-09-10) | kathai-chithiram |
 | 007 | Scene-script v2: a closed art vocabulary and a checkable authoring grammar | Proposed (2026-09-10) | kathai-chithiram |
 | 008 | Training corpus: wholly synthetic, clinician-adjudicated, provenance-carrying | Proposed (2026-09-10) | kathai-chithiram |
-| 009 | One knowledge asset, two surfaces — and the educate/never-advise line | Proposed (2026-09-10) | kathai-chithiram |
+| 009 | The context dictionary: one knowledge asset, two surfaces — educate/never-advise; broad-vision / narrow-start scope | Proposed (2026-09-10, rev. 2026-09-11) | kathai-chithiram |
 | 010 | Retrieval-first: facts live in the corpus, never in the weights | Proposed (2026-09-10) | `wegofwd-arivu` (moved) |
 | 011 | Corpus rights and freshness: what may be ingested, and how it stays true | Proposed (2026-09-10) | `wegofwd-arivu` (moved) |
 | 012 | Repository topology: where everything lives as the family grows | Proposed (2026-09-10) | kathai-chithiram |
@@ -177,11 +177,19 @@ a model trained on tidy inputs may fail on a real message written at 3 a.m.
 
 ---
 
-### ADR-009 — One knowledge asset, two surfaces *(Proposed)*
+### ADR-009 — The context dictionary: one knowledge asset, two surfaces *(Proposed)*
 **Decided:** The story generator is a *surface* on an asset that does not exist yet — a
 curated, citable body of practice knowledge. Build the asset. Four audiences, served in
 order: parents (today), helper-learners, lifespan navigators, and builders (a by-product,
 never a product).
+
+**Primary goal + scope (rev. 2026-09-11):** the asset's name is the **"context dictionary"**
+and it is the product's *primary goal* — the animation and the assistant are surfaces of it
+(Decision 8). Scope is **broad by vision** (disability + aging + accessibility across life
+contexts) but **incremental by domain**: start in special-needs practice, add aging, then
+built-environment / housing accessibility, each with its own rights check (Decision 9). This
+reframes the *why*, not the build order (Decision 5) or the educate-cite-never-advise law
+(Decision 3).
 
 **The product law:** *educate, always cite, never advise.* No recommendation about a specific
 person, no eligibility decisions, no assessment or diagnosis. An answer with no source is not
