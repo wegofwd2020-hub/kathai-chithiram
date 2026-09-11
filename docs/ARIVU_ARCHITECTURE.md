@@ -115,26 +115,40 @@ LEGEND: solid border = DECIDED; dashed border = PROPOSED. Colour key for the 7 l
 **Rendered (Mermaid — GitHub renders this inline; or paste into mermaid.live):**
 ```mermaid
 flowchart TB
-  classDef src fill:#64748b,color:#fff; classDef ing fill:#0d9488,color:#fff
-  classDef corp fill:#1e40af,color:#fff; classDef rag fill:#4f46e5,color:#fff
-  classDef llm fill:#7c3aed,color:#fff; classDef agent fill:#f59e0b,color:#111,stroke-dasharray:5 5
-  classDef surf fill:#16a34a,color:#fff; classDef guard fill:#b91c1c,color:#fff
+  classDef src fill:#64748b,color:#fff
+  classDef ing fill:#0d9488,color:#fff
+  classDef corp fill:#1e40af,color:#fff
+  classDef rag fill:#4f46e5,color:#fff
+  classDef llm fill:#7c3aed,color:#fff
+  classDef agent fill:#f59e0b,color:#111,stroke-dasharray:5 5
+  classDef surf fill:#16a34a,color:#fff
+  classDef guard fill:#b91c1c,color:#fff
   classDef mcp fill:#0891b2,color:#fff,stroke-dasharray:5 5
-  S["🏛️ L0 Sources — federal regs · MI state · practice lit · local directories"]:::src
-  I["🧪 L1 Ingestion — chunk · rights · freshness · entitlement tags"]:::ing
-  C["🗄️ L2 Corpus — FTS · embeddings-ready · need-dependency graph (proposed)"]:::corp
-  R["🔎 L3 Retrieval/RAG — cited passages · entitlement · dependency expansion"]:::rag
-  L["🧠 L4 LLM seam (wegofwd-llm) — provider-agnostic · cite-or-refuse"]:::llm
-  A["⚙️ L5 Agent layer (proposed) — plan→retrieve→expand→compose→verify"]:::agent
-  subgraph SF["🖥️ L6 Surfaces"]
+  S["L0 Sources - federal regs, MI state, practice lit, local directories"]:::src
+  I["L1 Ingestion - chunk, rights, freshness, entitlement tags"]:::ing
+  C["L2 Corpus - FTS, embeddings-ready, need-dependency graph (proposed)"]:::corp
+  R["L3 Retrieval / RAG - cited passages, entitlement, dependency expansion"]:::rag
+  L["L4 LLM seam (wegofwd-llm) - provider-agnostic, cite-or-refuse"]:::llm
+  A["L5 Agent layer (proposed) - plan, retrieve, expand, compose, verify"]:::agent
+  subgraph SF["L6 Surfaces"]
     SF1["Kathai Chithiram animation"]:::surf
     SF2["Practice assistant (later)"]:::surf
-    SF3["Commercial layer — ADR-013"]:::surf
+    SF3["Commercial layer (ADR-013)"]:::surf
   end
-  G["🛡️ Guardrail engine — cite-or-refuse · navigate-not-determine · no PII · risk→human"]:::guard
-  M["🔌 MCP (proposed) — corpus as tools ↔ external tools"]:::mcp
-  S-->I-->C-->R-->L-->A-->SF
-  R-.->A; A-.->R; G-.->A; G-.->SF; M-.->R; M-.->A
+  G["Guardrail engine - cite-or-refuse, navigate-not-determine, no PII, risk to human"]:::guard
+  M["MCP (proposed) - corpus as tools plus external tools"]:::mcp
+  S --> I
+  I --> C
+  C --> R
+  R --> L
+  L --> A
+  A --> SF
+  R -.-> A
+  A -.-> R
+  G -.-> A
+  G -.-> SF
+  M -.-> R
+  M -.-> A
 ```
 
 ---
@@ -255,13 +269,28 @@ COLOUR KEY reused from the hero diagram.
 **Rendered (Mermaid):**
 ```mermaid
 flowchart LR
-  classDef q fill:#16a34a,color:#fff; classDef gate fill:#b91c1c,color:#fff; classDef step fill:#4f46e5,color:#fff
-  Q["🙋 User query"]:::q --> IN["🛡️ Intake & scope gate"]:::gate --> P["🗂️ Retrieval planner"]:::step
-  P --> RAG["🔎 RAG retrieve (corpus)"]:::step --> CMP["🧠 LLM compose — cite only"]:::step
-  CMP --> V["🛡️ Verify — every claim cited? no determination?"]:::gate --> ANS["✅ Cited answer + who-to-ask"]:::q
-  IN -.personal person.-> D1["🚫 Decline"]:::gate
-  IN -.crisis.-> D2["🆘 Escalate to human"]:::gate
-  V -.no source.-> D3["↩️ Refuse"]:::gate
+  classDef q fill:#16a34a,color:#fff
+  classDef gate fill:#b91c1c,color:#fff
+  classDef step fill:#4f46e5,color:#fff
+  Q["User query"]:::q
+  IN["Intake and scope gate"]:::gate
+  P["Retrieval planner"]:::step
+  RAG["RAG retrieve (corpus)"]:::step
+  CMP["LLM compose - cite only"]:::step
+  V["Verify - every claim cited? no determination?"]:::gate
+  ANS["Cited answer + who-to-ask"]:::q
+  D1["Decline - personal person"]:::gate
+  D2["Escalate to human - crisis"]:::gate
+  D3["Refuse - no source"]:::gate
+  Q --> IN
+  IN --> P
+  P --> RAG
+  RAG --> CMP
+  CMP --> V
+  V --> ANS
+  IN -.-> D1
+  IN -.-> D2
+  V -.-> D3
 ```
 
 ### Flow B — entitlement discovery (Decision 10)
@@ -285,13 +314,24 @@ HARD-STOP CALLOUT: a large red bar UNDER the "Assemble" node reading
 **Rendered (Mermaid):**
 ```mermaid
 flowchart LR
-  classDef q fill:#16a34a,color:#fff; classDef step fill:#4f46e5,color:#fff
-  classDef meta fill:#0d9488,color:#fff; classDef gate fill:#b91c1c,color:#fff; classDef juris fill:#64748b,color:#fff
-  Q["🙋 'What are we entitled to?'"]:::q --> E["🎗️ Entitlement retrieval (tagged regs)"]:::step
-  E --> AS["🧠 Assemble: program · criteria-as-written · source · who-decides · how-to-apply"]:::step
-  AS --> F["⏱️ Freshness stamp + 'verify with agency'"]:::meta
-  F --> J["🗺️ Jurisdiction filter (Michigan-first)"]:::juris --> ANS["✅ Navigational answer"]:::q
-  AS -.->|"NEVER 'you qualify' / '$X'"| HO["🤝 Hand-off to benefits counsellor"]:::gate
+  classDef q fill:#16a34a,color:#fff
+  classDef step fill:#4f46e5,color:#fff
+  classDef meta fill:#0d9488,color:#fff
+  classDef gate fill:#b91c1c,color:#fff
+  classDef juris fill:#64748b,color:#fff
+  Q["What are we entitled to?"]:::q
+  E["Entitlement retrieval (tagged regs)"]:::step
+  AS["Assemble - program, criteria-as-written, source, who-decides, how-to-apply"]:::step
+  F["Freshness stamp + verify with agency"]:::meta
+  J["Jurisdiction filter (Michigan-first)"]:::juris
+  ANS["Navigational answer"]:::q
+  HO["Hand-off to benefits counsellor"]:::gate
+  Q --> E
+  E --> AS
+  AS --> F
+  F --> J
+  J --> ANS
+  AS -.->|"NEVER: you qualify / dollar amount"| HO
 ```
 
 ### Flow C — dependency-aware / anticipatory answering (the Mission)
@@ -313,14 +353,21 @@ a red 'navigate-not-determine' shield (e.g. the funding spoke).
 **Rendered (Mermaid):**
 ```mermaid
 flowchart TB
-  classDef c fill:#16a34a,color:#fff; classDef d fill:#f59e0b,color:#111
-  H["✅ Hearing aid selected"]:::c
-  H-->B1["🔋 recurring batteries"]:::d
-  H-->B2["✋ dexterity → rechargeable"]:::d
-  H-->B3["📦 backup device"]:::d
-  H-->B4["🩺 audiology follow-ups"]:::d
-  H-->B5["📺 phone/TV compatibility"]:::d
-  H-->B6["📍 local clinic (live / MCP)"]:::d
+  classDef c fill:#16a34a,color:#fff
+  classDef d fill:#f59e0b,color:#111
+  H["Hearing aid selected"]:::c
+  B1["recurring batteries"]:::d
+  B2["dexterity - rechargeable"]:::d
+  B3["backup device"]:::d
+  B4["audiology follow-ups"]:::d
+  B5["phone / TV compatibility"]:::d
+  B6["local clinic (live / MCP)"]:::d
+  H --> B1
+  H --> B2
+  H --> B3
+  H --> B4
+  H --> B5
+  H --> B6
 ```
 
 ### Flow D — grounded generation for Kathai Chithiram (surface 1)
@@ -338,10 +385,21 @@ ANNOTATION: a padlock over the whole lane labelled "child data — no commerce,
 **Rendered (Mermaid):**
 ```mermaid
 flowchart LR
-  classDef q fill:#16a34a,color:#fff; classDef step fill:#4f46e5,color:#fff; classDef llm fill:#7c3aed,color:#fff; classDef gate fill:#b91c1c,color:#fff
-  P["📝 Parent story"]:::q --> R["🔎 RAG: retrieve relevant practice"]:::step
-  R --> G["🧠 LLM seam: constrained scene-script (KC-12)"]:::llm
-  G --> V["🛡️ Validate scene script"]:::gate --> RN["🎬 Renderer"]:::step --> M["📽️ Animation (mp4)"]:::q
+  classDef q fill:#16a34a,color:#fff
+  classDef step fill:#4f46e5,color:#fff
+  classDef llm fill:#7c3aed,color:#fff
+  classDef gate fill:#b91c1c,color:#fff
+  P["Parent story"]:::q
+  R["RAG - retrieve relevant practice"]:::step
+  G["LLM seam - constrained scene-script (KC-12)"]:::llm
+  V["Validate scene script"]:::gate
+  RN["Renderer"]:::step
+  M["Animation (mp4)"]:::q
+  P --> R
+  R --> G
+  G --> V
+  V --> RN
+  RN --> M
 ```
 
 ---
