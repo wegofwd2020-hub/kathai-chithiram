@@ -1,215 +1,126 @@
-# Kathai Chithiram — State of Play
+# WeGoFwd — State of Play
 
-**As of:** 2026-07-02 · **Owner:** WeGoFwd2020 · **Purpose:** one place to see what is
-built, what is left, and **who each remaining item is blocked on** — so the next move is
-never ambiguous.
+**As of:** 2026-09-11 · **Owner:** WeGoFwd2020 · **Purpose:** the **front door** to the whole
+project — the high-level view of *what we're building, where everything lives, what's built,
+what's next, and who each remaining item is blocked on*, so the next move is never ambiguous.
 
-> This is a status snapshot, not a spec. The authoritative detail lives in the ADRs,
-> `docs/DPIA.md`, `PRIVACY.md`, and the `TICKETS/`. Update it when a track changes state.
+> **This is a map, not a spec.** It orients and links; it does not duplicate. The authoritative
+> detail lives in the ADRs (`docs/ADR_INDEX.md`), the architecture (`docs/ARIVU_ARCHITECTURE.md`),
+> `docs/DPIA.md`, `PRIVACY.md`, and `TICKETS/`. When a decision hardens, it becomes an ADR and
+> this file just points to it. Half-formed thoughts live in **§ Open threads** until they do.
 
-**Compliance status (2026-07-02):** the next-session queue is fully closed (4/4), all merged
-to `main` (PRs #37–#40). **No engineering-ownable *launch-blocker* work remains open** —
-everything left to reach launch is external/operational (DPO/counsel, professional
-collaborator, ops provisioning), each with a decision-ready artifact and a named owner below.
+---
 
-**Rendering/offline status (2026-07-02):** a follow-on session hardened the **render and
-authoring** side (PRs #47–#59, all merged): in-process narration with **per-character
-voices** + sound-effects (mixed into the mp4), rendered scene transitions, an accessibility
-caption sidecar (`.srt`/`.vtt`), **offline generation** (`kc generate`/`kc intake --offline`
-— story→video with no LLM/API key), and content-aware scene art (per-scene inferred setting,
-backdrop, props, character pose/expression, reading-paced duration). Tree is green — **634
-tests pass, ruff + mypy clean** (incl. the M1 policy wire-up and the `kc author` story
-template below). **Both** reference renderers now carry the content-aware art: the
-matplotlib default (`generate_animation.py`) and the **Blender v2** renderer
-(`blender_animation.py`) — the latter brought to parity (content-driven backdrops +
-props + figure expression, plus fade/dissolve transitions via keyframed opacity),
-verified on a real Blender 4.0.2 render.
+## 1. North star
 
-## TL;DR
+**We are building a "context dictionary":** a citation-grounded, *never-advise* knowledge and
+navigation asset for people with disabilities, seniors, and the people who help them. Given a
+real scenario, it assembles the relevant, **cited** possibilities — what practices and
+accommodations exist, what a term means, **what the government has already allocated**, and
+**what comes next** — and points to who decides. It never diagnoses, never determines
+eligibility, never gives individualised advice.
 
-The **product pipeline is built and green** (634 tests): a parent's story becomes a
-validated, safety-checked, human-review-gated draft animation, behind a provider-agnostic
-LLM seam, with encryption at rest and verifiable deletion — and now renders with narration,
-sound, transitions, captions, and content-aware art, drivable end-to-end offline (no key)
-for manual verification. **There is essentially no engineering-ownable launch-blocker work
-left**: the two open tracks (M1 progress engine, KC-11 access control) are built to the line
-where the next step is a *person* or *deployment*, and KC-10 envelope keys is built too. What
-blocks launch is external: a professional collaborator, a DPO sign-off, and operational
-provisioning.
+**Mission:** *address the person, not the label* — serve the immediate need **and** the
+dependencies that solving it creates, instead of answering the one question in front and stopping.
 
-## What is built (done)
+---
 
-- **Core pipeline** — scene-script contract + validation, generation behind the
-  `wegofwd-llm` seam (Anthropic provider), both reference renderers consume the contract,
-  parent intake with consent capture. `kc intake` / `kc generate` / `kc review` /
-  `kc assign` / `kc progress` / `kc suggestions` / `kc decide` / `kc author` / `kc delete` / `kc retention-sweep`, plus the **platform** commands `kc family-create` / `kc child-add` / `kc therapist-add` / `kc assign-child` / `kc consent` / `kc program-create` / `kc erase-child` / `kc erase-family` and `kc generate --child`.
-- **Erasure + retention are CLI-invokable** — `kc delete <story>` (owner-only, guarded +
-  audited, verifiable KC-1 hard-delete + KC-10 crypto-shred, confirms unless `--yes`) and
-  `kc retention-sweep` (purge undelivered older than the window; `--dry-run` reports only).
-  The right-to-erasure the DPIA/PRIVACY reference is now user-invokable, not just a function.
-- **Three ways to make a story** — `kc intake` (interactive, consented), `kc generate`
-  (free text; `--offline` = no LLM/key), and **`kc author`** (a structured story template
-  **from a file or via guided interactive prompts**, with `--dry-run` preview and shipped
-  examples in `docs/examples/` → scene script, deterministic, no key — ADR-005 part a;
-  `docs/STORY_TEMPLATE.md`). All three strip the child's name to the token (KC-2) and produce
-  a review-gated draft.
-- **Production hardening (KC-1…KC-9)** — verifiable hard-delete (KC-1), identifier
-  minimization before the LLM (KC-2), scene-script validation (KC-3), render-time seizure/
-  flash safety (KC-4), **encryption at rest** (KC-5), **dedicated ZDR/no-training
-  credential** (KC-6), **review→approve→deliver** gate (KC-7), **parent privacy notice** +
-  versioned consent (KC-8), **DPIA drafted** (KC-9).
-- **Access control (KC-11, ADR-004)** — code-complete: deny-by-default enforcement wired
-  through every app flow (CLI/intake/review/progress), a durable log-safe audit trail,
-  `kc assign` for reviewer/therapist grants, all role-scoped to the actor model.
-- **Envelope encryption (KC-10)** — each story is encrypted under its own data key,
-  stored wrapped by the master; hard-delete crypto-shreds the wrapped key (undecryptable
-  even from a stale backup), and `rewrap_story` rotates the master without re-encrypting
-  bodies. Backward-compatible with legacy KC-5 stores.
-- **Rendering & offline authoring (PRs #47–#57)** — the render/authoring side, all
-  in-process and behind the scene-script contract:
-  - *Audio* — an in-process narration voice (`--voice`, a local CLI-TTS seam) with optional
-    **per-character voices** (`--character-voice ID=CMD` → a `VoiceCast`, each scene narrated
-    in its foreground character's voice) and a local sound-effects bank (`--sfx`), each
-    safety-guarded and mixed into the sealed mp4; the child's name/audio never leaves the
-    machine (ADR-026 D1).
-  - *Motion & accessibility* — scene transitions (fade/dissolve) actually rendered, and a
-    caption sidecar (`kc … --captions srt|vtt`) written beside the `--out` video.
-  - *Offline generation* — `kc generate --offline` / `kc intake --offline` turn a story into
-    a video with **no LLM/API key** (deterministic local segmentation): sentences grouped
-    into readable scenes, name still stripped (KC-2), contract-validated, review-gated.
-  - *Content-aware art* — each scene infers its setting (bathroom / bedroom / kitchen /
-    classroom / outdoors / calm), backdrop, props (brushing / mealtime / play / school /
-    dressing), character pose/expression, and reading-paced duration from its content; the
-    hand-authored demo keeps its bespoke frames. (Reference renderer: `generate_animation.py`.)
-- **Decision-ready artifacts for the external blockers** — `docs/R10_DEPLOYMENT_BOUNDARY.md`
-  (the boundary + acceptance checklist that drops R10 → Low), `docs/M1_OUTREACH_SEND_READY.md`
-  (send-ready collaborator email, three fill-ins, *not sent*), and `docs/DPO_REVIEW_PACKAGE.md`
-  (one entry point for DPO/counsel sign-off, with the open gaps named). These don't unblock
-  the work themselves — they make each external step actionable.
+## 2. The shape — one asset, many surfaces
 
-## Open tracks — status and who they are blocked on
+The **corpus is the asset** (the context dictionary); everything a user sees is a **surface** on
+it. Surfaces are replaceable; the asset is not. `[ADR-009]`
 
-### 1. M1 — per-child progress → therapist-suggested premises
+- **Surface 1 — Kathai Chithiram (animation).** A parent's story → a calm, captioned animation a
+  special-needs child can understand. **Built and shipping.** It consumes the corpus for grounded
+  generation. No commerce, full child-data privacy apparatus.
+- **Surface 2 — the practice assistant (later).** Direct question → cited answer for carers,
+  helper-learners, self-advocates, seniors. Home of entitlement discovery and dependency-aware
+  answering. Ships **after** the animation and **after** the risk-of-harm escalation path exists.
+- **The asset — `wegofwd-arivu`.** A curated, rights-cleared, versioned corpus + retrieval (RAG).
+  Federal content first; state/nonprofit content is copyright-gated. Its own repository.
 
-- **Built:** ADR-002 (stance, Accepted) + ADR-003 (engine design, Accepted). The
-  `ProgressPolicy` schema, the deterministic `measure`/`suggest` interpreter, **and the
-  enabling wire-up** are all landed (PR #61) — a policy *loader* (`load_policy`), the runner
-  (`run_progress` = measure→suggest→record), and `kc progress <goal> --policy <file>
-  --story <id>`. It stays **default-free and gated off**: no policy ships, `--policy` is
-  required, recording a suggestion needs the therapist role (fails closed), and the
-  suggestion is inert (a therapist decides). Collaborator brief is at v0.2.
-- **The engineering track is COMPLETE end to end** — the therapist loop is now
-  CLI-complete: `kc progress <goal> --policy <file> --story <id>` (run the engine) →
-  `kc suggestions <story>` (list) → `kc decide <story> <sug> --accept|--edit|--dismiss`
-  (therapist decision, D7.3). The collaborator has a concrete file to author from —
-  `docs/PROGRESS_POLICY.md` + the inert starter `docs/examples/progress_policy.template.json`
-  (`enabled: false`, PLACEHOLDER copy). Verified end to end: a filled + enabled policy fires
-  its rule and records a suggestion. **The engine runs the moment a reviewed policy file
-  exists — no code left.**
-- **Blocked on — a professional collaborator (therapist/OT):** filling the template with the
-  real window K, thresholds, trend definitions (ADR-002 D7.1) + framing/copy sign-off (D7.4).
-  *Engineering cannot pick these — they are clinical judgment.*
-- **Also blocked on — DPO/counsel:** the progress-profiling DPIA touchpoint (D7.6).
-- **Note (2026-07-02):** owner reports the external gates (DPO sign-off + addendum, collaborator,
-  ops) **cleared** — awaiting the concrete artifacts to act on: the OT's **filled `ProgressPolicy`
-  file** (→ M1 live, no build), and the DPO's **DOB-granularity + lawful-basis rulings + auth
-  approach** (→ build platform b/c per ADR-005 + `RETENTION_ERASURE_DESIGN.md`).
+**Architecture:** `docs/ARIVU_ARCHITECTURE.md` (7-layer pattern: sources → ingestion → corpus →
+RAG → LLM seam → agent layer → surfaces; with rendered diagrams).
 
-### 2. KC-11 — operator access control (DPIA R10)
+**The five laws** (hard gates, every surface inherits them — ADR-009 D3/D6/D7/D10, ADR-010):
+educate/cite/never-advise · navigate-never-determine · no personal data on the assistant ·
+risk-of-harm routes to a human · facts live in the corpus, never in model weights.
 
-- **Built:** everything in code (ADR-004, PRs #28–#34).
-- **Blocked on — a deployment boundary (operational):** R10's residual drops from Medium to
-  Low only where an operator cannot bypass the app via direct filesystem access to the store
-  (a network boundary / no shared filesystem). In-app enforcement is done; the boundary is
-  infrastructure, not code. The required boundary — properties, threat-model delta, and the
-  §5 acceptance checklist for reassessing R10 → Low — is now specified in
-  `docs/R10_DEPLOYMENT_BOUNDARY.md`.
+---
 
-### 3. KC-10 — envelope / per-story keys (crypto-shredding)
+## 3. Where everything lives (doc map)
 
-- **Built (2026-07-02).** Per-story data keys wrapped by the master; hard-delete
-  crypto-shreds the wrapped key (R5), and `rewrap_story` rotates the master without
-  re-encrypting bodies (R3). Backward-compatible with legacy KC-5 stores; documented
-  rotation procedure in `TICKETS/KC-10-envelope-per-story-keys.md`.
-- **Blocked on — nobody:** done. The only operational follow-on is provisioning the
-  secret manager that holds `KC_STORAGE_KEY` (already tracked as a launch precondition).
+| You want… | Read |
+|---|---|
+| The decisions (the "why") | `docs/ADR_INDEX.md` → ADR-001…013 |
+| Product/strategy north star | **ADR-009** (asset & surfaces, context-dictionary, mission, entitlement discovery) |
+| How it's built (RAG / LLM / agents / MCP) | `docs/ARIVU_ARCHITECTURE.md` |
+| The scenarios it serves (+ future eval set) | `docs/CONTEXT_DICTIONARY_USE_CASES.md` (UC-1…UC-13) |
+| Who else is in the market | `docs/COMPETITIVE_LANDSCAPE.md` |
+| The domain-model / LLM programme | **ADR-006**, `docs/LLM_PROGRAM_PLAN.md` |
+| The scene-script contract | `docs/SCENE_SCRIPT_CONTRACT.md`, **ADR-007** |
+| Corpus retrieval / rights / freshness | **ADR-010**, **ADR-011** (canonical copies in `wegofwd-arivu`) |
+| Commercial model boundaries | **ADR-013** |
+| Privacy / safety / compliance | `PRIVACY.md`, `docs/CONTENT_SAFETY.md`, `docs/DPIA.md`, `docs/DPO_REVIEW_PACKAGE.md` |
+| The clinician engagement | `docs/M1_PROFESSIONAL_COLLABORATOR_BRIEF.md`, `docs/M1_OUTREACH_SEND_READY.md` |
+| Repo topology (why arivu is separate) | **ADR-012** |
 
-### 4. M2 — multi-user program platform (`docs/ADR_005_multi_user_program_platform.md`, Proposed)
+---
 
-- **Part (a) story template — BUILT (2026-07-02, `kc author`).** Adds no new personal
-  data, so it was not gated.
-- **Parts (b) family/child/therapist identity and (c) therapist programs — BUILT
-  (2026-07-02, PRs #84–92) against SYNTHETIC identities**, after the owner ruled the
-  core gates (DPIA addendum **A8**): **DOB → age band** (full DOB never stored), **lawful
-  basis → parental consent**, **auth → local accounts**. Delivered: the `people` domain
-  model (age-band `AgeBand.from_dob` discards the date; opaque ids, no names), child-scoped
-  grants lifted `story_id → child_id` behind the ADR-004 seam, a persisted `PeopleRegistry`,
-  onboarding + program + erase CLI, `GuardedStore.create_story_for_child` (consent-gated,
-  live child-scoped enforcement), `kc generate --child`, and **cascade right-to-erasure**
-  (`erase_child`/`erase_family` — R15 built, A6.3 met). 
-- **Still gated before a REAL child's data (not just synthetic):** the parent-facing
-  **progress report** (R14 — needs the D7.6 touchpoint + D7.4 copy sign-off) is **not
-  built**; and DPO items **A4.2** (account-data basis), **A4.3** (controller/processor + a
-  DPA for therapist orgs), **A4.4** (Children's Code), **A6.2** (re-versioned notice +
-  consent) remain. The registry is interim plaintext (opaque ids + bands); the per-child
-  **key tree** (`RETENTION_ERASURE_DESIGN §3`) is a further hardening.
+## 4. Status by track
 
-## Launch preconditions (from `docs/DPIA.md` §5) — the critical path
+| Track | State | Blocked on |
+|---|---|---|
+| **Animation pipeline (Surface 1)** | **Built, green — 721 tests.** Contract + validation, generation behind `wegofwd-llm`, both renderers, narration/sfx/transitions/captions, offline mode, content-aware art. | — (buildable polish only) |
+| **KC-12 constrained decoding + v2 emission** | **Done, merged.** Structured output + v2 scene-script; validate-and-repair retained. | — |
+| **M3 domain model (own the model over time)** | Contract (KC-13) + constraint (KC-12) done. Next is validators (KC-16). | **Clinician** (narrative policy) |
+| **M1 progress engine** | Built to the line; inert without a policy. | **Clinician** (ProgressPolicy) |
+| **The corpus (`wegofwd-arivu`)** | Persistence layer **spec'd + planned, not built**; ADR-010/011 ratified-in-principle. | — for the **federal** spine (buildable now); permissions for state/nonprofit |
+| **Practice assistant (Surface 2)** | Framed (ADR-009), **not designed/built.** | Animation shipping + **risk-of-harm path** (ADR-009 D7) |
+| **Commercial layer** | Boundaries set (ADR-013), nothing built. | **Counsel** (FTC / device-promotion) + owner's model choice |
+| **Platform accounts / DOB** | Built against synthetic identities. | **DPO** sign-off before real child data |
 
-The DPIA is **Draft v0.1, not signed off**. Before any EU/UK launch, all of:
+---
 
-| # | Precondition | Blocked on | Kind |
-|---|--------------|-----------|------|
-| 1 | DPO / counsel review + sign-off of the DPIA and parent notice | **DPO / counsel** | external |
-| 2 | Confirm the Anthropic org is genuinely no-training / ZDR (R2) | **Owner (ops)** | operational |
-| 3 | `KC_STORAGE_KEY` in a secret manager, separate from data/backups, with rotation (R3) | **Owner (ops)** | operational |
-| 4 | Deployment boundary that removes the local filesystem bypass (R10) — spec + checklist in `docs/R10_DEPLOYMENT_BOUNDARY.md` | **Owner (ops)** | operational |
-| 5 | Progress-engine DPIA touchpoint, if the engine is enabled (R8) | **Collaborator + DPO** | external |
+## 5. What's next — and who each is blocked on
 
-Code side of the two highest-inherent risks (R2 ZDR, R3 at-rest) is already done; what
-remains on the critical path is human and operational.
+**Buildable now, no one's permission needed:**
+- The **federal corpus spine** in `wegofwd-arivu` (ingest IDEA/OSEP, CMS/Medicaid, SSA, ADA/EEOC,
+  CDC — all public-domain), with rights + freshness records. This is librarian work and it
+  improves the animation via grounded retrieval while it's built.
+- Animation-product polish and the ADR-007 step-6 rename tidy-ups.
 
-## Who owns the next move
+**Blocked on a person (external — the real unlocks):**
+- **A retained clinical collaborator** → unblocks KC-16 (narrative policy), KC-14/15 (corpus
+  adjudication), and the M1 progress engine. *One engagement covers both tracks.* Outreach is
+  drafted and send-ready.
+- **A data-protection / legal review** → ADR-005 accounts+DOB, ADR-011 source tiering, ADR-013
+  commercial model.
+- **A deployment boundary** → last step of ADR-004.
 
-- **WeGoFwd2020 (owner):** engage the professional collaborator; commission the DPO/counsel
-  review; provision the secret manager, confirm the ZDR org, and stand up a deployment
-  boundary.
-- **Professional collaborator (therapist/OT):** author the `ProgressPolicy` and sign off the
-  framing (unblocks M1).
-- **DPO / counsel:** sign off the DPIA (unblocks launch) and the progress-profiling touchpoint.
-- **Engineering:** nothing is pick-up-able — everything waits on the above. The M1 policy
-  wire-up (`load_policy` → `run_progress` → `kc progress`) is now built too (PR #61), so
-  even that last "when the gate opens" task is done; the engine runs the moment a reviewed
-  policy file exists.
+**Honest note:** most of the recent work is **strategy captured as ADRs/docs**, not new code. The
+direction is clear and staged; the single biggest lever is still **retaining the clinician**.
 
-## Next-session task queue (pinned 2026-07-01, all cleared 2026-07-02)
+---
 
-**All four queued items are done.** What now remains is entirely external/operational
-(a DPO/counsel sign-off, a professional collaborator, and ops provisioning) — the M1
-policy wire-up that used to be the one "when the gate opens" code task is now built too
-(PR #61), so no engineering task is left. The four completed items are kept below for the
-audit trail.
+## 6. Open threads — thoughts not yet decided
 
-1. ~~**Build KC-10 — envelope / per-story keys (crypto-shredding).**~~ **Done 2026-07-02.**
-   Per-story data keys wrapped by the master; crypto-shred on delete; incremental
-   master-key rotation. Spec + rotation procedure: `TICKETS/KC-10-envelope-per-story-keys.md`.
-2. ~~**Write the R10 deployment-boundary design note.**~~ **Done 2026-07-02.**
-   `docs/R10_DEPLOYMENT_BOUNDARY.md`: the gap, the target properties, the threat-model
-   delta (before/after), and a §5 acceptance checklist for reassessing R10 Medium → Low.
-   Linked from DPIA R10 + §5 precondition 4. Unblocks the ops conversation.
-3. ~~**Prepare the M1 collaborator outreach.**~~ **Drafted + copy approved 2026-07-02.**
-   `docs/M1_OUTREACH_SEND_READY.md` — finalized pediatric-OT / advisory / cold-email
-   message; **owner approved the copy 2026-07-02**. **Still not sent** — sending is an
-   operational step the owner takes from `wegofwd2020@gmail.com` once a recipient
-   (name + email) and signature are supplied. Outward-facing; no auto-send.
-4. ~~**Assemble the DPO/counsel DPIA review package.**~~ **Done 2026-07-02.**
-   `docs/DPO_REVIEW_PACKAGE.md` — one entry point: enclosed-docs inventory, processing
-   at-a-glance, the five sign-off asks, honestly-surfaced open gaps (international
-   transfer, controller/processor DPA, Art. 22, DSAR process, retention justification),
-   and a sign-off record. Prepares for, does not substitute, legal review.
+Live thinking that has a home here until it hardens into an ADR (in `wegofwd-arivu` where noted):
 
-## Human-in-the-loop stays on
+- **Agent / orchestration layer** — bounded workflow, guardrails as hard gates (proposed in the
+  architecture doc; candidate arivu ADR).
+- **MCP integration** — expose the corpus as an MCP tool-server; consume external MCP for
+  live/local data (candidate arivu ADR).
+- **Need-dependency graph** — corpus data model for anticipatory answering (an ADR-010 evolution).
+- **Entitlement tagging schema** — program · criteria · jurisdiction · who-decides · how-to-apply
+  (ADR-009 D10 names the requirement; schema undesigned).
+- **Commercial model choice** — affiliate vs sponsored vs marketplace; v1-or-later; commerce vs
+  subscription/grant (a values call). Owner's, gated on counsel (ADR-013).
+- **Scope breadth confirmation** — disability + aging + accessibility is set as vision (ADR-009
+  D9); confirm the domain order as the corpus grows.
+- **Wider shared services** — `wegofwd-video`, `wegofwd-secure` (see `docs/shared-services.md`).
 
-Per CLAUDE.md, the human review gate (`kc review`) remains mandatory before any output
-reaches a child until automated safety enforcement is independently tested — regardless of
-the tracks above.
+---
+
+*Update this file when a track changes state or an open thread becomes a decision. Keep it a
+one-screen map — push detail down into the ADRs and specs it links to.*
