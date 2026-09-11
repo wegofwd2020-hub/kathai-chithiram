@@ -2,11 +2,12 @@
 
 The content-safety prompt (:mod:`kathai_chithiram.generation.system_prompt`)
 says *what* a story may contain; this module adds *how* the model must shape its
-output: a single JSON object conforming to the scene-script contract
+output: a single JSON object conforming to the scene-script v2 contract
 (``docs/SCENE_SCRIPT_CONTRACT.md`` §3), including the rules a JSON Schema cannot
 express on its own (caption must match narration, sequential scene indices, the
 declared total duration must equal the sum of scene durations, no content-safety
-flags) and a worked example.
+flags), the story-grammar fields (author/perspective/intent, closed art vocabulary),
+and a worked example.
 
 The model only ever sees the placeholder ``child_token`` — never a real name
 (PRIVACY.md §6 / KC-2). The emitted script is validated against the contract
@@ -22,7 +23,7 @@ from typing import Any
 
 from kathai_chithiram.generation.system_prompt import build_generation_system_prompt
 from kathai_chithiram.privacy.pseudonymize import DEFAULT_CHILD_TOKEN
-from kathai_chithiram.scene_script.schema import SCENE_SCRIPT_SCHEMA_V1
+from kathai_chithiram.scene_script.schema import SCENE_SCRIPT_SCHEMA_V2
 
 __all__ = [
     "EXAMPLE_SCENE_SCRIPT",
@@ -35,11 +36,14 @@ __all__ = [
 #: (CLAUDE.md: no real child data). A test asserts this passes
 #: :func:`kathai_chithiram.scene_script.validation.validate_scene_script`.
 EXAMPLE_SCENE_SCRIPT: dict[str, Any] = {
-    "schema_version": "1.0",
+    "schema_version": "2.0",
     "story_id": "00000000-0000-0000-0000-000000000001",
-    "title": "Washing Hands With CHILD",
+    "title": "Brushing Teeth With CHILD",
     "child_token": "CHILD",
     "locale": "en-US",
+    "author": "parent",
+    "perspective": "first_person",
+    "intent": "instructional",
     "total_duration_s": 8,
     "fps": 24,
     "safety": {
@@ -51,11 +55,11 @@ EXAMPLE_SCENE_SCRIPT: dict[str, Any] = {
         {
             "index": 1,
             "duration_s": 4,
-            "narration": "CHILD turns on the warm water.",
-            "caption": "CHILD turns on the warm water.",
+            "narration": "I pick up my toothbrush.",
+            "caption": "I pick up my toothbrush.",
             "setting": "bathroom",
-            "characters": [{"id": "child", "pose": "standing", "expression": "calm"}],
-            "props": ["sink", "soap"],
+            "characters": [{"id": "child", "pose": "rest", "expression": "calm"}],
+            "props": ["toothbrush", "toothpaste"],
             "transition_in": "fade",
             "transition_out": "dissolve",
             "audio": {"narration_volume": 0.7, "sfx": []},
@@ -63,11 +67,11 @@ EXAMPLE_SCENE_SCRIPT: dict[str, Any] = {
         {
             "index": 2,
             "duration_s": 4,
-            "narration": "CHILD rubs the soap and smiles.",
-            "caption": "CHILD rubs the soap and smiles.",
+            "narration": "I brush and I smile.",
+            "caption": "I brush and I smile.",
             "setting": "bathroom",
-            "characters": [{"id": "child", "pose": "standing", "expression": "happy"}],
-            "props": ["sink", "soap"],
+            "characters": [{"id": "child", "pose": "wave", "expression": "smile"}],
+            "props": ["toothbrush"],
             "transition_in": "dissolve",
             "transition_out": "fade",
             "audio": {"narration_volume": 0.7, "sfx": []},
@@ -91,6 +95,9 @@ def _cross_field_rules(child_token: str) -> str:
             "'total_duration_s' MUST equal the exact sum of every scene's 'duration_s'.",
             "Do not emit any 'content_flags'; a single flagged scene rejects the whole script.",
             "Keep each narration one short, literal sentence (140 characters or fewer).",
+            "Set 'author' to 'parent', 'perspective' to 'first_person', and 'intent' to 'instructional'.",
+            "Write narration in the first person ('I ...'); instructional stories must be first person.",
+            "Choose 'setting', 'props', each character's 'pose', and each character's 'expression' only from the enumerated values in the schema above; do not invent new ones.",
         )
     )
 
@@ -115,7 +122,7 @@ def build_scene_script_system_prefix(*, child_token: str = DEFAULT_CHILD_TOKEN) 
         The static system-prompt prefix.
     """
     safety = build_generation_system_prompt(child_token=child_token)
-    schema = json.dumps(SCENE_SCRIPT_SCHEMA_V1, indent=2, sort_keys=True)
+    schema = json.dumps(SCENE_SCRIPT_SCHEMA_V2, indent=2, sort_keys=True)
     example = json.dumps(EXAMPLE_SCENE_SCRIPT, indent=2, sort_keys=True)
 
     sections = [
