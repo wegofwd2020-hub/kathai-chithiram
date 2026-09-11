@@ -76,6 +76,15 @@ A script that violates any rule is **rejected, not rendered**, and the failure i
 - Renderers declare the MAJOR versions they support.
 - **Supported majors today: `{1, 2}`.** The validator selects the schema by major, so v1 and v2 scripts coexist. v1 is described above; v2 is §5. Generation now emits v2.
 
+Generation constrains its output to the v2 JSON schema at decode time using the
+provider's structured-output mechanism (on the Anthropic path,
+`output_config.format` with `type: json_schema`). This makes structural
+violations (wrong types, out-of-vocabulary art, missing fields) unrepresentable
+on a compliant provider. It is a *partial* constraint — structure only — so the
+validator in `scene_script/validation.py` remains the enforcement point for every
+numeric, length, pattern, and cross-field rule, and an invalid script is still
+rejected, not rendered.
+
 ## 5. Scene-script v2 — closed art vocabulary and story grammar
 
 v2 is additive over v1: every v1 rule above still holds. It closes the fields that decide what a child *sees*, and adds the story's voice and purpose (ADR-007). Because the validator picks the schema by major, **v1 scripts are unaffected** — their free-text art fields still validate and still degrade at render time as before.

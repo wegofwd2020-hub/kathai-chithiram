@@ -87,6 +87,14 @@ v1 fixtures still validate and render; unknown values rejected and logged withou
 
 ### Phase 1 — Constrained decoding and v2 emission *(3–4 weeks)* — `KC-12`
 
+**Status (2026-09-11): done.** Generation emits v2 and constrains output to the
+v2 schema via Anthropic structured outputs (`output_config.format`), which
+enforces structure only; `validate_scene_script` continues to enforce the
+numeric/length/pattern/cross-field rules and the repair loop remains the
+fallback. The prompt-caching half shipped earlier (#101). The exit-gate numbers
+(100% contract validity, mean attempts ≈ 1.0, token cost) are a live-model
+measurement to be recorded by an eval run, not asserted in unit tests.
+
 Grammar-constrained sampling against the v2 schema, so structural violations become
 unrepresentable rather than repairable. Generation paths emit v2. **Also in this phase, and
 independent of everything else: cache the schema prompt prefix** — the immediate cost win
