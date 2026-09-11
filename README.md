@@ -13,7 +13,7 @@
 
 Children on the autism spectrum and with other developmental needs often comprehend a
 situation far better when it is shown as a calm, predictable, visual narrative — the
-principle behind *social stories* and visual schedules. Kathai Chithiram makes that
+principle behind *social narratives* and visual schedules. Kathai Chithiram makes that
 personal and on-demand: instead of a generic clip, a parent describes *their* child's
 situation in their own words ("Silas is scared of brushing his teeth"), and the system
 produces a gentle, paced, captioned animation that walks the child through it.
@@ -40,7 +40,7 @@ Parent writes a story  ──▶  generation (wegofwd-llm)  ──▶  structure
 
 The end-to-end pipeline below is **built and green** (story → generation/authoring → validated
 scene script → render, with privacy, safety, and a human-review gate enforced in code). The two
-**reference renderers** and the first hand-built social story, *"Silas Shines His Smile"* (an
+**reference renderers** and the first hand-built social narrative, *"Silas Shines His Smile"* (an
 11-scene tooth-brushing routine), remain the render layer:
 
 | File | What it is |

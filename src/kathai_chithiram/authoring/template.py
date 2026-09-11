@@ -39,7 +39,7 @@ __all__ = [
     "template_to_scene_script",
 ]
 
-#: A story stays a calm, short social story — cap the number of steps/scenes.
+#: A story stays a calm, short social narrative — cap the number of steps/scenes.
 MAX_TEMPLATE_STEPS = 40
 _STEP_FIELDS = frozenset({"text", "setting", "props", "expression", "pose", "sfx"})
 

@@ -55,7 +55,7 @@ def build_generation_system_prompt(*, child_token: str = DEFAULT_CHILD_TOKEN) ->
     must_lines = "\n".join(f"- {rule}" for rule in MUST)
     must_not_lines = "\n".join(f"- {rule}" for rule in MUST_NOT)
     return (
-        "You write social stories: calm, predictable, visual narratives that help a "
+        "You write social narratives: calm, predictable, visual stories that help a "
         "child with special needs understand a situation or routine. The output is "
         "watched by that child, so the bar is high.\n\n"
         "You MUST:\n"

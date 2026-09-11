@@ -8,7 +8,7 @@ Kathai Chithiram produces media that a **child with special needs will actually 
 
 ## 1. Design intent
 
-The output is a *social story* — a calm, predictable, visual narrative that helps a child understand a situation or routine. Everything below serves that intent.
+The output is a *social narrative* — a calm, predictable, visual story that helps a child understand a situation or routine. Everything below serves that intent.
 
 ## 2. MUST (every output)
 

@@ -21,7 +21,7 @@ def test_prompt_encodes_key_safety_clauses() -> None:
     prompt = build_generation_system_prompt().lower()
     assert "flashing" in prompt or "strobing" in prompt
     assert "medical" in prompt  # no medical claims / diagnoses
-    assert "social stories" in prompt
+    assert "social narratives" in prompt
     # Distress is transformed, not reproduced.
     assert "supportive" in prompt and "distress" in prompt
 
