@@ -64,6 +64,23 @@ names the asset (Decision 8) and widens its scope (Decision 9) without altering 
 sequence (Decision 5) or the educate-cite-never-advise law (Decision 3), which the example
 above already obeys.
 
+**Mission — address the person, not the label.** The animating purpose is a lived one: people
+with special needs, and equally people whose needs change with age, are too often *labelled*
+and handed an answer to the question immediately in front of them — and nothing beyond it.
+Society is quick to close the single ticket. This product exists to do the opposite: to serve
+the immediate need **and** the dependencies that solving it creates — the recurring, downstream
+and adjacent needs the first answer sets up (a hearing aid needs batteries; a senior needs
+those batteries to be changeable by hands that are losing dexterity; and a local clinic, once
+found, has its own follow-ups). That "and what comes next" is the value the corpus's structure
+must eventually carry — it is the *context* in "context dictionary", the web of related needs
+rather than a lookup. So the educate-cite law (Decision 3) is a **floor, not a ceiling**: the
+point is not merely to avoid advising, it is to inform a whole situation rather than close one
+question. Following those dependencies stays educational and cited — "people who use X commonly
+need Y next" with a source — never prescriptive. *(The mechanism this implies — modelling
+relationships between needs, not just retrievable passages — is a retrieval-architecture
+concern for ADR-010 and the corpus package, noted here as the standard the surfaces are held
+to, not designed here.)*
+
 ## Decision
 
 **Decision 1 — Adopt an asset-and-surfaces model. The corpus is a shared package with its
