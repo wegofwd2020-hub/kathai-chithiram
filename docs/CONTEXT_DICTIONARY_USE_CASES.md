@@ -142,12 +142,22 @@ serve the next need, not just the question in front.
 - **Sources needed:** EEOC ADA Title I guidance (federal, public domain), the **Job Accommodation Network (JAN)** (the canonical free resource), ADA National Network, SSA work-incentive / Ticket to Work rules, vocational-rehabilitation guidance (state-level — ADR-011 freshness).
 - **Status:** captured — introduces the self-advocate persona and the disclosure decision; the clearest test of D6's general-education vs individual-advice line.
 
+### UC-9 — Guardianship at 18, and its less-restrictive alternatives
+- **Persona:** P3 lifespan navigator (a parent of a young adult with an intellectual/developmental disability approaching majority); also reached by the young adult themselves (self-advocate).
+- **Query (as asked):** "My son with an intellectual disability turns 18 soon — do we need guardianship, and what are the alternatives?"
+- **Domain(s):** legal / decision-making rights + lifespan transition + special-needs
+- **Immediate need:** understand that at 18 a person becomes a legal adult with the right to make their own decisions, and the **spectrum of decision-making support from least to most restrictive** — supported decision-making (least restrictive), power of attorney, a healthcare proxy, a representative payee, limited/partial guardianship, and full guardianship (most restrictive, which removes civil rights). The governing principle: **least-restrictive alternative first** — guardianship should not be the default.
+- **Dependencies / what comes next:** the decision has to be made **around 18** (timing, before/at majority); a capacity assessment; if guardianship is pursued, the court process (petition, hearing, an attorney, cost, and *ongoing* reporting and renewal duties); choosing the **domains** it covers (medical, financial, residential — it can be limited to some); interactions with benefits (a representative payee for SSI), healthcare (HIPAA authorisation), and education (IEP rights transfer to the student at majority); the **rights lost** under full guardianship (to vote, marry, contract, choose where to live — varying by state); reversibility and restoration of rights; and the alternatives that avoid it entirely (a supported-decision-making agreement, POA, an ABLE account). *The dependency society misses: guardianship is often presented as automatic at 18, when least-restrictive alternatives preserve autonomy — families are rarely told there is a choice.*
+- **Answer layers:** education (the decision-making spectrum, the least-restrictive principle, the rights implications, cited) · navigation (legal aid / the state Protection & Advocacy org, a special-needs or elder-law attorney, the court self-help process, supported-decision-making resources) · products: none.
+- **Boundary flags:** **the log's highest-stakes navigate-not-advise case** — the system explains the options, the process and the rights at stake and points to an attorney / disability-rights org; it **never** says "you should get guardianship" or "you don't need it" (a legal decision that can remove civil rights). **Strongly state-specific** (guardianship law varies a lot by state — Michigan first, ADR-009 D4). This use-case is the purest expression of the **mission** — *presume competence, address the person, don't strip autonomy by default* (aligns with ADR-001). Decline a description of a specific real person (ADR-009 D6).
+- **Sources needed:** state guardianship statutes (Michigan first), the National Resource Center for Supported Decision-Making, ACL, the state Protection & Advocacy (P&A) system, ABA and court self-help materials (state-level, freshness-sensitive — ADR-011).
+- **Status:** captured — the highest-stakes navigate-not-advise case and the clearest ethical expression of "address, not label."
+
 ---
 
 ## Backlog — use-cases to detail over time
 
-Seed list; expand as scenarios come up. Each becomes a full entry above when detailed.
+The initial seed list is now fully detailed above (UC-1…UC-9). New scenarios land here first as a one-line stub, then become a full entry above when detailed.
 
-- "What changes when my child turns 18" — guardianship vs supported decision-making (navigate, never determine).
 > Add new use-cases as real questions surface — from the owner's own family situations
 > (2 special-needs, 2 senior) and, later, from what actual users ask.
