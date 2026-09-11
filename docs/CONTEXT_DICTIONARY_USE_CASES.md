@@ -98,13 +98,23 @@ serve the next need, not just the question in front.
 - **Sources needed:** IDEA/OSEP transition guidance (federal, public domain), CMS Medicaid HCBS-waiver material, SSA SSI/SSDI adult rules, Michigan developmental-disability agency + Vocational Rehabilitation guidance and directories (state-level, freshness-sensitive — ADR-011).
 - **Status:** captured — **high priority.** ADR-009 D2/P3: "highest real-world need, hardest corpus, highest hazard."
 
+### UC-5 — Respite care and carer burnout (the carer is the person addressed)
+- **Persona:** P2 helper-learner — but here the **carer is both the questioner and the beneficiary**. The person the answer serves is the carer, not the person they care for.
+- **Query (as asked):** "I care for my adult son with autism full-time and I'm exhausted — what support is there for me?"
+- **Domain(s):** caregiving support + respite + carer wellbeing (cross-cuts special-needs and aging)
+- **Immediate need:** what respite care is and its forms — in-home respite, adult day programs, short-term residential/facility respite, informal networks — and how to get an actual break.
+- **Dependencies / what comes next:** funding for respite (Medicaid HCBS-waiver respite hours, the National Family Caregiver Support Program / ACL, VA caregiver support if a veteran, state caregiver programs) — navigate, don't determine; finding and vetting a respite provider (local directory); the **carer's own neglected health** — burnout, isolation, depression → support groups, counselling, their own overdue medical care; an **emergency backup plan** (who cares for the dependent if the carer is hospitalised); documentation and legal standing for a substitute carer (POA, a care plan); and the long-horizon question — sustainability, and planning for when the carer can no longer provide care. *The dependency society misses: the carer's own survival is the precondition for everything else, and no one asks about it.*
+- **Answer layers:** education (what respite is, the signs of burnout, cited) · navigation (local respite providers, caregiver-support programs, funding sources, support groups, who to ask) · products: minimal.
+- **Boundary flags:** **strongest D7 case in the log** — a carer in crisis ("I can't do this anymore") must **route to a human**, not receive a corpus answer; this use-case is a concrete reason the risk-of-harm path is a precondition for the assistant surface (ADR-009 D7). Carer mental-health content is **educational, not diagnostic** (ADR-009 D3; CONTENT_SAFETY §3 — no medical claims). Respite-funding eligibility is navigate-not-determine. Decline descriptions of a specific real person (ADR-009 D6).
+- **Sources needed:** ACL / National Family Caregiver Support Program (federal), Medicaid waiver respite provisions, VA caregiver support, Michigan caregiver programs and local respite directories (state/local, freshness-sensitive — ADR-011), reputable carer mental-health resources.
+- **Status:** captured — notable for flipping *who* is addressed (the carer) and for being the log's clearest test of the D7 escalation path.
+
 ---
 
 ## Backlog — use-cases to detail over time
 
 Seed list; expand as scenarios come up. Each becomes a full entry above when detailed.
 
-- Respite care and carer burnout — what support exists for the *carer*.
 - Communication aids (AAC) for a non-speaking person — devices, training, dependencies.
 - Mobility and fall-prevention in the home for a senior (built-environment + aging).
 - "What changes when my child turns 18" — guardianship vs supported decision-making (navigate, never determine).
