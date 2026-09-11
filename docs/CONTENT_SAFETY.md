@@ -40,7 +40,7 @@ Parent stories may describe distressing situations (meltdowns, fears, medical pr
 
 Safety is enforced at three points, not just trusted to the model:
 
-1. **Generation prompt** encodes the MUST/MUST-NOT rules as system constraints.
+1. **Generation prompt** encodes the MUST/MUST-NOT rules as system constraints. As of KC-12, generation additionally constrains its output to the v2 schema at decode time (structured outputs) — a first line of structural defence that does not replace the validator gate below it.
 2. **Scene-script validation** (see `SCENE_SCRIPT_CONTRACT.md`) rejects scripts that violate structural safety rules (scene length, transition type, banned content flags) *before* rendering.
    - **Closed art vocabulary (v2).** A v2 script may only name a `setting`, `pose`, `expression`, or `prop` the renderers can actually draw (`SCENE_SCRIPT_CONTRACT.md` §5.1). An undrawable value is **rejected, not silently degraded** — closing the one place the pipeline used to proceed instead of stopping, where a mismatched backdrop is a safety-adjacent failure for a child following a visual schedule, not a cosmetic miss.
    - **Story grammar gate (v2).** The gated `experiential` intent is rejected (`story.intent.gated`) and the instructional track is held to first person (`SCENE_SCRIPT_CONTRACT.md` §5.2), so the deferral survives a prompt edit or a provider swap.

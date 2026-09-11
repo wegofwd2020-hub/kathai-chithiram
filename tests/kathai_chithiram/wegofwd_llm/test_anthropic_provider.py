@@ -213,3 +213,32 @@ def test_build_zdr_provider_missing_sdk_raises_unavailable(
     monkeypatch.setattr(provider_mod, "_load_anthropic_module", _boom)
     with pytest.raises(ProviderUnavailableError, match="anthropic"):
         build_zdr_provider(env={ZDR_API_KEY_ENV: "sk-zdr"})
+
+
+# --- Structured outputs (KC-12) ------------------------------------------------
+
+
+def test_output_schema_sets_json_schema_format_with_effort() -> None:
+    client = FakeClient(FakeMessage(content=[FakeBlock("text", "{}")]))
+    schema = {"type": "object", "additionalProperties": False}
+    req = LLMRequest(prompt="p", config=CONFIG, system_prompt="RULES", output_schema=schema)
+    AnthropicProvider(client=client, effort="high").complete(req)
+    assert client.messages.calls[0]["output_config"] == {
+        "effort": "high",
+        "format": {"type": "json_schema", "schema": schema},
+    }
+
+
+def test_no_output_schema_sends_no_format_key() -> None:
+    client = FakeClient(FakeMessage(content=[FakeBlock("text", "ok")]))
+    AnthropicProvider(client=client).complete(_request())
+    assert client.messages.calls[0]["output_config"] == {"effort": "high"}
+    assert "format" not in client.messages.calls[0]["output_config"]
+
+
+def test_refusal_still_raises_on_structured_path() -> None:
+    client = FakeClient(FakeMessage(content=[], stop_reason="refusal"))
+    schema = {"type": "object", "additionalProperties": False}
+    req = LLMRequest(prompt="p", config=CONFIG, output_schema=schema)
+    with pytest.raises(ProviderResponseError, match="refusal"):
+        AnthropicProvider(client=client).complete(req)

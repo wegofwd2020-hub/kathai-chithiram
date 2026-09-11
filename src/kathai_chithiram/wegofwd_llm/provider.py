@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 __all__ = [
     "LLMProvider",
@@ -70,12 +70,18 @@ class LLMRequest:
             supports prompt caching may mark it cacheable so repeated requests
             re-read rather than re-process it; providers without caching ignore
             it and use ``system_prompt`` in full. Carries no child identifier.
+        output_schema: Optional JSON Schema the reply must conform to. A provider
+            that supports constrained/structured output MUST return a value
+            satisfying it; a provider that does not ignores this field and the
+            caller's validate-and-repair loop remains the guarantee. Carries no
+            child identifier.
     """
 
     prompt: str
     config: ProviderConfig
     system_prompt: str = ""
     system_prefix: str = ""
+    output_schema: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

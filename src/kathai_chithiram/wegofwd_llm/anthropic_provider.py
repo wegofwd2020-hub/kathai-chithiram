@@ -11,7 +11,9 @@ The provider is a thin text-in/text-out adapter: the seam has already
 pseudonymized the prompt and verified the privacy posture, so this only turns a
 :class:`LLMRequest` into a Messages API call and returns the reply text. The
 contract-shaping and validation live in
-:mod:`kathai_chithiram.generation.generator`, not here.
+:mod:`kathai_chithiram.generation.generator`, not here. When a request supplies
+an ``output_schema``, the provider constrains the reply to it via Anthropic's
+structured outputs API (KC-12).
 
 Defaults follow current best practice for building on Claude: model
 ``claude-opus-4-8``, adaptive thinking, and streaming (so a large generation
@@ -151,7 +153,9 @@ class AnthropicProvider:
         Args:
             request: The outbound request. ``request.prompt`` is the (already
                 pseudonymized) story; ``request.system_prompt`` carries the
-                safety + contract instructions.
+                safety + contract instructions. When ``request.output_schema``
+                is set, the reply is constrained to conform to it via Anthropic
+                structured outputs (KC-12).
 
         Returns:
             The model's reply text as an :class:`LLMResponse`.
@@ -170,6 +174,16 @@ class AnthropicProvider:
         system = _system_param(request)
         if system is not None:
             kwargs["system"] = system
+
+        # KC-12: when the caller supplies a schema, constrain the reply to it via
+        # Anthropic structured outputs. This enforces structure only (types,
+        # enums, $ref, required, additionalProperties); the caller still validates
+        # the numeric/length/pattern/cross-field rules the subset cannot express.
+        if request.output_schema is not None:
+            kwargs["output_config"] = {
+                **kwargs["output_config"],
+                "format": {"type": "json_schema", "schema": request.output_schema},
+            }
 
         with self._client.messages.stream(**kwargs) as stream:
             message = stream.get_final_message()

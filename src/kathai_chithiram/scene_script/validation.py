@@ -1,17 +1,20 @@
-"""Validate a scene script against the v1 contract before any rendering.
+"""Validate a scene script against the v1 and v2 contracts before any rendering.
 
 This is the safety gate described in ``docs/CONTENT_SAFETY.md`` §5.2 and
-``docs/SCENE_SCRIPT_CONTRACT.md`` §3: a script is checked here *before* a
+``docs/SCENE_SCRIPT_CONTRACT.md`` §3–5: a script is checked here *before* a
 renderer ever sees it. A script that violates any rule is **rejected, not
 rendered**, and the rejection is logged without any raw story text.
 
-Two layers run in order:
+Three layers run in order:
 
 1. **Structural** — the JSON Schema in :mod:`kathai_chithiram.scene_script.schema`
    (types, enums, numeric ranges, string lengths, required fields).
 2. **Cross-field safety** — rules a JSON Schema cannot express on its own:
    caption must match narration, no scene may carry a content-safety flag, and
    the declared total duration must equal the sum of scene durations.
+3. **Story grammar (v2 only)** — checks author/perspective/intent semantics, the
+   closed art vocabulary, the gated ``experiential`` intent, and the
+   instructional-first-person rule (``SCENE_SCRIPT_CONTRACT.md`` §5.2).
 
 All failures surface as :class:`SceneScriptInvalidError`, whose message is safe
 to log (no captions, narration, or names — only rule ids, lengths, and counts).

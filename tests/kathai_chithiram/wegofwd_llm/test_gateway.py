@@ -150,3 +150,45 @@ def test_leak_guard_blocks_dispatch(caplog: pytest.LogCaptureFixture) -> None:
             )
     assert exc.value.residual_count > 0
     assert MOCK_CHILD_NAME not in caplog.text
+
+
+def test_output_schema_forwarded_to_provider() -> None:
+    provider = CapturingProvider()
+    schema = {"type": "object", "additionalProperties": False}
+    run_generation(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+        output_schema=schema,
+    )
+    assert provider.requests[0].output_schema == schema
+
+
+def test_output_schema_defaults_to_none_when_omitted() -> None:
+    provider = CapturingProvider()
+    run_generation(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+    )
+    assert provider.requests[0].output_schema is None
+
+
+def test_output_schema_not_forwarded_when_leak_guard_trips() -> None:
+    # The privacy guards run before dispatch; a leak means the provider is never
+    # called, schema or not.
+    mapping = NameMapping(identifiers=("Milo", "MILO"), token="MILO")
+    provider = ExplodingProvider()  # raises if reached
+    with pytest.raises(IdentifierLeakError):
+        run_generation(
+            story_text=MOCK_STORY,
+            mapping=mapping,
+            provider=provider,
+            config=COMPLIANT,
+            request_id="req-leak",
+            output_schema={"type": "object"},
+        )

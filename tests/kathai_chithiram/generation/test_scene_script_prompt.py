@@ -83,3 +83,43 @@ def test_full_prompt_is_prefix_plus_repair_suffix() -> None:
     assert "scene.caption.mismatch" in suffix
     # The changed part a repair re-asks is far smaller than the cached prefix.
     assert len(suffix) < len(prefix)
+
+
+# --- KC-12: v2 emission ----------------------------------------------------
+
+
+def test_example_is_v2() -> None:
+    assert EXAMPLE_SCENE_SCRIPT["schema_version"] == "2.0"
+    assert EXAMPLE_SCENE_SCRIPT["author"] in ("parent", "therapist")
+    assert EXAMPLE_SCENE_SCRIPT["perspective"] == "first_person"
+    assert EXAMPLE_SCENE_SCRIPT["intent"] == "instructional"
+
+
+def test_example_uses_closed_vocabulary() -> None:
+    from kathai_chithiram.scene_script.vocabulary import (
+        Background,
+        Expression,
+        Gesture,
+        Prop,
+    )
+
+    settings = {b.value for b in Background}
+    props = {p.value for p in Prop}
+    poses = {g.value for g in Gesture}
+    expressions = {e.value for e in Expression}
+    for scene in EXAMPLE_SCENE_SCRIPT["scenes"]:
+        assert scene["setting"] in settings
+        assert set(scene["props"]) <= props
+        for character in scene["characters"]:
+            assert character["pose"] in poses
+            assert character["expression"] in expressions
+
+
+def test_prefix_embeds_v2_schema_and_grammar() -> None:
+    prefix = build_scene_script_system_prefix(child_token="CHILD")
+    # v2 schema id and the story-grammar fields are present.
+    assert "scene-script/v2.json" in prefix
+    assert "author" in prefix and "perspective" in prefix and "intent" in prefix
+    # It steers the model to the instructional, first-person track.
+    assert "instructional" in prefix
+    assert "first_person" in prefix
