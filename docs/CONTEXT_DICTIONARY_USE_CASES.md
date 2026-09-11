@@ -109,13 +109,23 @@ serve the next need, not just the question in front.
 - **Sources needed:** ACL / National Family Caregiver Support Program (federal), Medicaid waiver respite provisions, VA caregiver support, Michigan caregiver programs and local respite directories (state/local, freshness-sensitive — ADR-011), reputable carer mental-health resources.
 - **Status:** captured — notable for flipping *who* is addressed (the carer) and for being the log's clearest test of the D7 escalation path.
 
+### UC-6 — AAC: communication aids for a non-speaking person
+- **Persona:** P2 helper-learner (parent / carer / aide) with a strong P3 lifespan thread — the system grows with the person.
+- **Query (as asked):** "My son is non-speaking — what communication options are there and how do we start?"
+- **Domain(s):** special-needs practice + AAC / assistive technology + device products + local services (speech-language pathology)
+- **Immediate need:** what AAC (augmentative and alternative communication) is, and its spectrum — unaided (sign, gestures), low-tech (picture boards, PECS), high-tech (speech-generating devices, tablet apps, eye-gaze) — plus the two things families are rarely told up front: **AAC does not hinder speech development** (a persistent myth), and **presume competence**.
+- **Dependencies / what comes next:** assessment by a **speech-language pathologist** to match the system to the person (the device is chosen *after* this, not before); **funding** — speech-generating devices are often covered as durable medical equipment / an SGD benefit by Medicaid/insurance → navigate, don't determine; **training of communication partners** (family, teachers, aides) — AAC fails without it, and the biggest failure mode is a device that's technically fine but socially unsupported; vocabulary customisation and ongoing programming; charging, mounting, durability, repair and replacement; **school integration** (the device travels to school; IDEA assistive-technology access); a **low-tech backup** when the device is down; and the lifespan axis — vocabulary and system grow as the person develops (P3). *The dependency society misses: **AAC abandonment** — devices are commonly given up not for technical reasons but because the support system around them was never built. The need is the support, not the gadget.*
+- **Answer layers:** education (AAC types, presume-competence, myths debunked, cited) · navigation (find an SLP / AAC specialist, the assessment, the funding path, partner-training resources) · products (Layer B: devices, apps, mounts, switches, eye-gaze — labelled, ADR-013).
+- **Boundary flags:** **the log's cleanest test of the commercial guardrail** — "which device should we buy?" is exactly what ADR-009 D3 forbids answering individually and what ADR-013 D2/D3 keeps out of Layer A: the honest answer is "an SLP assessment determines fit; here are the categories," never "buy device X". Speech-generating devices are often **regulated / durable medical equipment and high-cost** → ADR-013 D4 tier check; the commercial layer must not push a specific expensive device the assessment hasn't chosen. Device funding eligibility is navigate-not-determine. Decline descriptions of a specific real person (ADR-009 D6).
+- **Sources needed:** ASHA AAC guidance, AAC practice/research, Medicaid/Medicare speech-generating-device coverage rules, IDEA assistive-technology provisions, local SLP / AAC clinic directories (state/local, freshness-sensitive — ADR-011).
+- **Status:** captured — the case where the ADR-013 commercial boundary does the most work (assessment decides, not the store).
+
 ---
 
 ## Backlog — use-cases to detail over time
 
 Seed list; expand as scenarios come up. Each becomes a full entry above when detailed.
 
-- Communication aids (AAC) for a non-speaking person — devices, training, dependencies.
 - Mobility and fall-prevention in the home for a senior (built-environment + aging).
 - "What changes when my child turns 18" — guardianship vs supported decision-making (navigate, never determine).
 - Employment supports and workplace accommodations (ADA, accessibility domain).
