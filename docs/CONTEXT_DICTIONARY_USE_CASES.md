@@ -131,6 +131,17 @@ serve the next need, not just the question in front.
 - **Sources needed:** CDC STEADI fall-prevention materials (federal, public domain), ACL / Area Agency on Aging, Medicaid-waiver home-modification provisions, aging-in-place / CAPS resources, PT/OT fall-prevention practice, local OT and contractor directories (state/local, freshness-sensitive — ADR-011).
 - **Status:** captured — the case that most tests the health/education line and introduces subscription-based commercial listings.
 
+### UC-8 — Employment and workplace accommodations (the self-advocate)
+- **Persona:** **self-advocate** — the person with the disability asking for *themselves* (a persona angle beyond P2/P3; also reached by a job coach or family). A new major domain, reinforcing the broadened scope (ADR-009 D9).
+- **Query (as asked):** "I have ADHD and I'm starting a new job — what workplace accommodations can I ask for, and how?"
+- **Domain(s):** employment + disability rights (ADA Title I) + assistive technology
+- **Immediate need:** what "reasonable accommodations" are under the ADA, examples matched to different needs (flexible schedule, a quiet workspace, written instructions, assistive tech, scheduled breaks), and how the request works — the employer/employee **interactive process**.
+- **Dependencies / what comes next:** the **disclosure decision** — whether, when and how much to disclose a disability, a personal and high-stakes choice with real trade-offs (navigate, never advise); documentation an employer may request; what counts as "reasonable" vs an employer's "undue hardship" defence; rights and the process if a request is denied or met with retaliation (the EEOC complaint route) → navigate, don't determine an outcome; the **benefits interaction** — if on SSI/SSDI, working affects benefits (SSA work incentives / Ticket to Work) → navigate; vocational rehabilitation and supported employment (links to UC-4 transition); and re-visiting accommodations as the role or condition changes. *The dependency society misses: the accommodation is the easy part — the disclosure decision and the interactive-process skills are what actually determine whether someone keeps the job.*
+- **Answer layers:** education (what ADA accommodations are, examples, the interactive process, cited) · navigation (how to request, the Job Accommodation Network, EEOC and ADA National Network, vocational rehab, and — for a dispute — an employment attorney) · products: minimal (some assistive tech).
+- **Boundary flags:** **strong ADR-009 D6 test.** General "what accommodations exist for ADHD, and how does the interactive process work?" is educational and fine; "what should *I* do in *my* dispute with *my* employer?" is individualised advice about a real person — **navigate to a human** (JAN, EEOC, an employment attorney), don't answer. "Should I disclose?" and "will I win an EEOC complaint?" are navigate-not-determine and legal-information-not-advice. Benefits-while-working is navigate-not-determine. Decline a description of a specific real person (ADR-009 D6).
+- **Sources needed:** EEOC ADA Title I guidance (federal, public domain), the **Job Accommodation Network (JAN)** (the canonical free resource), ADA National Network, SSA work-incentive / Ticket to Work rules, vocational-rehabilitation guidance (state-level — ADR-011 freshness).
+- **Status:** captured — introduces the self-advocate persona and the disclosure decision; the clearest test of D6's general-education vs individual-advice line.
+
 ---
 
 ## Backlog — use-cases to detail over time
@@ -138,7 +149,5 @@ serve the next need, not just the question in front.
 Seed list; expand as scenarios come up. Each becomes a full entry above when detailed.
 
 - "What changes when my child turns 18" — guardianship vs supported decision-making (navigate, never determine).
-- Employment supports and workplace accommodations (ADA, accessibility domain).
-
 > Add new use-cases as real questions surface — from the owner's own family situations
 > (2 special-needs, 2 senior) and, later, from what actual users ask.
