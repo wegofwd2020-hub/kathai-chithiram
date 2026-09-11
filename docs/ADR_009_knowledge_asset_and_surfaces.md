@@ -196,6 +196,18 @@ primary goal is precisely *not* the rejected "pause the story product and pivot"
 surface. `wegofwd-arivu` (Decision 1) remains the package/repository name; "context
 dictionary" is the user-facing name for what it holds.
 
+The name is chosen to do double duty — as the LLM's task frame and as the product's
+one-line positioning. *Technically* it describes the generation architecture: facts are
+supplied to the model as retrieved **context** (ADR-010's retrieval-first — facts in the
+corpus, never in weights), so the model's job is to **assemble** cited entries for a
+scenario — *retrieve → assemble → cite → refuse if unsourced* — not to recall from its
+weights. The compound is deliberate: "dictionary" alone reads as a single-term lookup, and
+"context" is what signals the scenario-level assembly across domains (the house example
+draws on hearing, aging and the built environment at once), so the eventual system prompt
+should frame the model as a context *assembler*, not a lookup table. *For positioning*, it
+places the whole product in one line — "Kathai Chithiram is powered by a context-dictionary
+LLM" conveys grounded, cited, scenario-aware without further explanation.
+
 **Decision 9 — Scope is broad by vision, incremental by domain.**
 The dictionary's stated scope is **disability, aging, and accessibility across life
 contexts** — not special-needs children alone. The house-accessibility example is the proof:
