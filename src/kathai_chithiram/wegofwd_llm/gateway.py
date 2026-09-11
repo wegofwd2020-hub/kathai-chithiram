@@ -17,6 +17,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from kathai_chithiram.errors import IdentifierLeakError, ProviderConfigError
 from kathai_chithiram.privacy.pseudonymize import (
@@ -59,6 +60,7 @@ def run_generation(
     request_id: str,
     system_prompt: str = "",
     system_prefix: str = "",
+    output_schema: dict[str, Any] | None = None,
     clock: Callable[[], datetime] | None = None,
 ) -> GenerationResult:
     """Pseudonymize, guard, dispatch, and record a single generation request.
@@ -76,6 +78,9 @@ def run_generation(
         system_prefix: Optional cacheable leading substring of ``system_prompt``,
             forwarded so a caching-capable provider can re-read rather than
             re-process it across repeated requests (KC-12).
+        output_schema: Optional JSON Schema forwarded to the provider so a
+            structured-output-capable provider can constrain its reply; providers
+            without that capability ignore it. Carries no child identifier.
         clock: Optional callable returning the current time, used to stamp the
             record. Injectable for deterministic tests; if ``None`` the record
             carries no timestamp.
@@ -132,6 +137,7 @@ def run_generation(
             config=config,
             system_prompt=system_prompt,
             system_prefix=system_prefix,
+            output_schema=output_schema,
         )
     )
 
