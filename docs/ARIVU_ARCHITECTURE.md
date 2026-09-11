@@ -13,10 +13,13 @@ because that is where the shaping ADRs (ADR-006, ADR-009, ADR-013) live today.
 > The agent layer and MCP integration are the main `[PROPOSED]` pieces — they are how the
 > pattern would hang together, not settled decisions.
 >
-> **Diagram note.** This document specifies diagrams rather than drawing them. Each
-> `▚ DIAGRAM SPEC` block is a precise, labelled description — components, colours, grouping,
-> edges, legend — intended to be rendered in a design tool (Figma / Excalidraw / an image
-> generator). No polished art is embedded here by design (owner's choice).
+> **Diagram note.** Each diagram appears twice: a **rendered Mermaid** block (GitHub shows it
+> inline; or paste into mermaid.live) for quick understanding, and a `▚ DIAGRAM SPEC` block —
+> a precise, labelled description (components, colours, grouping, edges, legend) — for
+> rendering a polished version in a design tool (Figma / Excalidraw / Eraser / an image
+> generator). Mermaid is boxes-and-arrows but instant and versionable; the spec is the path to
+> non-line-art polish. (AI image generators garble diagram text — use them for concept art, not
+> the accurate diagram.)
 
 ---
 
@@ -107,6 +110,31 @@ EDGES: single upward arrows L0→L1→L2→L3→L4; L3 also feeds L5; L5 orchest
         (two gates). 
 
 LEGEND: solid border = DECIDED; dashed border = PROPOSED. Colour key for the 7 layers.
+```
+
+**Rendered (Mermaid — GitHub renders this inline; or paste into mermaid.live):**
+```mermaid
+flowchart TB
+  classDef src fill:#64748b,color:#fff; classDef ing fill:#0d9488,color:#fff
+  classDef corp fill:#1e40af,color:#fff; classDef rag fill:#4f46e5,color:#fff
+  classDef llm fill:#7c3aed,color:#fff; classDef agent fill:#f59e0b,color:#111,stroke-dasharray:5 5
+  classDef surf fill:#16a34a,color:#fff; classDef guard fill:#b91c1c,color:#fff
+  classDef mcp fill:#0891b2,color:#fff,stroke-dasharray:5 5
+  S["🏛️ L0 Sources — federal regs · MI state · practice lit · local directories"]:::src
+  I["🧪 L1 Ingestion — chunk · rights · freshness · entitlement tags"]:::ing
+  C["🗄️ L2 Corpus — FTS · embeddings-ready · need-dependency graph (proposed)"]:::corp
+  R["🔎 L3 Retrieval/RAG — cited passages · entitlement · dependency expansion"]:::rag
+  L["🧠 L4 LLM seam (wegofwd-llm) — provider-agnostic · cite-or-refuse"]:::llm
+  A["⚙️ L5 Agent layer (proposed) — plan→retrieve→expand→compose→verify"]:::agent
+  subgraph SF["🖥️ L6 Surfaces"]
+    SF1["Kathai Chithiram animation"]:::surf
+    SF2["Practice assistant (later)"]:::surf
+    SF3["Commercial layer — ADR-013"]:::surf
+  end
+  G["🛡️ Guardrail engine — cite-or-refuse · navigate-not-determine · no PII · risk→human"]:::guard
+  M["🔌 MCP (proposed) — corpus as tools ↔ external tools"]:::mcp
+  S-->I-->C-->R-->L-->A-->SF
+  R-.->A; A-.->R; G-.->A; G-.->SF; M-.->R; M-.->A
 ```
 
 ---
@@ -224,6 +252,18 @@ ANNOTATION: under the RAG node, caption "facts from corpus, never from weights".
 COLOUR KEY reused from the hero diagram.
 ```
 
+**Rendered (Mermaid):**
+```mermaid
+flowchart LR
+  classDef q fill:#16a34a,color:#fff; classDef gate fill:#b91c1c,color:#fff; classDef step fill:#4f46e5,color:#fff
+  Q["🙋 User query"]:::q --> IN["🛡️ Intake & scope gate"]:::gate --> P["🗂️ Retrieval planner"]:::step
+  P --> RAG["🔎 RAG retrieve (corpus)"]:::step --> CMP["🧠 LLM compose — cite only"]:::step
+  CMP --> V["🛡️ Verify — every claim cited? no determination?"]:::gate --> ANS["✅ Cited answer + who-to-ask"]:::q
+  IN -.personal person.-> D1["🚫 Decline"]:::gate
+  IN -.crisis.-> D2["🆘 Escalate to human"]:::gate
+  V -.no source.-> D3["↩️ Refuse"]:::gate
+```
+
 ### Flow B — entitlement discovery (Decision 10)
 ```
 ▚ DIAGRAM SPEC — "Flow B: entitlement discovery"
@@ -242,6 +282,18 @@ HARD-STOP CALLOUT: a large red bar UNDER the "Assemble" node reading
   "so do I qualify?" follow-up.
 ```
 
+**Rendered (Mermaid):**
+```mermaid
+flowchart LR
+  classDef q fill:#16a34a,color:#fff; classDef step fill:#4f46e5,color:#fff
+  classDef meta fill:#0d9488,color:#fff; classDef gate fill:#b91c1c,color:#fff; classDef juris fill:#64748b,color:#fff
+  Q["🙋 'What are we entitled to?'"]:::q --> E["🎗️ Entitlement retrieval (tagged regs)"]:::step
+  E --> AS["🧠 Assemble: program · criteria-as-written · source · who-decides · how-to-apply"]:::step
+  AS --> F["⏱️ Freshness stamp + 'verify with agency'"]:::meta
+  F --> J["🗺️ Jurisdiction filter (Michigan-first)"]:::juris --> ANS["✅ Navigational answer"]:::q
+  AS -.->|"NEVER 'you qualify' / '$X'"| HO["🤝 Hand-off to benefits counsellor"]:::gate
+```
+
 ### Flow C — dependency-aware / anticipatory answering (the Mission)
 ```
 ▚ DIAGRAM SPEC — "Flow C: dependency expansion"
@@ -258,6 +310,19 @@ Each spoke node carries a small quote-mark glyph (still cited) and where relevan
 a red 'navigate-not-determine' shield (e.g. the funding spoke).
 ```
 
+**Rendered (Mermaid):**
+```mermaid
+flowchart TB
+  classDef c fill:#16a34a,color:#fff; classDef d fill:#f59e0b,color:#111
+  H["✅ Hearing aid selected"]:::c
+  H-->B1["🔋 recurring batteries"]:::d
+  H-->B2["✋ dexterity → rechargeable"]:::d
+  H-->B3["📦 backup device"]:::d
+  H-->B4["🩺 audiology follow-ups"]:::d
+  H-->B5["📺 phone/TV compatibility"]:::d
+  H-->B6["📍 local clinic (live / MCP)"]:::d
+```
+
 ### Flow D — grounded generation for Kathai Chithiram (surface 1)
 ```
 ▚ DIAGRAM SPEC — "Flow D: grounded animation generation"
@@ -268,6 +333,15 @@ NODES: [Parent story] (green) → [RAG: retrieve relevant practice] (indigo) →
 ANNOTATION: a padlock over the whole lane labelled "child data — no commerce,
   full privacy apparatus (ADR-001)". Contrast note: "this surface produces an
   artefact; the assistant surface produces a cited answer".
+```
+
+**Rendered (Mermaid):**
+```mermaid
+flowchart LR
+  classDef q fill:#16a34a,color:#fff; classDef step fill:#4f46e5,color:#fff; classDef llm fill:#7c3aed,color:#fff; classDef gate fill:#b91c1c,color:#fff
+  P["📝 Parent story"]:::q --> R["🔎 RAG: retrieve relevant practice"]:::step
+  R --> G["🧠 LLM seam: constrained scene-script (KC-12)"]:::llm
+  G --> V["🛡️ Validate scene script"]:::gate --> RN["🎬 Renderer"]:::step --> M["📽️ Animation (mp4)"]:::q
 ```
 
 ---
