@@ -33,6 +33,7 @@
 | 010 | Retrieval-first: facts live in the corpus, never in the weights | Proposed (2026-09-10) | `wegofwd-arivu` (moved) |
 | 011 | Corpus rights and freshness: what may be ingested, and how it stays true | Proposed (2026-09-10) | `wegofwd-arivu` (moved) |
 | 012 | Repository topology: where everything lives as the family grows | Proposed (2026-09-10) | kathai-chithiram |
+| 013 | The practice-assistant surface and its commercial model — two layers, money never bends the answer | Proposed (2026-09-11) | kathai-chithiram |
 
 001–005 predate this round of work. 006–012 were written in September 2026 and **none of
 them has been built**.
@@ -250,6 +251,32 @@ repository whose every policy document is about one child's sensitive data.
 
 ---
 
+### ADR-013 — The practice-assistant surface and its commercial model *(Proposed)*
+**Decided:** The commercial idea (surface "products available for sale" alongside answers,
+Google/Amazon-style) is allowed only under strict separation. Commerce lives **only on the
+practice-assistant surface**, never on the child animation. Two visibly separate layers: (A)
+the cited educational answer, and (B) a labelled, disclosed "products that address this"
+section — and **money never bends Layer A**. Categories and disclosed listings, not
+individualised purchase advice. Regulated/medical-device/health-claim products are gated
+pending counsel.
+
+**The clinician distinction:** clinicians and therapists **inform the corpus** (what the
+dictionary knows); the surface still **educates, cites and routes to a human** — it does not
+give live advice. Monetisation touches Layer B only.
+
+**Why it matters:** it is the commercial analogue of ADR-009 D3 (educate/cite/never advise) —
+the rule that keeps the product outside clinical-decision-support regulation and trustworthy
+to a vulnerable audience. It fixes the boundaries so "should we monetise?" stays an open,
+deliberate choice rather than one foreclosed by a leaky design.
+
+**Still the owner's call (open):** revenue mechanism (affiliate / sponsored / marketplace),
+v1-or-later timing, commerce vs subscription/grant (a values call), and launch categories.
+**Counsel-gated** before ratification (FTC disclosure, advertising to vulnerable populations,
+device/health-claim promotion). Downstream of Kathai Chithiram shipping and the risk-of-harm
+path — not a now-build.
+
+---
+
 ## Which decisions are waiting on a person
 
 Not on engineering. These are the real blockers.
@@ -257,7 +284,7 @@ Not on engineering. These are the real blockers.
 | Waiting on | Blocks |
 |---|---|
 | **A named professional collaborator** | ADR-002's remaining preconditions (the progress engine stays off), ADR-007's narrative ratio policy, ADR-008's entire corpus, ADR-009's risk-of-harm path |
-| **A data-protection / legal review** | ADR-005's accounts and date-of-birth work, ADR-011's source tiering |
+| **A data-protection / legal review** | ADR-005's accounts and date-of-birth work, ADR-011's source tiering, ADR-013's commercial-model review (FTC disclosure, advertising to vulnerable populations, device/health-claim promotion) |
 | **A deployment boundary** | The last step of ADR-004; the residual risk stays medium until operators cannot reach the files directly |
 
 Everything else is buildable now.
