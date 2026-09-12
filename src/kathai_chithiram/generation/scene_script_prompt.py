@@ -95,14 +95,20 @@ def _cross_field_rules(child_token: str) -> str:
             "'total_duration_s' MUST equal the exact sum of every scene's 'duration_s'.",
             "Do not emit any 'content_flags'; a single flagged scene rejects the whole script.",
             "Keep each narration one short, literal sentence (140 characters or fewer).",
-            "Set 'author' to 'parent', 'perspective' to 'first_person', and 'intent' to 'instructional'.",
-            "Write narration in the first person ('I ...'); instructional stories must be first person.",
-            "Choose 'setting', 'props', each character's 'pose', and each character's 'expression' only from the enumerated values in the schema above; do not invent new ones.",
+            "Set 'author' to 'parent', 'perspective' to 'first_person',"
+            " and 'intent' to 'instructional'.",
+            "Write narration in the first person ('I ...');"
+            " instructional stories must be first person.",
+            "Choose 'setting', 'props', each character's 'pose', and each character's"
+            " 'expression' only from the enumerated values in the schema above;"
+            " do not invent new ones.",
         )
     )
 
 
-def build_scene_script_system_prefix(*, child_token: str = DEFAULT_CHILD_TOKEN) -> str:
+def build_scene_script_system_prefix(
+    *, child_token: str = DEFAULT_CHILD_TOKEN, grounding_block: str = ""
+) -> str:
     """Build the static, cacheable part of the system prompt (no repair feedback).
 
     This is everything that does not change between the attempts for one story:
@@ -117,6 +123,12 @@ def build_scene_script_system_prefix(*, child_token: str = DEFAULT_CHILD_TOKEN) 
             name. Defaults to the pipeline's ``CHILD`` token; pass the active
             mapping's token so the example and rules agree with what the seam
             substitutes.
+        grounding_block: Optional cited reference block surfaced by the retrieval
+            layer (KC-21). When non-empty it is inserted after the safety rules
+            and before the ``OUTPUT FORMAT`` section so the model can ground its
+            output in retrieved practice evidence. When ``""`` (the default) the
+            returned prefix is byte-identical to the pre-KC-21 output, preserving
+            prompt-cache hits for non-grounded calls.
 
     Returns:
         The static system-prompt prefix.
@@ -125,8 +137,10 @@ def build_scene_script_system_prefix(*, child_token: str = DEFAULT_CHILD_TOKEN) 
     schema = json.dumps(SCENE_SCRIPT_SCHEMA_V2, indent=2, sort_keys=True)
     example = json.dumps(EXAMPLE_SCENE_SCRIPT, indent=2, sort_keys=True)
 
-    sections = [
-        safety,
+    sections: list[str] = [safety]
+    if grounding_block:
+        sections += ["", grounding_block]
+    sections += [
         "",
         "OUTPUT FORMAT",
         "Emit exactly one JSON object that conforms to the scene-script contract "
