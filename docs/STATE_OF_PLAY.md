@@ -73,6 +73,7 @@ risk-of-harm routes to a human · facts live in the corpus, never in model weigh
 |---|---|---|
 | **Animation pipeline (Surface 1)** | **Built, green — 721 tests.** Contract + validation, generation behind `wegofwd-llm`, both renderers, narration/sfx/transitions/captions, offline mode, content-aware art. | — (buildable polish only) |
 | **KC-12 constrained decoding + v2 emission** | **Done, merged.** Structured output + v2 scene-script; validate-and-repair retained. | — |
+| **KC-21 retrieval grounding** | **Wired, dormant.** Generation optionally grounds scene scripts in cited corpus passages; seam tested with mock sources. Activates when `KC_ARIVU_DB` points at a `wegofwd-arivu` corpus. | — (awaiting federal corpus ingest) |
 | **M3 domain model (own the model over time)** | Contract (KC-13) + constraint (KC-12) done. Next is validators (KC-16). | **Clinician** (narrative policy) |
 | **M1 progress engine** | Built to the line; inert without a policy. | **Clinician** (ProgressPolicy) |
 | **The corpus (`wegofwd-arivu`)** | Persistence layer **spec'd + planned, not built**; ADR-010/011 ratified-in-principle. | — for the **federal** spine (buildable now); permissions for state/nonprofit |
