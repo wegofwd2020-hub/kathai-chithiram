@@ -123,3 +123,22 @@ def test_prefix_embeds_v2_schema_and_grammar() -> None:
     # It steers the model to the instructional, first-person track.
     assert "instructional" in prefix
     assert "first_person" in prefix
+
+
+# --- KC-21: optional grounding block ---------------------------------------
+
+
+def test_empty_grounding_block_is_byte_identical() -> None:
+    base = build_scene_script_system_prefix(child_token="CHILD")
+    with_empty = build_scene_script_system_prefix(child_token="CHILD", grounding_block="")
+    assert with_empty == base
+
+
+def test_grounding_block_is_inserted_when_present() -> None:
+    block = "REFERENCE PRACTICE (cited; for grounding only)\n- [cdc:oral-1] warm up gradually"
+    prefix = build_scene_script_system_prefix(child_token="CHILD", grounding_block=block)
+    assert "cdc:oral-1" in prefix
+    assert "REFERENCE PRACTICE" in prefix
+    # the safety rules and the contract are still present
+    assert "You MUST" in prefix
+    assert "total_duration_s" in prefix

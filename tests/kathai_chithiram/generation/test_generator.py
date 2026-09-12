@@ -234,3 +234,97 @@ def test_generation_constrains_output_to_v2_schema() -> None:
         request_id="req-1",
     )
     assert provider.requests[0].output_schema == SCENE_SCRIPT_SCHEMA_V2
+
+
+from dataclasses import dataclass as _dataclass  # noqa: E402
+from dataclasses import field as _field  # noqa: E402
+
+from kathai_chithiram.generation.grounding import GroundingPassage  # noqa: E402
+
+
+@_dataclass
+class FakeGroundingSource:
+    passages: list[GroundingPassage]
+    queries: list[str] = _field(default_factory=list)
+
+    def retrieve(self, query: str, *, limit: int = 5) -> list[GroundingPassage]:
+        self.queries.append(query)
+        return list(self.passages)
+
+
+def test_grounding_injects_block_and_records_source_ids() -> None:
+    passages = [
+        GroundingPassage(text="warm up to the brush", source_id="cdc:oral-1", licence_ref="cdc:pd"),
+        GroundingPassage(
+            text="use a visual schedule", source_id="cdc:oral-1", licence_ref="cdc:pd"
+        ),
+        GroundingPassage(
+            text="first dental visit tips", source_id="ed:idea-2", licence_ref="ed:pd"
+        ),
+    ]
+    grounding = FakeGroundingSource(passages)
+    provider = ScriptedProvider(replies=[json.dumps(_valid_script())])
+    result = generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+        grounding=grounding,
+    )
+    # source ids recorded, de-duplicated, order-preserving
+    assert result.grounding_source_ids == ("cdc:oral-1", "ed:idea-2")
+    # the cited block reached the system prompt
+    assert "cdc:oral-1" in provider.requests[0].system_prompt
+    assert "REFERENCE PRACTICE" in provider.requests[0].system_prompt
+
+
+def test_grounding_query_is_pseudonymised() -> None:
+    grounding = FakeGroundingSource([])
+    generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=ScriptedProvider(replies=[json.dumps(_valid_script())]),
+        config=COMPLIANT,
+        request_id="req-1",
+        grounding=grounding,
+    )
+    assert grounding.queries, "grounding was queried"
+    q = grounding.queries[0]
+    assert MOCK_CHILD_NAME not in q          # real name never sent to the corpus
+    assert "CHILD" in q                       # the token took its place
+
+
+def test_no_grounding_leaves_prompt_and_ids_unchanged() -> None:
+    provider = ScriptedProvider(replies=[json.dumps(_valid_script())])
+    result = generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+    )
+    assert result.grounding_source_ids == ()
+    assert "REFERENCE PRACTICE" not in provider.requests[0].system_prompt
+
+
+@_dataclass
+class RaisingGroundingSource:
+    """A grounding source that always raises to simulate a corpus/DB failure."""
+
+    def retrieve(self, query: str, *, limit: int = 5) -> list[GroundingPassage]:
+        raise RuntimeError("corpus down")
+
+
+def test_grounding_retrieval_failure_falls_back_to_ungrounded() -> None:
+    provider = ScriptedProvider(replies=[json.dumps(_valid_script())])
+    result = generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+        grounding=RaisingGroundingSource(),
+    )
+    assert result.grounding_source_ids == ()
+    assert "REFERENCE PRACTICE" not in provider.requests[0].system_prompt

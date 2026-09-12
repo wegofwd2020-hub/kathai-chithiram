@@ -47,6 +47,14 @@ generation = [
 encryption = [
     "cryptography>=42",
 ]
+# Retrieval grounding (KC-21): the wegofwd-arivu corpus that generation queries to
+# ground scene scripts in cited practice. Optional — the core pipeline degrades to
+# ungrounded generation when it is absent. Set KC_ARIVU_DB to a corpus path to enable.
+# Pinned to an immutable commit SHA (supply-chain hardening); bump deliberately via
+# PR when arivu advances, or switch to a signed release tag once arivu cuts one.
+grounding = [
+    "wegofwd-arivu @ git+https://github.com/wegofwd2020-hub/wegofwd-arivu@9ee042fae0651c47eabaca8f775a30d3646a26da",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.5",
@@ -56,6 +64,8 @@ dev = [
     "kathai-chithiram[render]",
     # The storage-encryption tests need the cipher backend.
     "kathai-chithiram[encryption]",
+    # The fail-safe grounding test needs the arivu interface.
+    "kathai-chithiram[grounding]",
 ]
 
 [tool.setuptools.packages.find]

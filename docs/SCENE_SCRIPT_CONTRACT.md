@@ -4,7 +4,7 @@
 
 §2–4 describe **v1** (the original free-text contract); **§5** describes **v2**, which closes the art vocabulary and adds the story grammar. The validator supports both.
 
-The scene script is the stable contract between **generation** (`wegofwd-llm` turns a parent's story into structure) and **rendering** (a renderer turns structure into video). Renderers may evolve — matplotlib today, Blender tomorrow — but they all consume this contract. Generation never talks to a renderer directly; it only emits a valid scene script.
+The scene script is the stable contract between **generation** (`wegofwd-llm` turns a parent's story into structure) and **rendering** (a renderer turns structure into video). Renderers may evolve — matplotlib today, Blender tomorrow — but they all consume this contract. Generation never talks to a renderer directly; it only emits a valid scene script. Generation optionally grounds the scene script in cited corpus passages (KC-21) when `KC_ARIVU_DB` points at a `wegofwd-arivu` corpus; grounding is additive and never bypasses validation or the human-review gate.
 
 ```
 parent story ──▶ generation ──▶ [ SCENE SCRIPT ] ──▶ renderer ──▶ animation
