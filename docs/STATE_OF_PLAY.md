@@ -1,6 +1,6 @@
 # WeGoFwd — State of Play
 
-**As of:** 2026-09-11 · **Owner:** Sivakumar (Siva) Mambakkam · **Purpose:** the **front door** to the whole
+**As of:** 2026-09-12 · **Owner:** Sivakumar (Siva) Mambakkam · **Purpose:** the **front door** to the whole
 project — the high-level view of *what we're building, where everything lives, what's built,
 what's next, and who each remaining item is blocked on*, so the next move is never ambiguous.
 
@@ -37,7 +37,10 @@ it. Surfaces are replaceable; the asset is not. `[ADR-009]`
   helper-learners, self-advocates, seniors. Home of entitlement discovery and dependency-aware
   answering. Ships **after** the animation and **after** the risk-of-harm escalation path exists.
 - **The asset — `wegofwd-arivu`.** A curated, rights-cleared, versioned corpus + retrieval (RAG).
-  Federal content first; state/nonprofit content is copyright-gated. Its own repository.
+  **Federal Tier-1 spine ingested** (CDC, ED/IDEA-OSEP, NIH, CMS/Medicaid, CPIR, Michigan — 6/6
+  families, ~278 cited chunks) and the **entitlement-discovery layer is built** (ADR-009 D10:
+  program · criteria-as-written · jurisdiction · who-decides · how-to-apply, cite-or-refuse,
+  navigate-never-determine). State/nonprofit content is copyright-gated. Its own repository.
 
 **Architecture:** `docs/ARIVU_ARCHITECTURE.md` (7-layer pattern: sources → ingestion → corpus →
 RAG → LLM seam → agent layer → surfaces; with rendered diagrams).
@@ -71,12 +74,13 @@ risk-of-harm routes to a human · facts live in the corpus, never in model weigh
 
 | Track | State | Blocked on |
 |---|---|---|
-| **Animation pipeline (Surface 1)** | **Built, green — 721 tests.** Contract + validation, generation behind `wegofwd-llm`, both renderers, narration/sfx/transitions/captions, offline mode, content-aware art. | — (buildable polish only) |
+| **Animation pipeline (Surface 1)** | **Built, green — 735 tests.** Contract + validation, generation behind `wegofwd-llm`, both renderers, narration/sfx/transitions/captions, offline mode, content-aware art. | — (buildable polish only) |
 | **KC-12 constrained decoding + v2 emission** | **Done, merged.** Structured output + v2 scene-script; validate-and-repair retained. | — |
-| **KC-21 retrieval grounding** | **Wired, dormant.** Generation optionally grounds scene scripts in cited corpus passages; seam tested with mock sources. Activates when `KC_ARIVU_DB` points at a `wegofwd-arivu` corpus. | — (awaiting federal corpus ingest) |
+| **KC-21 retrieval grounding** | **Wired + live.** Generation grounds scene scripts in cited corpus passages (pseudonymised query, additive, fails safe). Verified end-to-end against the ingested corpus; `KC_ARIVU_DB` set. | — |
 | **M3 domain model (own the model over time)** | Contract (KC-13) + constraint (KC-12) done. Next is validators (KC-16). | **Clinician** (narrative policy) |
 | **M1 progress engine** | Built to the line; inert without a policy. | **Clinician** (ProgressPolicy) |
-| **The corpus (`wegofwd-arivu`)** | Persistence layer **spec'd + planned, not built**; ADR-010/011 ratified-in-principle. | — for the **federal** spine (buildable now); permissions for state/nonprofit |
+| **The corpus (`wegofwd-arivu`)** | **Built.** SqliteCorpus + FTS5 retrieval + rights/currency regime (merged); **federal Tier-1 spine ingested (6/6, ~278 chunks)**; TLS-chain + stale-URL fixes shipped. | — for **federal** (done); permissions for state/nonprofit; PDF extractor + Tier-2 PMC + retraction daemon still unbuilt |
+| **Entitlement discovery (ADR-009 D10)** | **Built, merged.** Schema + cited TOML registry (3 verbatim-cited federal programs: IDEA Part C, IDEA Part B, Medicaid HCBS 1915(c)) + fail-closed loader + `EntitlementIndex.find`; navigate-never-determine locked by a guard test. | — (EPSDT/SSI deferred pending citable/ingestable source content) |
 | **Practice assistant (Surface 2)** | Framed (ADR-009), **not designed/built.** | Animation shipping + **risk-of-harm path** (ADR-009 D7) |
 | **Commercial layer** | Boundaries set (ADR-013), nothing built. | **Counsel** (FTC / device-promotion) + owner's model choice |
 | **Platform accounts / DOB** | Built against synthetic identities. | **DPO** sign-off before real child data |
@@ -86,9 +90,12 @@ risk-of-harm routes to a human · facts live in the corpus, never in model weigh
 ## 5. What's next — and who each is blocked on
 
 **Buildable now, no one's permission needed:**
-- The **federal corpus spine** in `wegofwd-arivu` (ingest IDEA/OSEP, CMS/Medicaid, SSA, ADA/EEOC,
-  CDC — all public-domain), with rights + freshness records. This is librarian work and it
-  improves the animation via grounded retrieval while it's built.
+- **Deepen the corpus:** a PDF extractor (unlocks Michigan admin rules + gov PDFs), Tier-2 PMC
+  open-access literature, and a retraction/withdrawal watch (ADR-011). Each widens grounding and
+  entitlement coverage.
+- **Grow the entitlement map:** more federal programs and jurisdictions as source content lands;
+  re-add **EPSDT** (needs richer CMS content) and **SSI** (needs honest SSA access — SSA.gov's WAF
+  blocks the crawler; candidate path is citing 20 CFR 416 via eCFR).
 - Animation-product polish and the ADR-007 step-6 rename tidy-ups.
 
 **Blocked on a person (external — the real unlocks):**
@@ -99,8 +106,10 @@ risk-of-harm routes to a human · facts live in the corpus, never in model weigh
   commercial model.
 - **A deployment boundary** → last step of ADR-004.
 
-**Honest note:** most of the recent work is **strategy captured as ADRs/docs**, not new code. The
-direction is clear and staged; the single biggest lever is still **retaining the clinician**.
+**Honest note:** the corpus is now real code shipping — persistence, the ingested federal spine,
+live retrieval grounding, and the entitlement-discovery foundation all merged. The single biggest
+lever for the *animation/clinical* tracks is still **retaining the clinician**; the corpus/asset
+track can keep advancing without it.
 
 ---
 
@@ -113,8 +122,7 @@ Live thinking that has a home here until it hardens into an ADR (in `wegofwd-ari
 - **MCP integration** — expose the corpus as an MCP tool-server; consume external MCP for
   live/local data (candidate arivu ADR).
 - **Need-dependency graph** — corpus data model for anticipatory answering (an ADR-010 evolution).
-- **Entitlement tagging schema** — program · criteria · jurisdiction · who-decides · how-to-apply
-  (ADR-009 D10 names the requirement; schema undesigned).
+  (The entitlement tagging schema this thread once named is now **built + merged** — see §4.)
 - **Commercial model choice** — affiliate vs sponsored vs marketplace; v1-or-later; commerce vs
   subscription/grant (a values call). Owner's, gated on counsel (ADR-013).
 - **Scope breadth confirmation** — disability + aging + accessibility is set as vision (ADR-009
