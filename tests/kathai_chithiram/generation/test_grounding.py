@@ -70,3 +70,12 @@ def test_arivu_source_fails_safe_on_missing_corpus() -> None:
     # so grounding degrades to "no support" rather than breaking generation.
     src = ArivuGroundingSource("/nonexistent/dir/does-not-exist.corpus.db")
     assert src.retrieve("toothbrushing routine") == []
+
+
+def test_generation_package_reexports_grounding() -> None:
+    import kathai_chithiram.generation as gen
+
+    assert hasattr(gen, "open_grounding_source")
+    assert hasattr(gen, "GroundingSource")
+    assert hasattr(gen, "GroundingPassage")
+    assert hasattr(gen, "build_grounding_block")

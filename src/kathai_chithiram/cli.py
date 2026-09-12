@@ -34,7 +34,11 @@ from wegofwd_video.errors import VideoError
 
 from kathai_chithiram.access import GuardedStore, JsonlAuditSink, Principal, Role
 from kathai_chithiram.errors import KathaiChithiramError
-from kathai_chithiram.generation import build_offline_scene_script, generate_scene_script
+from kathai_chithiram.generation import (
+    build_offline_scene_script,
+    generate_scene_script,
+    open_grounding_source,
+)
 from kathai_chithiram.intake import (
     Consent,
     ParentSubmission,
@@ -72,6 +76,7 @@ from kathai_chithiram.wegofwd_llm.provider import LLMProvider, ProviderConfig
 
 if TYPE_CHECKING:
     from kathai_chithiram.authoring import StoryTemplate
+    from kathai_chithiram.generation import GroundingSource
 
 __all__ = ["build_arg_parser", "main"]
 
@@ -519,6 +524,22 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
     return _cmd_generate(args, provider=provider)
 
 
+_ARIVU_DB_ENV = "KC_ARIVU_DB"
+
+
+def _grounding_from_env() -> GroundingSource | None:
+    """Build a corpus grounding source from KC_ARIVU_DB, or None if unset/absent.
+
+    Opens the corpus database specified by the KC_ARIVU_DB environment variable.
+    Returns None if the variable is unset, empty, or if the wegofwd-arivu extra is
+    not installed (graceful degradation — grounding is optional).
+
+    Returns:
+        A GroundingSource backed by the corpus path, or None.
+    """
+    return open_grounding_source(os.environ.get(_ARIVU_DB_ENV))
+
+
 def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> int:
     """The non-interactive generate flow."""
     story_id = args.story_id or uuid.uuid4().hex
@@ -563,6 +584,7 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
             config=config,
             request_id=story_id,
             max_attempts=args.max_attempts,
+            grounding=_grounding_from_env(),
         )
     except KathaiChithiramError as exc:
         print(f"error: generation failed: {exc}", file=sys.stderr)

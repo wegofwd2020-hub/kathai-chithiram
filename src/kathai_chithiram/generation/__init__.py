@@ -16,6 +16,12 @@ from kathai_chithiram.generation.generator import (
     GeneratedSceneScript,
     generate_scene_script,
 )
+from kathai_chithiram.generation.grounding import (
+    GroundingPassage,
+    GroundingSource,
+    build_grounding_block,
+    open_grounding_source,
+)
 from kathai_chithiram.generation.offline import build_offline_scene_script
 from kathai_chithiram.generation.scene_script_prompt import (
     EXAMPLE_SCENE_SCRIPT,
@@ -32,8 +38,12 @@ __all__ = [
     "MUST",
     "MUST_NOT",
     "GeneratedSceneScript",
+    "GroundingPassage",
+    "GroundingSource",
     "build_generation_system_prompt",
+    "build_grounding_block",
     "build_offline_scene_script",
     "build_scene_script_system_prompt",
     "generate_scene_script",
+    "open_grounding_source",
 ]
