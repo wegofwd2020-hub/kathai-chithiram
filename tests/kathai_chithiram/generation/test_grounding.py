@@ -18,8 +18,16 @@ _ARIVU_AVAILABLE = importlib.util.find_spec("wegofwd_arivu") is not None
 
 def _passages() -> list[GroundingPassage]:
     return [
-        GroundingPassage(text="Warm up to the toothbrush gradually.", source_id="cdc:oral-1", licence_ref="cdc:pd"),
-        GroundingPassage(text="Use a visual schedule for the routine.", source_id="ed:idea-2", licence_ref="ed:pd"),
+        GroundingPassage(
+            text="Warm up to the toothbrush gradually.",
+            source_id="cdc:oral-1",
+            licence_ref="cdc:pd",
+        ),
+        GroundingPassage(
+            text="Use a visual schedule for the routine.",
+            source_id="ed:idea-2",
+            licence_ref="ed:pd",
+        ),
     ]
 
 
