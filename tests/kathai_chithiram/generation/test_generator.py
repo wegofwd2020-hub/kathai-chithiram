@@ -306,3 +306,25 @@ def test_no_grounding_leaves_prompt_and_ids_unchanged() -> None:
     )
     assert result.grounding_source_ids == ()
     assert "REFERENCE PRACTICE" not in provider.requests[0].system_prompt
+
+
+@_dataclass
+class RaisingGroundingSource:
+    """A grounding source that always raises to simulate a corpus/DB failure."""
+
+    def retrieve(self, query: str, *, limit: int = 5) -> list[GroundingPassage]:
+        raise RuntimeError("corpus down")
+
+
+def test_grounding_retrieval_failure_falls_back_to_ungrounded() -> None:
+    provider = ScriptedProvider(replies=[json.dumps(_valid_script())])
+    result = generate_scene_script(
+        story_text=MOCK_STORY,
+        mapping=_mapping(),
+        provider=provider,
+        config=COMPLIANT,
+        request_id="req-1",
+        grounding=RaisingGroundingSource(),
+    )
+    assert result.grounding_source_ids == ()
+    assert "REFERENCE PRACTICE" not in provider.requests[0].system_prompt

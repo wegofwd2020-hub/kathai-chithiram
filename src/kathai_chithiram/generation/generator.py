@@ -115,7 +115,11 @@ def generate_scene_script(
     # with the pseudonymised story so the child's name never reaches it (retrieval
     # is local and the corpus holds no personal data). Empty/absent -> no grounding.
     if grounding is not None:
-        passages = grounding.retrieve(pseudonymize(story_text, mapping))
+        try:
+            passages = grounding.retrieve(pseudonymize(story_text, mapping))
+        except Exception:
+            logger.warning("grounding retrieval failed; continuing ungrounded", exc_info=True)
+            passages = []
     else:
         passages = []
     grounding_block = build_grounding_block(passages)
