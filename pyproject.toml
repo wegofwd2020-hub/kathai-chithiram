@@ -53,7 +53,7 @@ encryption = [
 # Pinned to an immutable commit SHA (supply-chain hardening); bump deliberately via
 # PR when arivu advances, or switch to a signed release tag once arivu cuts one.
 grounding = [
-    "wegofwd-arivu @ git+https://github.com/wegofwd2020-hub/wegofwd-arivu@9ee042fae0651c47eabaca8f775a30d3646a26da",
+    "wegofwd-arivu @ git+https://github.com/wegofwd2020-hub/wegofwd-arivu@2c3845a8f12d59d9f3d540ee88c7fd5d60d11267",
 ]
 dev = [
     "pytest>=8.0",
