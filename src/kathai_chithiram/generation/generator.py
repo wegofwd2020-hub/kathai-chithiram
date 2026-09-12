@@ -24,11 +24,9 @@ from datetime import datetime
 from typing import Any
 
 from kathai_chithiram.errors import SceneScriptGenerationError, SceneScriptInvalidError
-from kathai_chithiram.generation.scene_script_prompt import (
-    build_scene_script_system_prefix,
-    build_scene_script_system_prompt,
-)
-from kathai_chithiram.privacy.pseudonymize import NameMapping
+from kathai_chithiram.generation.grounding import GroundingSource, build_grounding_block
+from kathai_chithiram.generation.scene_script_prompt import build_scene_script_system_prefix
+from kathai_chithiram.privacy.pseudonymize import NameMapping, pseudonymize
 from kathai_chithiram.scene_script.schema import SCENE_SCRIPT_SCHEMA_V2
 from kathai_chithiram.scene_script.validation import validate_scene_script
 from kathai_chithiram.wegofwd_llm.gateway import run_generation
@@ -49,11 +47,14 @@ class GeneratedSceneScript:
             privacy-posture audit for every seam call made.
         attempts: How many attempts were needed (``len(records)``); ``1`` when
             the first reply was already valid.
+        grounding_source_ids: The de-duplicated corpus source ids that grounded
+            this script (empty when generation was ungrounded).
     """
 
     script: dict[str, Any]
     records: tuple[ProviderRequestRecord, ...]
     attempts: int
+    grounding_source_ids: tuple[str, ...] = ()
 
 
 def generate_scene_script(
@@ -64,6 +65,7 @@ def generate_scene_script(
     config: ProviderConfig,
     request_id: str,
     max_attempts: int = 3,
+    grounding: GroundingSource | None = None,
     clock: Callable[[], datetime] | None = None,
 ) -> GeneratedSceneScript:
     """Generate a contract-valid scene script from a parent's story.
@@ -85,6 +87,10 @@ def generate_scene_script(
             distinct id (``"<request_id>#<n>"``) for its audit record.
         max_attempts: Maximum number of generation attempts, including repairs.
             Must be at least 1.
+        grounding: Optional corpus grounding source; when provided, cited practice
+            passages relevant to the (pseudonymised) story are injected into the
+            prompt prefix. Must fail safe (never raise). ``None`` → generation is
+            ungrounded.
         clock: Optional callable returning the current time, used to stamp each
             audit record. Injectable for deterministic tests.
 
@@ -105,19 +111,34 @@ def generate_scene_script(
     if max_attempts < 1:
         raise ValueError(f"max_attempts must be at least 1, got {max_attempts}")
 
+    # Grounding is per-story (constant across repair attempts). Query the corpus
+    # with the pseudonymised story so the child's name never reaches it (retrieval
+    # is local and the corpus holds no personal data). Empty/absent -> no grounding.
+    if grounding is not None:
+        passages = grounding.retrieve(pseudonymize(story_text, mapping))
+    else:
+        passages = []
+    grounding_block = build_grounding_block(passages)
+    grounding_source_ids = tuple(dict.fromkeys(p.source_id for p in passages))
+
     records: list[ProviderRequestRecord] = []
     feedback: str | None = None
     last_failure = "no attempt produced a parseable scene script"
 
     # The prefix is constant across a story's attempts, so build it once and mark
     # it cacheable; only the repair feedback varies (KC-12).
-    system_prefix = build_scene_script_system_prefix(child_token=mapping.token)
+    system_prefix = build_scene_script_system_prefix(
+        child_token=mapping.token, grounding_block=grounding_block
+    )
 
     for attempt in range(1, max_attempts + 1):
-        system_prompt = build_scene_script_system_prompt(
-            child_token=mapping.token,
-            repair_feedback=feedback,
+        repair_suffix = (
+            "\n\nYour previous attempt was rejected. Fix it and emit a corrected "
+            f"JSON object. Reason: {feedback}"
+            if feedback
+            else ""
         )
+        system_prompt = system_prefix + repair_suffix
         result = run_generation(
             story_text=story_text,
             mapping=mapping,
@@ -160,6 +181,7 @@ def generate_scene_script(
             script=script,
             records=tuple(records),
             attempts=attempt,
+            grounding_source_ids=grounding_source_ids,
         )
 
     raise SceneScriptGenerationError(
