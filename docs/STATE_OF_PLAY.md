@@ -1,6 +1,6 @@
 # WeGoFwd — State of Play
 
-**As of:** 2026-09-12 · **Owner:** Sivakumar (Siva) Mambakkam · **Purpose:** the **front door** to the whole
+**As of:** 2026-09-13 · **Owner:** Sivakumar (Siva) Mambakkam · **Purpose:** the **front door** to the whole
 project — the high-level view of *what we're building, where everything lives, what's built,
 what's next, and who each remaining item is blocked on*, so the next move is never ambiguous.
 
@@ -106,7 +106,7 @@ the rights/provenance regime; holds no personal data.
 | **KC-21 retrieval grounding** | **Wired + live.** Generation grounds scene scripts in cited corpus passages (pseudonymised query, additive, fails safe). Verified end-to-end against the ingested corpus; `KC_ARIVU_DB` set. | — |
 | **M3 domain model (own the model over time)** | Contract (KC-13) + constraint (KC-12) done. Next is validators (KC-16). | **Clinician** (narrative policy) |
 | **M1 progress engine** | Built to the line; inert without a policy. | **Clinician** (ProgressPolicy) |
-| **The corpus (`wegofwd-arivu`)** | **Built.** SqliteCorpus + FTS5 retrieval + rights/currency regime (merged); **federal Tier-1 spine ingested (6/6, ~278 chunks)**; TLS-chain + stale-URL fixes shipped. | — for **federal** (done); permissions for state/nonprofit; PDF extractor + Tier-2 PMC + retraction daemon still unbuilt |
+| **The corpus (`wegofwd-arivu`)** | **Built.** SqliteCorpus + FTS5 retrieval + rights/currency regime (merged); **federal Tier-1 spine ingested (6/6, ~278 chunks)**; TLS-chain + stale-URL fixes shipped; per-run ingest-metrics history (size · coverage · per-family). | — for **federal** (done); permissions for state/nonprofit; PDF extractor + Tier-2 PMC + retraction daemon still unbuilt |
 | **Entitlement discovery (ADR-009 D10)** | **Built, merged.** Schema + cited TOML registry (3 verbatim-cited federal programs: IDEA Part C, IDEA Part B, Medicaid HCBS 1915(c)) + fail-closed loader + `EntitlementIndex.find`; navigate-never-determine locked by a guard test. | — (EPSDT/SSI deferred pending citable/ingestable source content) |
 | **Practice assistant (Surface 2)** | Framed (ADR-009), **not designed/built.** | Animation shipping + **risk-of-harm path** (ADR-009 D7) |
 | **Commercial layer** | Boundaries set (ADR-013), nothing built. | **Counsel** (FTC / device-promotion) + owner's model choice |
@@ -119,7 +119,8 @@ the rights/provenance regime; holds no personal data.
 **Buildable now, no one's permission needed:**
 - **Deepen the corpus:** a PDF extractor (unlocks Michigan admin rules + gov PDFs), Tier-2 PMC
   open-access literature, and a retraction/withdrawal watch (ADR-011). Each widens grounding and
-  entitlement coverage.
+  entitlement coverage. Track growth/coverage via the per-run ingest-metrics history (not
+  CPU/memory — negligible for an embedded corpus until vector search or a hosted service arrives).
 - **Grow the entitlement map:** more federal programs and jurisdictions as source content lands;
   re-add **EPSDT** (needs richer CMS content) and **SSI** (needs honest SSA access — SSA.gov's WAF
   blocks the crawler; candidate path is citing 20 CFR 416 via eCFR).
