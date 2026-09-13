@@ -51,6 +51,33 @@ risk-of-harm routes to a human · facts live in the corpus, never in model weigh
 
 ---
 
+## Visual map (color-coded)
+
+Four views. Source of truth is [`SYSTEM_MAP.drawio`](SYSTEM_MAP.drawio) (editable in
+diagrams.net or the VS Code drawio extension); the PNGs below are exports.
+
+**1 · Component map** — the whole system by layer (colour = layer).
+
+![Component map](SYSTEM_MAP_1_components.png)
+
+**2 · Build progress & flow** — colour = status (built · gated-on-a-person · planned).
+
+![Build progress and flow](SYSTEM_MAP_2_progress.png)
+
+**3 · Serving path** — customer → front end → **app/API + safety layer** → corpus. The
+customer meets the app layer (where the five laws live); the front end never reads the
+corpus directly.
+
+![Serving path](SYSTEM_MAP_3_serving.png)
+
+**4 · Corpus — conceptual architecture** — rights-cleared sources → ingestion (+ rights
+guard) → SqliteCorpus storage → retrieval → entitlement layer → consumers, governed by
+the rights/provenance regime; holds no personal data.
+
+![Corpus architecture](SYSTEM_MAP_4_corpus.png)
+
+---
+
 ## 3. Where everything lives (doc map)
 
 | You want… | Read |
