@@ -150,4 +150,54 @@
       </root>
     </mxGraphModel>
   </diagram>
+
+  <diagram name="3 · Serving Path (customer → corpus)" id="serving">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="stitle" value="Serving Path — the customer never talks to the corpus directly" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="1100" height="30" as="geometry" /></mxCell>
+
+        <!-- legend -->
+        <mxCell id="sl_a" value="Actor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="58" width="90" height="28" as="geometry" /></mxCell>
+        <mxCell id="sl_s" value="Surface (front end)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="140" y="58" width="150" height="28" as="geometry" /></mxCell>
+        <mxCell id="sl_g" value="App / API + safety" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="300" y="58" width="150" height="28" as="geometry" /></mxCell>
+        <mxCell id="sl_l" value="LLM (via seam)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="460" y="58" width="140" height="28" as="geometry" /></mxCell>
+        <mxCell id="sl_c" value="Corpus (internal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="610" y="58" width="140" height="28" as="geometry" /></mxCell>
+        <mxCell id="sl_p" value="Later / optional" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1"><mxGeometry x="760" y="58" width="140" height="28" as="geometry" /></mxCell>
+
+        <!-- actors + front end -->
+        <mxCell id="cust" value="Customer&#10;(carer · self-advocate · senior)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1"><mxGeometry x="40" y="250" width="140" height="70" as="geometry" /></mxCell>
+        <mxCell id="fe" value="Front end&#10;(the product UI / surface)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1"><mxGeometry x="230" y="250" width="150" height="70" as="geometry" /></mxCell>
+
+        <!-- app layer background -->
+        <mxCell id="appbg" value="Application / API layer  —  the customer-facing API; where the five laws live" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FBE5E4;strokeColor=#B85450;fontStyle=1;verticalAlign=top;dashed=0;" vertex="1" parent="1"><mxGeometry x="430" y="130" width="510" height="330" as="geometry" /></mxCell>
+        <mxCell id="api" value="Application API — request in / cited answer out" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1"><mxGeometry x="450" y="165" width="470" height="40" as="geometry" /></mxCell>
+        <mxCell id="pseudo" value="Pseudonymise personal input (name → token). Personal data stays HERE." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="450" y="220" width="230" height="60" as="geometry" /></mxCell>
+        <mxCell id="laws" value="The five laws enforced here: cite-or-refuse · navigate-never-determine · no personal data on the assistant · risk-of-harm → human" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="690" y="220" width="230" height="105" as="geometry" /></mxCell>
+        <mxCell id="llm" value="LLM — Opus 4.8 via wegofwd-llm seam (swappable)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="450" y="295" width="230" height="55" as="geometry" /></mxCell>
+        <mxCell id="retr" value="Retrieval (RAG) — query the corpus, get cited passages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="450" y="365" width="470" height="45" as="geometry" /></mxCell>
+
+        <!-- corpus + consumption modes -->
+        <mxCell id="corpus" value="wegofwd-arivu — CORPUS&#10;internal retrieval engine&#10;holds NO personal data (ADR-009 D6)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1000" y="235" width="270" height="95" as="geometry" /></mxCell>
+        <mxCell id="modeA" value="consumed as: in-process library (today)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="1000" y="345" width="270" height="35" as="geometry" /></mxCell>
+        <mxCell id="modeB" value="or: standalone internal service / MCP (later)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="1000" y="385" width="270" height="35" as="geometry" /></mxCell>
+
+        <!-- boundary note -->
+        <mxCell id="note" value="Personal data boundary: the customer's situation lives ONLY in the app layer (pseudonymised before retrieval). The corpus never receives it, and the front end never reads the corpus directly — that would bypass every gate above." style="text;html=1;align=left;fontSize=12;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="40" y="480" width="1230" height="40" as="geometry" /></mxCell>
+
+        <!-- edges -->
+        <mxCell id="se1" value="asks" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="cust" target="fe"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="fe" target="api"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se3" value="query (pseudonymised)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="retr" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se4" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="corpus" target="retr"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se5" value="ground" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;endArrow=block;" edge="1" parent="1" source="retr" target="llm"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;endArrow=block;" edge="1" parent="1" source="llm" target="api"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se7" value="cited answer" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0;exitY=0.25;entryX=1;entryY=0.75;" edge="1" parent="1" source="api" target="fe"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se8" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=none;dashed=1;" edge="1" parent="1" source="modeA" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se9" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=none;dashed=1;" edge="1" parent="1" source="modeB" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
