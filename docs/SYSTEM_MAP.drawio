@@ -200,4 +200,51 @@
       </root>
     </mxGraphModel>
   </diagram>
+
+  <diagram name="4 · Corpus — conceptual architecture" id="corpusarch">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="ctitle" value="wegofwd-arivu — the corpus, conceptually  (rights-cleared data in ▸ cited passages out; no personal data)" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="1300" height="30" as="geometry" /></mxCell>
+
+        <!-- legend -->
+        <mxCell id="cl1" value="Sources (input)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="58" width="130" height="26" as="geometry" /></mxCell>
+        <mxCell id="cl2" value="Ingestion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="180" y="58" width="110" height="26" as="geometry" /></mxCell>
+        <mxCell id="cl3" value="Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1"><mxGeometry x="300" y="58" width="90" height="26" as="geometry" /></mxCell>
+        <mxCell id="cl4" value="Retrieval" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="400" y="58" width="100" height="26" as="geometry" /></mxCell>
+        <mxCell id="cl5" value="Entitlement layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="510" y="58" width="140" height="26" as="geometry" /></mxCell>
+        <mxCell id="cl6" value="Rights/provenance (governance)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="660" y="58" width="220" height="26" as="geometry" /></mxCell>
+
+        <!-- vertical layered stack -->
+        <mxCell id="b1" value="SOURCES · rights-cleared inputs&#10;Tier-1 federal, public domain: CDC · ED/IDEA-OSEP · NIH · CMS/Medicaid · CPIR · Michigan   |   SSA/SSI: module ready, dormant (WAF)   |   Tier-2 PMC open-access: planned   |   Tier-3 (ERIC/Cochrane/WHO/paywalled): prohibited, never ingested" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="110" width="980" height="75" as="geometry" /></mxCell>
+        <mxCell id="b2" value="INGESTION pipeline&#10;Fetch (HttpFetcher — polite · rate-limited · full TLS chain)  →  Extract (html_to_text)  →  Chunk (bounded passages)  →  RIGHTS GUARD: refuse if no rights record / prohibited tier / disallowed licence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="215" width="980" height="75" as="geometry" /></mxCell>
+        <mxCell id="b3" value="STORAGE — SqliteCorpus  (holds NO personal data)&#10;chunks: text · source_id · licence_ref · currency     +     sources: tier · licence · currency     +     FTS5 index&#10;content-hash reconciliation: add / unchanged / superseded (supersession history kept)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="320" width="980" height="80" as="geometry" /></mxCell>
+        <mxCell id="b4" value="RETRIEVAL&#10;retrieve(query, limit) — FTS5 / BM25, currency-filtered   ·   source_chunks(source_id)   ·   no_support_rate (coverage metric)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="430" width="980" height="70" as="geometry" /></mxCell>
+        <mxCell id="b5" value="ENTITLEMENT LAYER  (ADR-009 D10)&#10;EntitlementProgram registry (program · criteria-as-written · jurisdiction · who-decides · how-to-apply)  +  EntitlementIndex.find&#10;cite-or-refuse · navigate-never-determine — cites the passages held below" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="530" width="980" height="80" as="geometry" /></mxCell>
+
+        <!-- governance vertical band -->
+        <mxCell id="gov" value="RIGHTS &amp; PROVENANCE REGIME  (ADR-011)&#10;&#10;RightsRecord&#10;(licence + text-ref + attribution)&#10;&#10;SourceTier — 1 / 2 / 3&#10;&#10;CurrencyStatus&#10;current / superseded /&#10;retracted / withdrawn&#10;&#10;Every chunk stays traceable,&#10;correctable, withdrawable." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1070" y="215" width="300" height="395" as="geometry" /></mxCell>
+
+        <!-- consumers -->
+        <mxCell id="cons" value="CONSUMERS  (server-side, behind the app/API + safety layer — see page 3; via the wegofwd-llm seam)&#10;Grounding (KC-21) → the animation      ·      Practice / entitlement surface → later (gated on the risk-of-harm path, ADR-009 D7)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="650" width="980" height="70" as="geometry" /></mxCell>
+
+        <!-- principles strip -->
+        <mxCell id="laws" value="Corpus laws:  holds NO personal data (ADR-009 D6)   ·   facts live here, not in model weights (ADR-010)   ·   cite-or-refuse   ·   currency is first-class (retraction-aware)" style="text;html=1;align=left;fontSize=13;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="60" y="740" width="1310" height="30" as="geometry" /></mxCell>
+
+        <!-- flow edges -->
+        <mxCell id="ce1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b1" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b2" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b3" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce4" value="cites" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;" edge="1" parent="1" source="b5" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce5" value="serves" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b4" target="cons"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- governance touches ingestion/storage/retrieval -->
+        <mxCell id="cg1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cg2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cg3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
