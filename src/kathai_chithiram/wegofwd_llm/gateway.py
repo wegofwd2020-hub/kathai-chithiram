@@ -61,6 +61,7 @@ def run_generation(
     system_prompt: str = "",
     system_prefix: str = "",
     output_schema: dict[str, Any] | None = None,
+    allow_untrusted_provider: bool = False,
     clock: Callable[[], datetime] | None = None,
 ) -> GenerationResult:
     """Pseudonymize, guard, dispatch, and record a single generation request.
@@ -70,7 +71,8 @@ def run_generation(
             identifiers are stripped first.
         mapping: The local identifier→token mapping for this child.
         provider: Any concrete provider implementing :class:`LLMProvider`.
-        config: The provider configuration; must be privacy-compliant.
+        config: The provider configuration; must be privacy-compliant unless
+            ``allow_untrusted_provider`` is set.
         request_id: Caller-supplied correlation id for the audit record.
         system_prompt: Optional system instructions forwarded to the provider
             (e.g. the content-safety prompt from
@@ -81,6 +83,10 @@ def run_generation(
         output_schema: Optional JSON Schema forwarded to the provider so a
             structured-output-capable provider can constrain its reply; providers
             without that capability ignore it. Carries no child identifier.
+        allow_untrusted_provider: Default ``False``. When ``True``, a provider
+            that is not no-training / zero-retention is permitted to run with a
+            loud warning. **For synthetic / dev data only.** Never set this on
+            a real parent story.
         clock: Optional callable returning the current time, used to stamp the
             record. Injectable for deterministic tests; if ``None`` the record
             carries no timestamp.
@@ -91,9 +97,11 @@ def run_generation(
 
     Raises:
         ValueError: If ``request_id`` is blank.
-        ProviderConfigError: If ``config`` is not no-training / zero-retention.
+        ProviderConfigError: If ``config`` is not no-training / zero-retention
+            and ``allow_untrusted_provider`` is ``False``.
         IdentifierLeakError: If a child identifier survives pseudonymization;
-            nothing is dispatched in that case.
+            nothing is dispatched in that case. This hard-stop runs even when
+            ``allow_untrusted_provider`` is ``True``.
     """
     if not request_id or not request_id.strip():
         raise ValueError("request_id must be a non-empty correlation id")
@@ -101,10 +109,20 @@ def run_generation(
     # 1. Refuse a provider that has not committed to no-training / zero-retention
     #    before doing anything else with the story.
     if not config.is_privacy_compliant:
-        raise ProviderConfigError(
+        if not allow_untrusted_provider:
+            raise ProviderConfigError(
+                config.provider_id,
+                "provider must guarantee both no-training and zero-retention "
+                "to receive child story text",
+            )
+        logger.warning(
+            "wegofwd-llm: DISPATCHING TO NON-COMPLIANT PROVIDER under synthetic-data "
+            "override - provider=%s no_training=%s zero_retention=%s request=%s. "
+            "SYNTHETIC / DEV DATA ONLY; never real story data.",
             config.provider_id,
-            "provider must guarantee both no-training and zero-retention "
-            "to receive child story text",
+            config.no_training,
+            config.zero_retention,
+            request_id,
         )
 
     # 2. Minimize: strip the child's identifiers to the token.
