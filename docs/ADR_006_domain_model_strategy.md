@@ -210,6 +210,30 @@ because a training programme is exactly the context in which each is tempting.
 - The choice of teacher for corpus generation (ADR-008) is independent of the choice of
   base, and a frontier teacher remains appropriate even for a small student.
 
+### Multi-provider generation (2026-09-14 addendum)
+
+Generation is multi-provider behind the `wegofwd-llm` seam. As of this addendum three
+concrete providers exist: `AnthropicProvider`, `GeminiProvider`, and `QwenProvider`.
+
+**Anthropic remains the default and the only privacy-compliant provider today.** Its
+no-training / zero-retention (ZDR) posture is an org-level property of the credential,
+enforced by `build_zdr_provider` failing closed, and rated Low residual risk in DPIA R2.
+No other provider in this list has a verified equivalent.
+
+**Gemini (Google AI Studio free tier) and Qwen (hosted API) are synthetic/dev only.**
+They are accessible only through the gateway's `allow_untrusted_provider` escape, which
+is activated by the `--synthetic-data` CLI flag. This flag is intentionally absent from
+the `intake` service — real family story data can never be routed through these providers
+by any normal code path.
+
+Routing real story data through Gemini or Qwen is gated on two things: (1) verifying
+that the provider offers no-training / zero-retention terms equivalent to Anthropic ZDR
+(Gemini via Vertex AI, or a self-hosted Qwen deployment), and (2) building a compliant
+`ProviderConfig` that sets `no_training=True` and `zero_retention=True` on the basis of
+a verified contractual commitment, not an assumption. Until both gates are cleared, the
+`allow_untrusted_provider=False` default in `run_generation` means any attempt to use
+these providers against real data is refused at the gateway, before any LLM call is made.
+
 ## Alternatives considered
 
 - **Pretrain a base model from scratch.** Rejected. Cost is three to five orders of

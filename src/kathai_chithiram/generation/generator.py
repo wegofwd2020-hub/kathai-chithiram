@@ -65,6 +65,7 @@ def generate_scene_script(
     config: ProviderConfig,
     request_id: str,
     max_attempts: int = 3,
+    allow_untrusted_provider: bool = False,
     grounding: GroundingSource | None = None,
     clock: Callable[[], datetime] | None = None,
 ) -> GeneratedSceneScript:
@@ -87,6 +88,9 @@ def generate_scene_script(
             distinct id (``"<request_id>#<n>"``) for its audit record.
         max_attempts: Maximum number of generation attempts, including repairs.
             Must be at least 1.
+        allow_untrusted_provider: When ``True``, permits a non-privacy-compliant
+            provider to run (synthetic/dev data only). Default ``False`` keeps the
+            no-training/zero-retention refusal. See the gateway.
         grounding: Optional corpus grounding source; when provided, cited practice
             passages relevant to the (pseudonymised) story are injected into the
             prompt prefix. Must fail safe (never raise). ``None`` → generation is
@@ -152,6 +156,7 @@ def generate_scene_script(
             system_prompt=system_prompt,
             system_prefix=system_prefix,
             output_schema=SCENE_SCRIPT_SCHEMA_V2,
+            allow_untrusted_provider=allow_untrusted_provider,
             clock=clock,
         )
         records.append(result.record)

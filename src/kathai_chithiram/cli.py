@@ -131,6 +131,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     generate.add_argument(
+        "--provider", choices=["anthropic", "gemini", "qwen"], default="anthropic",
+        help="generation provider (default: anthropic). gemini/qwen require --synthetic-data.",
+    )
+    generate.add_argument(
+        "--synthetic-data", action="store_true",
+        help="attest the input is SYNTHETIC/dev data, permitting a non-ZDR provider "
+             "(gemini/qwen). Never use with real story data.",
+    )
+    generate.add_argument(
         "--offline",
         action="store_true",
         help=(
@@ -563,18 +572,35 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
             args, store=store, story_id=story_id, story_text=story_text, mapping=mapping
         )
 
+    provider_name = args.provider
+    if provider_name != "anthropic" and not args.synthetic_data:
+        print(
+            f"error: --provider {provider_name} is not a no-training/zero-retention "
+            "provider; pass --synthetic-data to use it with SYNTHETIC data only "
+            "(never real story data).",
+            file=sys.stderr,
+        )
+        return 2
     if provider is None:
-        provider = _build_anthropic_provider(model=args.model, effort=args.effort)
+        provider = _build_provider(provider_name, model=args.model, effort=args.effort)
         if provider is None:
             return 2
 
-    # The posture is backed by the dedicated ZDR key the provider was built with
-    # (KC-6); the key class is recorded in the audit id.
-    config = ProviderConfig(
-        provider_id=f"anthropic:{args.model}:zdr-key",
-        no_training=args.provider_no_train_zdr,
-        zero_retention=args.provider_no_train_zdr,
-    )
+    if provider_name == "anthropic":
+        # The posture is backed by the dedicated ZDR key the provider was built with
+        # (KC-6); the key class is recorded in the audit id.
+        config = ProviderConfig(
+            provider_id=f"anthropic:{args.model}:zdr-key",
+            no_training=args.provider_no_train_zdr,
+            zero_retention=args.provider_no_train_zdr,
+        )
+    else:
+        # gemini/qwen: truthful non-compliant posture; gated behind --synthetic-data.
+        config = ProviderConfig(
+            provider_id=f"{provider_name}:{args.model}",
+            no_training=False,
+            zero_retention=False,
+        )
 
     try:
         result = generate_scene_script(
@@ -584,6 +610,7 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
             config=config,
             request_id=story_id,
             max_attempts=args.max_attempts,
+            allow_untrusted_provider=args.synthetic_data,
             grounding=_grounding_from_env(),
         )
     except KathaiChithiramError as exc:
@@ -1779,6 +1806,34 @@ def _create_story_flow(
         print(f"error: cannot create story: {exc}", file=sys.stderr)
         return False
     return True
+
+
+def _build_provider(name: str, *, model: str, effort: str) -> LLMProvider | None:
+    """Construct the selected provider, printing a friendly error and returning None
+    on a missing key/SDK (mirrors _build_anthropic_provider).
+
+    Args:
+        name: One of ``"anthropic"``, ``"gemini"``, or ``"qwen"``.
+        model: The Anthropic model id (used only for the anthropic branch).
+        effort: Reasoning-effort hint (used only for the anthropic branch).
+
+    Returns:
+        The constructed :class:`LLMProvider`, or ``None`` if the provider cannot
+        be initialised (error already printed to stderr).
+    """
+    from kathai_chithiram.errors import KathaiChithiramError
+
+    try:
+        if name == "anthropic":
+            return _build_anthropic_provider(model=model, effort=effort)
+        if name == "gemini":
+            from kathai_chithiram.wegofwd_llm.gemini_provider import build_gemini_provider
+            return build_gemini_provider()
+        from kathai_chithiram.wegofwd_llm.qwen_provider import build_qwen_provider
+        return build_qwen_provider()
+    except KathaiChithiramError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return None
 
 
 def _build_anthropic_provider(*, model: str, effort: str) -> LLMProvider | None:

@@ -41,6 +41,14 @@ render = [
 generation = [
     "anthropic>=0.69",
 ]
+# Gemini generation via the google-genai SDK (behind the wegofwd-llm seam).
+gemini = [
+    "google-genai>=1.0",
+]
+# Qwen generation via an OpenAI-compatible endpoint (behind the wegofwd-llm seam).
+qwen = [
+    "openai>=1.40",
+]
 # At-rest encryption of stored artifacts (KC-5). Kept optional so the core
 # contract/validation layers stay dependency-light; install it (and set
 # KC_STORAGE_KEY) for any deployment that persists real story data.
@@ -66,6 +74,11 @@ dev = [
     "kathai-chithiram[encryption]",
     # The fail-safe grounding test needs the arivu interface.
     "kathai-chithiram[grounding]",
+    # Provider SDK extras so the dev env can import them (provider tests use fakes
+    # and pass whether or not the SDKs are installed, but having them available
+    # enables manual smoke-testing against real endpoints).
+    "kathai-chithiram[gemini]",
+    "kathai-chithiram[qwen]",
 ]
 
 [tool.setuptools.packages.find]
@@ -121,4 +134,15 @@ follow_imports = "skip"
 # get_ffmpeg_exe(). Ignore its missing imports rather than vendor a stub.
 [[tool.mypy.overrides]]
 module = ["imageio_ffmpeg.*"]
+ignore_missing_imports = true
+
+# google-genai ([gemini]) and openai ([qwen]) are optional provider extras; the
+# providers import them lazily. Ignore missing imports so a strict check never
+# fails purely because the extras aren't installed in the type-check environment.
+[[tool.mypy.overrides]]
+module = ["google.genai.*", "google.ai.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["openai.*"]
 ignore_missing_imports = true
