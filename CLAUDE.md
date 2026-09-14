@@ -18,8 +18,13 @@ disabilities. Treat all story text and child data as special-category data.
 - The **scene script is the contract** (`docs/SCENE_SCRIPT_CONTRACT.md`). Generation
   emits a valid scene script; renderers consume it. Generation never calls a
   renderer directly.
-- Generation goes through the shared **`wegofwd-llm`** seam (provider-agnostic). Do
-  not hard-code a single LLM provider.
+- Generation goes through the shared **`wegofwd-llm`** seam (provider-agnostic).
+  Generation is multi-provider (Anthropic, Gemini, Qwen). **Anthropic is the default
+  and the only no-training/zero-retention provider today; real story data may only go
+  to a no-training/zero-retention provider.** Gemini and Qwen are synthetic/dev only,
+  behind the `--synthetic-data` flag (`allow_untrusted_provider` gateway escape). Do
+  not hard-code a single LLM provider; do not route real story data to an unverified
+  provider.
 - A scene script is **validated against the contract + safety rules before any
   rendering**. Invalid scripts are rejected, not rendered.
 
