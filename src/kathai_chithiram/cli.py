@@ -596,8 +596,15 @@ def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> 
         )
     else:
         # gemini/qwen: truthful non-compliant posture; gated behind --synthetic-data.
+        # Label the audit id with the provider's OWN default model — the builders use
+        # DEFAULT_*_MODEL and ignore --model (which defaults to the Anthropic model),
+        # so f"{provider}:{args.model}" would mislabel e.g. "qwen:claude-...".
+        from kathai_chithiram.wegofwd_llm.gemini_provider import DEFAULT_GEMINI_MODEL
+        from kathai_chithiram.wegofwd_llm.qwen_provider import DEFAULT_QWEN_MODEL
+
+        default_model = {"gemini": DEFAULT_GEMINI_MODEL, "qwen": DEFAULT_QWEN_MODEL}[provider_name]
         config = ProviderConfig(
-            provider_id=f"{provider_name}:{args.model}",
+            provider_id=f"{provider_name}:{default_model}",
             no_training=False,
             zero_retention=False,
         )
