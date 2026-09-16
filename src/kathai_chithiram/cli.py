@@ -402,6 +402,35 @@ def build_arg_parser() -> argparse.ArgumentParser:
     erase_f.add_argument(_PEOPLE_FILE[0], type=Path, default=_PEOPLE_FILE[1], help=_PEOPLE_FILE[2])
     erase_f.add_argument("--yes", action="store_true", help="Skip the confirmation prompt.")
 
+    ent = sub.add_parser(
+        "entitlements",
+        help=(
+            "Look up programs that may be relevant to a family's situation. "
+            "Navigational only — not a determination of eligibility. "
+            f"Requires {_ARIVU_DB_ENV} env var pointing to an ingested corpus DB."
+        ),
+    )
+    ent.add_argument(
+        "--situation",
+        required=True,
+        help=(
+            "Free-text description of the situation, e.g. "
+            "'my child has autism and needs school support services'."
+        ),
+    )
+    ent.add_argument(
+        "--jurisdiction",
+        choices=["federal", "michigan"],
+        default=None,
+        help="Limit results to a jurisdiction (default: all).",
+    )
+    ent.add_argument(
+        "--limit",
+        type=int,
+        default=5,
+        help="Maximum number of programs to show (default: 5).",
+    )
+
     return parser
 
 
@@ -530,6 +559,8 @@ def main(argv: Sequence[str] | None = None, *, provider: LLMProvider | None = No
         return _cmd_delete(args)
     if args.command == "retention-sweep":
         return _cmd_retention_sweep(args)
+    if args.command == "entitlements":
+        return _cmd_entitlements(args)
     return _cmd_generate(args, provider=provider)
 
 
@@ -547,6 +578,85 @@ def _grounding_from_env() -> GroundingSource | None:
         A GroundingSource backed by the corpus path, or None.
     """
     return open_grounding_source(os.environ.get(_ARIVU_DB_ENV))
+
+
+def _cmd_entitlements(args: argparse.Namespace) -> int:
+    """Surface entitlement programs relevant to a situation (navigate-never-determine).
+
+    Requires KC_ARIVU_DB to point to an ingested wegofwd-arivu corpus database.
+    Uses cite-or-refuse: every program criterion is a verbatim corpus quote.
+
+    Args:
+        args: Parsed arguments with ``situation``, ``jurisdiction``, and ``limit``.
+
+    Returns:
+        ``0`` on success (including zero matches), ``2`` on configuration error.
+    """
+    db_path = os.environ.get(_ARIVU_DB_ENV)
+    if not db_path:
+        print(
+            f"error: set {_ARIVU_DB_ENV} to an ingested corpus DB path to use this command.",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        from wegofwd_arivu.entitlements.index import EntitlementIndex
+        from wegofwd_arivu.entitlements.registry import load_programs
+        from wegofwd_arivu.entitlements.schema import Jurisdiction
+        from wegofwd_arivu.errors import EntitlementError, StoreError
+        from wegofwd_arivu.store import open_corpus
+    except ImportError:
+        print(
+            "error: wegofwd-arivu is not installed; "
+            "run: pip install -e '.[grounding]'",
+            file=sys.stderr,
+        )
+        return 2
+
+    jurisdiction: Jurisdiction | None = (
+        Jurisdiction(args.jurisdiction) if args.jurisdiction else None
+    )
+
+    try:
+        with open_corpus(db_path) as corpus:
+            try:
+                index = EntitlementIndex(load_programs(), corpus)
+            except EntitlementError as exc:
+                print(f"error: entitlement registry: {exc}", file=sys.stderr)
+                return 2
+            cards = index.find(args.situation, jurisdiction=jurisdiction, limit=args.limit)
+    except StoreError as exc:
+        print(f"error: could not open corpus at {db_path!r}: {exc}", file=sys.stderr)
+        return 2
+
+    if not cards:
+        print("No programs matched that situation.")
+        return 0
+
+    print(
+        "These programs may be relevant — navigational information only, "
+        "not a determination of eligibility.\n"
+    )
+    for i, card in enumerate(cards, start=1):
+        p = card.program
+        print(f"{i}. {p.name}  [{p.jurisdiction}]")
+        print(f"   {p.summary}")
+        if card.currency.value != "current":
+            print(f"   WARNING: currency={card.currency.value} — verify against current sources")
+        print("   Criteria as written:")
+        for crit in p.criteria_as_written:
+            excerpt = crit.quote[:200] + ("…" if len(crit.quote) > 200 else "")
+            print(f"     [{crit.source_id}]  {excerpt}")
+        wd = p.who_decides
+        wd_excerpt = wd.quote[:120] + ("…" if len(wd.quote) > 120 else "")
+        print(f"   Who decides: [{wd.source_id}]  {wd_excerpt}")
+        ha = p.how_to_apply
+        ha_excerpt = ha.quote[:120] + ("…" if len(ha.quote) > 120 else "")
+        print(f"   How to apply: [{ha.source_id}]  {ha_excerpt}")
+        if i < len(cards):
+            print()
+    return 0
 
 
 def _cmd_generate(args: argparse.Namespace, *, provider: LLMProvider | None) -> int:
