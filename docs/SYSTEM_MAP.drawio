@@ -247,4 +247,81 @@
       </root>
     </mxGraphModel>
   </diagram>
+
+  <diagram name="5 · LLM vs Corpus" id="llmvcorpus">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="p5title" value="5 · LLM vs Corpus — &quot;the LLM phrases; the corpus knows&quot;  |  built current state" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="18" width="1200" height="30" as="geometry" /></mxCell>
+
+        <!-- LEGEND -->
+        <mxCell id="p5la" value="Knowledge asset (corpus)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="55" width="185" height="26" as="geometry" /></mxCell>
+        <mxCell id="p5lb" value="LLM seam" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="235" y="55" width="110" height="26" as="geometry" /></mxCell>
+        <mxCell id="p5lc" value="Entitlement layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="355" y="55" width="140" height="26" as="geometry" /></mxCell>
+        <mxCell id="p5ld" value="Built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="505" y="55" width="80" height="26" as="geometry" /></mxCell>
+        <mxCell id="p5le" value="Guardrail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="595" y="55" width="90" height="26" as="geometry" /></mxCell>
+        <mxCell id="p5lf" value="Gate (person-blocked)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="695" y="55" width="175" height="26" as="geometry" /></mxCell>
+
+        <!-- ===== kc generate / kc intake PATH ===== -->
+        <mxCell id="p5t1label" value="kc generate / kc intake — grounded animation path (built)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="100" width="700" height="20" as="geometry" /></mxCell>
+
+        <mxCell id="p5s1" value="Parent story" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="40" y="130" width="110" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5s2" value="Pseudonymize&#10;(name stripped,&#10;stays on machine)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="175" y="130" width="145" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5s3" value="ArivuGroundingSource&#10;(query → corpus;&#10;cited passages back)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="350" y="130" width="175" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5s4" value="wegofwd-llm seam&#10;Anthropic ZDR (default — no-train/zero-retention)&#10;Gemini / Qwen: --synthetic-data flag only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;fontSize=11;" vertex="1" parent="1"><mxGeometry x="560" y="118" width="250" height="74" as="geometry" /></mxCell>
+        <mxCell id="p5s5" value="Scene script&#10;(validated)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="840" y="130" width="130" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5s6" value="Human review&#10;(required)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="995" y="130" width="120" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5s7" value="Renderer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="1140" y="130" width="100" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5s8" value="Animation&#10;(mp4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1265" y="130" width="90" height="50" as="geometry" /></mxCell>
+
+        <!-- generate path arrows -->
+        <mxCell id="p5ge1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s1" target="p5s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ge2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s2" target="p5s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ge3" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;" edge="1" parent="1" source="p5s3" target="p5s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ge4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s4" target="p5s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ge5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s5" target="p5s6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ge6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s6" target="p5s7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ge7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s7" target="p5s8"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== CORPUS BAND ===== -->
+        <mxCell id="p5corp" value="wegofwd-arivu corpus  (the knowledge asset — ADR-010: facts live here, not in model weights)&#10;SqliteCorpus · FTS5/BM25 · 3,438 chunks · currency-gated (current / superseded / retracted / withdrawn) · NO personal data (ADR-009 D6)&#10;Sources: federal regs (IDEA · CMS/Medicaid · SSA/SSI · ADA/Section 504) · Michigan MARSE PDF · PMC Tier-2 CC0/CC-BY literature · eCFR 20 CFR/34 CFR/42 CFR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=12;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="300" width="1310" height="100" as="geometry" /></mxCell>
+
+        <!-- grounding ↔ corpus arrows (down then up at different x offsets) -->
+        <mxCell id="p5cq" value="query (pseudonymised)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0.3;exitY=1;entryX=0.28;entryY=0;" edge="1" parent="1" source="p5s3" target="p5corp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5cp" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0.55;exitY=0;entryX=0.7;entryY=1;" edge="1" parent="1" source="p5corp" target="p5s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== kc entitlements PATH ===== -->
+        <mxCell id="p5t2label" value="kc entitlements — navigate-never-determine (ADR-009 D10, built)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="425" width="750" height="20" as="geometry" /></mxCell>
+
+        <mxCell id="p5eq1" value="--situation&#10;(free text)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="40" y="455" width="115" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5eq2" value="EntitlementIndex&#10;(11 programs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" vertex="1" parent="1"><mxGeometry x="185" y="455" width="175" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5eq3" value="cite-or-refuse on construction&#10;(every citation quote must be verbatim&#10;substring of a corpus chunk)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="395" y="450" width="225" height="60" as="geometry" /></mxCell>
+        <mxCell id="p5eq4" value="Matched programs&#10;criteria-as-written · citations&#10;who-decides · how-to-apply" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="650" y="455" width="205" height="50" as="geometry" /></mxCell>
+        <mxCell id="p5eq5" value="Navigational output&#10;(NOT: &quot;you qualify&quot;)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="885" y="455" width="185" height="50" as="geometry" /></mxCell>
+
+        <!-- entitlement path arrows -->
+        <mxCell id="p5ea1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq1" target="p5eq2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ea2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq2" target="p5eq3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ea3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq3" target="p5eq4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5ea4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq4" target="p5eq5"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- entitlement ↔ corpus arrow -->
+        <mxCell id="p5ec1" value="validate quotes&#10;against corpus chunks" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;exitX=0.5;exitY=0;entryX=0.19;entryY=1;" edge="1" parent="1" source="p5eq2" target="p5corp"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== RIGHT RAIL: LAWS ===== -->
+        <mxCell id="p5laws" value="LAWS (hard gates, not hints)&#10;&#10;① cite-or-refuse&#10;no source → no claim&#10;&#10;② navigate-not-determine&#10;never &quot;you qualify&quot;&#10;&#10;③ child data&#10;pseudonymized; name&#10;stays on machine&#10;&#10;④ no-train / ZDR&#10;Anthropic only for&#10;real child data&#10;&#10;⑤ no personal data&#10;corpus = public reg&#10;text only" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1380" y="100" width="185" height="480" as="geometry" /></mxCell>
+
+        <!-- laws ↔ LLM and output dashed lines -->
+        <mxCell id="p5la1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="p5laws" target="p5s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p5la2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="p5laws" target="p5eq5"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ===== KEY CALLOUT ===== -->
+        <mxCell id="p5callout" value="The LLM is the language faculty — it phrases what the corpus found.  The corpus is where knowledge lives.  No retrieved passage → no claim (cite-or-refuse, ADR-010)." style="text;html=1;align=center;fontSize=14;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="40" y="630" width="1520" height="30" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
