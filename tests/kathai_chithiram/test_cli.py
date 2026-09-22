@@ -1296,3 +1296,35 @@ def test_generate_child_scoped_refused_without_consent(tmp_path: Path, monkeypat
     code = main(["generate", str(story), "--child-name", "Kid", "--offline", "--child", "k",
                  "--people-file", pf, "--store-root", sr, "--story-id", "s1", "--no-render"])
     assert code == 2  # no parental consent on record
+
+
+# ---------------------------------------------------------------------------
+# --renderer flag tests
+# ---------------------------------------------------------------------------
+
+
+def test_renderer_arg_defaults_to_matplotlib() -> None:
+    """--renderer is optional; omitting it selects matplotlib (default value)."""
+    parser = build_arg_parser()
+    args = parser.parse_args(["generate", "story.txt", "--child-name", "Kid", "--no-render"])
+    assert args.renderer == "matplotlib"
+
+
+def test_renderer_blender_loads_blender_subprocess() -> None:
+    """--renderer blender: _load_blender_renderer returns a BlenderSubprocessRenderer."""
+    from kathai_chithiram.cli import _load_blender_renderer
+    from kathai_chithiram.rendering.blender_subprocess import BlenderSubprocessRenderer
+
+    renderer = _load_blender_renderer()
+    assert isinstance(renderer, BlenderSubprocessRenderer)
+
+
+def test_generate_accepts_renderer_flag(capsys: pytest.CaptureFixture[str]) -> None:
+    """kc generate --help output includes --renderer."""
+    parser = build_arg_parser()
+    try:
+        parser.parse_args(["generate", "--help"])
+    except SystemExit:
+        pass
+    captured = capsys.readouterr()
+    assert "--renderer" in captured.out

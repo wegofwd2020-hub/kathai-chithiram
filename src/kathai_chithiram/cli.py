@@ -470,6 +470,17 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         help="Stop after producing and storing the scene script (skip rendering).",
     )
     parser.add_argument(
+        "--renderer",
+        choices=["matplotlib", "blender"],
+        default="matplotlib",
+        help=(
+            "Renderer to use for the animation draft (default: matplotlib). "
+            "'blender' uses the Grease-Pencil renderer via a Blender subprocess; "
+            "requires Blender 4+ on PATH or KC_BLENDER_BIN set. "
+            "Audio (--voice, --sfx) is not yet supported on the blender path."
+        ),
+    )
+    parser.add_argument(
         "--out",
         type=Path,
         default=None,
@@ -1589,7 +1600,10 @@ def _maybe_render(
         return 2
 
     try:
-        renderer = _load_default_renderer()
+        if getattr(args, "renderer", "matplotlib") == "blender":
+            renderer = _load_blender_renderer()
+        else:
+            renderer = _load_default_renderer()
         media_path = _render_draft(
             renderer=renderer,
             store=store,
@@ -1658,6 +1672,22 @@ def _load_default_renderer() -> SceneScriptRenderer:
         ) from exc
     renderer: SceneScriptRenderer = MatplotlibStickFigureRenderer()
     return renderer
+
+
+def _load_blender_renderer() -> SceneScriptRenderer:
+    """Import and construct the Blender subprocess renderer.
+
+    Returns:
+        A :class:`~kathai_chithiram.rendering.blender_subprocess.BlenderSubprocessRenderer`
+        instance ready to render a scene script via a Blender 4+ subprocess.
+
+    Raises:
+        ImportError: If ``kathai_chithiram.rendering.blender_subprocess`` cannot be
+            imported (should not happen for a normal package install).
+    """
+    from kathai_chithiram.rendering.blender_subprocess import BlenderSubprocessRenderer
+
+    return BlenderSubprocessRenderer()
 
 
 def _load_voice(spec: str | None) -> NarrationSynthesizer | None:
