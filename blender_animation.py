@@ -956,6 +956,13 @@ def main() -> None:
 
     the post-``--`` arguments are parsed and the supplied script is rendered.
     When called with no arguments the bundled Silas demo is rendered instead.
+
+    Returns:
+        None (void).
+
+    Raises:
+        SystemExit: When subprocess mode is active, any exception causes a
+            traceback to be printed to stderr and sys.exit(1) to be called.
     """
     import argparse
     import json as _json
@@ -994,7 +1001,7 @@ def main() -> None:
                 script, mapping=mapping, output_path=parsed.output
             )
             print(f"Done! → {parsed.output}")
-        except (RuntimeError, OSError, ValueError, KeyError) as exc:
+        except Exception as exc:  # noqa: BLE001 (subprocess error boundary: catch-all correct)
             traceback.print_exc()
             sys.stderr.write(f"Render failed: {exc}\n")
             sys.exit(1)
