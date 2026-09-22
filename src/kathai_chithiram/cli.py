@@ -1599,6 +1599,17 @@ def _maybe_render(
         print(f"error: invalid --sfx sound bank: {exc}", file=sys.stderr)
         return 2
 
+    if getattr(args, "renderer", "matplotlib") == "blender":
+        voice = getattr(args, "voice", None)
+        sfx = getattr(args, "sfx", None)
+        if voice or sfx:
+            print(
+                "error: Audio (--voice / --sfx) is not supported on the blender renderer yet. "
+                "Re-run without --voice/--sfx, or use the default matplotlib renderer.",
+                file=sys.stderr,
+            )
+            raise SystemExit(2)
+
     try:
         if getattr(args, "renderer", "matplotlib") == "blender":
             renderer = _load_blender_renderer()

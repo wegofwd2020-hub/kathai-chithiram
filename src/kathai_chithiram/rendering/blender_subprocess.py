@@ -223,7 +223,12 @@ class BlenderSubprocessRenderer(SceneScriptRenderer):
                     raise RendererError(
                         "Blender exited 0 but output not found at expected path"
                     )
-                os.replace(tmp_out, output_path)
+                try:
+                    os.replace(tmp_out, output_path)
+                except OSError as exc:
+                    raise RendererError(
+                        f"failed to move rendered output to {output_path}: {exc}"
+                    ) from exc
 
         plan = build_render_plan(script, mapping=mapping)
         return RenderResult(
