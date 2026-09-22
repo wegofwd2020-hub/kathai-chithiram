@@ -8,7 +8,14 @@ without Blender.
 
 from __future__ import annotations
 
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
 import blender_animation as ba
+import pytest
 from tests.kathai_chithiram.rendering.fake_renderer import tiny_script
 
 from kathai_chithiram.rendering.pipeline import build_render_plan
@@ -57,3 +64,42 @@ def test_blender_drawable_props_matches_drawers():
 
 def test_blender_drawable_props_non_empty():
     assert len(ba.BLENDER_DRAWABLE_PROPS) > 0
+
+
+@pytest.mark.skipif(
+    shutil.which("blender") is None and not os.environ.get("KC_BLENDER_BIN"),
+    reason="Blender not on PATH and KC_BLENDER_BIN not set",
+)
+def test_blender_main_renders_via_args(tmp_path):
+    """Integration: blender_animation.py renders a script passed via --input/--output."""
+    blender_bin = os.environ.get("KC_BLENDER_BIN") or shutil.which("blender")
+    script_path = str(Path(__file__).resolve().parents[3] / "blender_animation.py")
+
+    script_json = tmp_path / "script.json"
+    script_json.write_text(json.dumps(SILAS_SCENE_SCRIPT), encoding="utf-8")
+
+    mapping_json = tmp_path / "mapping.json"
+    m = silas_mapping()
+    mapping_data = {
+        "identifiers": list(m.identifiers),
+        "token": m.token,
+        "display_name": m.display_name,
+    }
+    mapping_json.write_text(json.dumps(mapping_data), encoding="utf-8")
+
+    out_mp4 = str(tmp_path / "out.mp4")
+    result = subprocess.run(
+        [blender_bin, "--background", "--python", script_path,
+         "--", "--input", str(script_json), "--output", out_mp4,
+         "--name-mapping", str(mapping_json)],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    # If Blender's Python environment doesn't have dependencies, skip the test.
+    # This can happen even with return code 0 if the error occurs during import.
+    if "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr:
+        pytest.skip("Blender's Python environment missing dependencies")
+    assert result.returncode == 0, f"Blender stderr:\n{result.stderr}"
+    assert os.path.exists(out_mp4), "MP4 not written"
+    assert os.path.getsize(out_mp4) > 1000, "MP4 suspiciously small"

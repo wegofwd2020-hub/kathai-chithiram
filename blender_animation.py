@@ -25,19 +25,34 @@ imports fine anywhere, but actually rendering requires Blender::
 from __future__ import annotations
 
 import math
+import os
+import sys
 from typing import Any
 
-from kathai_chithiram.rendering.pipeline import RenderPlan, SceneScriptRenderer
-from kathai_chithiram.rendering.safety import RenderSafetyReport
-from kathai_chithiram.rendering.scene_art_hints import (
+# Ensure src/ directory is on sys.path so imports work when run via
+# `blender --python blender_animation.py`.
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_src_dir = os.path.join(_script_dir, "src")
+if _src_dir not in sys.path:
+    sys.path.insert(0, _src_dir)
+
+from kathai_chithiram.rendering.pipeline import (  # noqa: E402
+    RenderPlan,
+    SceneScriptRenderer,
+)
+from kathai_chithiram.rendering.safety import RenderSafetyReport  # noqa: E402
+from kathai_chithiram.rendering.scene_art_hints import (  # noqa: E402
     Background,
     Expression,
     Gesture,
     art_hint_for,
     resolve_figure_cues,
 )
-from kathai_chithiram.rendering.transitions import BlendSource, composite_plan
-from kathai_chithiram.scene_script.vocabulary import Prop
+from kathai_chithiram.rendering.transitions import (  # noqa: E402
+    BlendSource,
+    composite_plan,
+)
+from kathai_chithiram.scene_script.vocabulary import Prop  # noqa: E402
 
 #: Lazily-bound Blender module; ``None`` until :func:`_load_bpy` runs.
 bpy: Any = None
@@ -933,14 +948,60 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
 
 
 def main() -> None:
-    """Render the bundled demo to ``silas_shines_his_smile_v2.mp4``."""
+    """Render the bundled demo, or a supplied script when args follow '--'.
+
+    When Blender is invoked as::
+
+        blender --background --python blender_animation.py -- --input <json> --output <mp4>
+
+    the post-``--`` arguments are parsed and the supplied script is rendered.
+    When called with no arguments the bundled Silas demo is rendered instead.
+    """
+    import argparse
+    import json as _json
     import os
+    import sys
+    import traceback
 
-    from kathai_chithiram.rendering.silas_story import (
-        SILAS_SCENE_SCRIPT,
-        silas_mapping,
-    )
+    if "--" in sys.argv:
+        # Blender passes everything after '--' to the Python script.
+        argv_after = sys.argv[sys.argv.index("--") + 1:]
+        parser = argparse.ArgumentParser(prog="blender_animation.py")
+        parser.add_argument("--input", required=True, metavar="JSON_PATH",
+                            help="Path to the scene-script JSON file.")
+        parser.add_argument("--output", required=True, metavar="MP4_PATH",
+                            help="Path to write the rendered MP4.")
+        parser.add_argument("--name-mapping", default=None, metavar="JSON_PATH",
+                            help="Optional name-mapping JSON for render-time reinsertion.")
+        parsed = parser.parse_args(argv_after)
 
+        with open(parsed.input, encoding="utf-8") as fh:
+            script = _json.load(fh)
+
+        mapping = None
+        if parsed.name_mapping:
+            from kathai_chithiram.privacy.pseudonymize import NameMapping
+            with open(parsed.name_mapping, encoding="utf-8") as fh:
+                d = _json.load(fh)
+            mapping = NameMapping(
+                identifiers=tuple(d["identifiers"]),
+                token=d["token"],
+                display_name=d.get("display_name"),
+            )
+
+        try:
+            BlenderGreasePencilRenderer().render(
+                script, mapping=mapping, output_path=parsed.output
+            )
+            print(f"Done! → {parsed.output}")
+        except (RuntimeError, OSError, ValueError, KeyError) as exc:
+            traceback.print_exc()
+            sys.stderr.write(f"Render failed: {exc}\n")
+            sys.exit(1)
+        return
+
+    # Original demo path — no CLI args.
+    from kathai_chithiram.rendering.silas_story import SILAS_SCENE_SCRIPT, silas_mapping
     output_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "silas_shines_his_smile_v2.mp4"
     )
