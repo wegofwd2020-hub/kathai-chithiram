@@ -1,326 +1,627 @@
-<mxfile host="app.diagrams.net" version="24.0.0" type="device">
+<mxfile host="Electron" pages="5">
   <diagram name="1 · Component Map" id="components">
     <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <mxCell id="title" value="Kathai Chithiram + wegofwd-arivu — Component Map  (colour = layer)" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="900" height="30" as="geometry" /></mxCell>
-
+        <mxCell id="title" value="Kathai Chithiram + wegofwd-arivu — Component Map  (colour = layer)" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="900" height="30" as="geometry" />
+        </mxCell>
         <!-- LEGEND -->
-        <mxCell id="lg" value="LEGEND" style="text;html=1;align=left;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="58" width="80" height="20" as="geometry" /></mxCell>
-        <mxCell id="lg1" value="Surface (user-facing)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="120" y="55" width="170" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg2" value="Privacy / Safety gate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="300" y="55" width="170" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg3" value="Generation / LLM seam" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="480" y="55" width="180" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg4" value="Corpus (the asset)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="670" y="55" width="150" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg5" value="Platform / People" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="830" y="55" width="150" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg6" value="Human review (amber)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="990" y="55" width="160" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg7" value="Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1"><mxGeometry x="1160" y="55" width="90" height="28" as="geometry" /></mxCell>
-        <mxCell id="lg8" value="Planned / not built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1"><mxGeometry x="1260" y="55" width="150" height="28" as="geometry" /></mxCell>
-
+        <mxCell id="lg" value="LEGEND" style="text;html=1;align=left;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="Surface (user-facing)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="55" width="170" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="Privacy / Safety gate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="55" width="170" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="Generation / LLM seam" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="480" y="55" width="180" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="Corpus (the asset)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="670" y="55" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="Platform / People" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="830" y="55" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="Human review (amber)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="990" y="55" width="160" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7" value="Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="55" width="90" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lg8" value="Planned / not built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="55" width="150" height="28" as="geometry" />
+        </mxCell>
         <!-- MAIN VERTICAL PIPELINE (center) -->
-        <mxCell id="n1" value="Parent's written story  (input)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1"><mxGeometry x="560" y="120" width="320" height="45" as="geometry" /></mxCell>
-        <mxCell id="n2" value="kc intake — consent capture (guardian · AI · human-review ack)  ✔ built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="560" y="185" width="320" height="45" as="geometry" /></mxCell>
-        <mxCell id="n3" value="Pseudonymize — real name → token (local, never leaves machine)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="560" y="250" width="320" height="45" as="geometry" /></mxCell>
-        <mxCell id="n4" value="wegofwd-llm gateway — no-train/ZDR check · identifier-leak HARD STOP · logs lengths not text  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="560" y="315" width="320" height="55" as="geometry" /></mxCell>
-        <mxCell id="n5" value="generate_scene_script — validate-and-repair loop  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="560" y="400" width="320" height="55" as="geometry" /></mxCell>
-        <mxCell id="n6" value="Scene-script validation + content-safety rules  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="560" y="490" width="320" height="45" as="geometry" /></mxCell>
-        <mxCell id="n7" value="Human review gate (KC-7) — REQUIRED before any child sees output  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="560" y="555" width="320" height="50" as="geometry" /></mxCell>
-        <mxCell id="n8" value="Renderer — matplotlib v1 / Blender v2  +  captions · local TTS · sfx · transitions  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1"><mxGeometry x="560" y="625" width="320" height="55" as="geometry" /></mxCell>
-        <mxCell id="n9" value="Calm, captioned animation  (output)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="560" y="700" width="320" height="45" as="geometry" /></mxCell>
-
+        <mxCell id="n1" value="Parent&#39;s written story  (input)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="320" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="kc intake — consent capture (guardian · AI · human-review ack)  ✔ built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="560" y="185" width="320" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="Pseudonymize — real name → token (local, never leaves machine)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="560" y="250" width="320" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" value="wegofwd-llm gateway — no-train/ZDR check · identifier-leak HARD STOP · logs lengths not text  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="560" y="315" width="320" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" value="generate_scene_script — validate-and-repair loop  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="400" width="320" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="n6" value="Scene-script validation + content-safety rules  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="560" y="490" width="320" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="n7" value="Human review gate (KC-7) — REQUIRED before any child sees output  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="555" width="320" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="n8" value="Renderer — matplotlib v1 / Blender v2  +  captions · local TTS · sfx · transitions  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="560" y="625" width="320" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="n9" value="Calm, captioned animation  (output)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="700" width="320" height="45" as="geometry" />
+        </mxCell>
         <!-- LEFT: contract feeds generator -->
-        <mxCell id="c1" value="Scene Script Contract — the contract (schema + cross-field safety rules)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="220" y="400" width="260" height="55" as="geometry" /></mxCell>
-
+        <mxCell id="c1" value="Scene Script Contract — the contract (schema + cross-field safety rules)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="220" y="400" width="260" height="55" as="geometry" />
+        </mxCell>
         <!-- RIGHT: provider + grounding feed generator -->
-        <mxCell id="p1" value="AnthropicProvider — claude-opus-4-8 (behind provider-agnostic seam)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="960" y="360" width="280" height="55" as="geometry" /></mxCell>
-        <mxCell id="g1" value="Grounding — ArivuGroundingSource (KC-21): injects cited passages  ✔ live" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="960" y="430" width="280" height="55" as="geometry" /></mxCell>
-
+        <mxCell id="p1" value="AnthropicProvider — claude-opus-4-8 (behind provider-agnostic seam)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="960" y="360" width="280" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" value="Grounding — ArivuGroundingSource (KC-21): injects cited passages  ✔ live" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="960" y="430" width="280" height="55" as="geometry" />
+        </mxCell>
         <!-- ASSET CLUSTER (green) bottom-right -->
-        <mxCell id="asetc" value="wegofwd-arivu — the corpus (the ASSET; own repo)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;verticalAlign=top;" vertex="1" parent="1"><mxGeometry x="960" y="520" width="300" height="290" as="geometry" /></mxCell>
-        <mxCell id="a2" value="SqliteCorpus · FTS5 retrieval  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="980" y="555" width="260" height="40" as="geometry" /></mxCell>
-        <mxCell id="a3" value="Rights regime · currency (RightsRecord, tiers)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="980" y="605" width="260" height="45" as="geometry" /></mxCell>
-        <mxCell id="a4" value="Ingestion — fetch → extract → chunk → rights guard  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="980" y="660" width="260" height="45" as="geometry" /></mxCell>
-        <mxCell id="a5" value="Tier-1 federal sources: CDC · ED/IDEA · NIH · CMS · CPIR · Michigan  (6/6, 278 chunks)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="980" y="715" width="260" height="80" as="geometry" /></mxCell>
-
+        <mxCell id="asetc" value="wegofwd-arivu — the corpus (the ASSET; own repo)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="960" y="520" width="300" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="SqliteCorpus · FTS5 retrieval  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="980" y="555" width="260" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="Rights regime · currency (RightsRecord, tiers)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="980" y="605" width="260" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="Ingestion — fetch → extract → chunk → rights guard  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="980" y="660" width="260" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="Tier-1 federal sources: CDC · ED/IDEA · NIH · CMS · CPIR · Michigan  (6/6, 278 chunks)  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="980" y="715" width="260" height="80" as="geometry" />
+        </mxCell>
         <!-- PLATFORM CLUSTER (cyan) bottom-left -->
-        <mxCell id="pltc" value="Platform / People  (built vs SYNTHETIC identities; DPO gate before real child data)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontStyle=1;verticalAlign=top;" vertex="1" parent="1"><mxGeometry x="220" y="520" width="300" height="230" as="geometry" /></mxCell>
-        <mxCell id="pl1" value="people — family / child / therapist · grants · registry  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" vertex="1" parent="1"><mxGeometry x="240" y="555" width="260" height="45" as="geometry" /></mxCell>
-        <mxCell id="pl2" value="per-family / child / story key tree · crypto-shred erasure  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" vertex="1" parent="1"><mxGeometry x="240" y="610" width="260" height="45" as="geometry" /></mxCell>
-        <mxCell id="pl3" value="StoryArtifactStore — encrypted at rest  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="240" y="665" width="260" height="40" as="geometry" /></mxCell>
-        <mxCell id="pl4" value="M1 progress engine — GATED (needs clinician policy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="240" y="710" width="260" height="35" as="geometry" /></mxCell>
-
+        <mxCell id="pltc" value="Platform / People  (built vs SYNTHETIC identities; DPO gate before real child data)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="220" y="520" width="300" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="pl1" value="people — family / child / therapist · grants · registry  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" vertex="1" parent="1">
+          <mxGeometry x="240" y="555" width="260" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="pl2" value="per-family / child / story key tree · crypto-shred erasure  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" vertex="1" parent="1">
+          <mxGeometry x="240" y="610" width="260" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="pl3" value="StoryArtifactStore — encrypted at rest  ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="240" y="665" width="260" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pl4" value="M1 progress engine — GATED (needs clinician policy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="710" width="260" height="35" as="geometry" />
+        </mxCell>
         <!-- FUTURE SURFACE -->
-        <mxCell id="s2" value="Surface 2 — Practice Assistant (cited Q&amp;A; entitlement discovery)  · planned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="220" y="120" width="260" height="55" as="geometry" /></mxCell>
-
+        <mxCell id="s2" value="Surface 2 — Practice Assistant (cited Q&amp;A; entitlement discovery)  · planned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="120" width="260" height="55" as="geometry" />
+        </mxCell>
         <!-- EDGES: main chain -->
-        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n1" target="n2"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n2" target="n3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n3" target="n4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n4" target="n5"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n5" target="n6"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n6" target="n7"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n7" target="n8"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n8" target="n9"><mxGeometry relative="1" as="geometry" /></mxCell>
-
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n1" target="n2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n2" target="n3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n3" target="n4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n4" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n5" target="n6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n6" target="n7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n7" target="n8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="n8" target="n9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- EDGES: feeds into generator -->
-        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673A6;endArrow=block;dashed=1;" edge="1" parent="1" source="c1" target="n5"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673A6;endArrow=block;dashed=1;" edge="1" parent="1" source="p1" target="n5"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673A6;endArrow=block;dashed=1;" edge="1" parent="1" source="g1" target="n5"><mxGeometry relative="1" as="geometry" /></mxCell>
-
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673A6;endArrow=block;dashed=1;" edge="1" parent="1" source="c1" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673A6;endArrow=block;dashed=1;" edge="1" parent="1" source="p1" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673A6;endArrow=block;dashed=1;" edge="1" parent="1" source="g1" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- EDGES: corpus feeds grounding -->
-        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="a2" target="g1"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="a4" target="a2"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="a5" target="a4"><mxGeometry relative="1" as="geometry" /></mxCell>
-
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="a2" target="g1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="a4" target="a2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="a5" target="a4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- EDGES: platform + storage -->
-        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;" edge="1" parent="1" source="pl1" target="n4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;" edge="1" parent="1" source="n8" target="pl3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="a2" target="s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;" edge="1" parent="1" source="pl1" target="n4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;" edge="1" parent="1" source="n8" target="pl3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="a2" target="s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-
   <diagram name="2 · Build Progress &amp; Flow" id="progress">
     <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <mxCell id="ptitle" value="Build Progress &amp; Flow  —  colour = status" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="900" height="30" as="geometry" /></mxCell>
-
+        <mxCell id="ptitle" value="Build Progress &amp; Flow  —  colour = status" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="900" height="30" as="geometry" />
+        </mxCell>
         <!-- STATUS LEGEND -->
-        <mxCell id="sl1" value="Built &amp; shipping" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="58" width="160" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl2" value="Gated on a person" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="210" y="58" width="160" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl3" value="Planned / not built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1"><mxGeometry x="380" y="58" width="160" height="28" as="geometry" /></mxCell>
-
+        <mxCell id="sl1" value="Built &amp; shipping" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="160" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl2" value="Gated on a person" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="210" y="58" width="160" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl3" value="Planned / not built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="58" width="160" height="28" as="geometry" />
+        </mxCell>
         <!-- TRACK 1: ANIMATION PIPELINE (all built) -->
-        <mxCell id="t1lab" value="Track 1 — Animation pipeline (Surface 1): BUILT end-to-end, 735 tests green" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="110" width="760" height="20" as="geometry" /></mxCell>
-        <mxCell id="s1" value="Story" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="40" y="140" width="120" height="50" as="geometry" /></mxCell>
-        <mxCell id="s2b" value="Consent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="185" y="140" width="120" height="50" as="geometry" /></mxCell>
-        <mxCell id="s3" value="Pseudonymize" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="330" y="140" width="120" height="50" as="geometry" /></mxCell>
-        <mxCell id="s4" value="Generate&#10;(Opus via seam)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="475" y="140" width="130" height="50" as="geometry" /></mxCell>
-        <mxCell id="s5b" value="Ground&#10;(cite corpus) KC-21" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="630" y="140" width="140" height="50" as="geometry" /></mxCell>
-        <mxCell id="s6" value="Validate&#10;+ safety" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="795" y="140" width="120" height="50" as="geometry" /></mxCell>
-        <mxCell id="s7" value="Human review&#10;(required)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="940" y="140" width="120" height="50" as="geometry" /></mxCell>
-        <mxCell id="s8b" value="Render" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="1085" y="140" width="110" height="50" as="geometry" /></mxCell>
-        <mxCell id="s9b" value="Animation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1220" y="140" width="120" height="50" as="geometry" /></mxCell>
-
+        <mxCell id="t1lab" value="Track 1 — Animation pipeline (Surface 1): BUILT end-to-end, 735 tests green" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="760" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" value="Story" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s2b" value="Consent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="185" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="Pseudonymize" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="330" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" value="Generate&#xa;(Opus via seam)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="475" y="140" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s5b" value="Ground&#xa;(cite corpus) KC-21" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="630" y="140" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" value="Validate&#xa;+ safety" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="795" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" value="Human review&#xa;(required)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="940" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s8b" value="Render" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="1085" y="140" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s9b" value="Animation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="140" width="120" height="50" as="geometry" />
+        </mxCell>
         <!-- TRACK 2: CORPUS -->
-        <mxCell id="t2lab" value="Track 2 — Corpus (wegofwd-arivu): federal spine ingested, feeds grounding" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="300" width="760" height="20" as="geometry" /></mxCell>
-        <mxCell id="c1b" value="Federal sources&#10;CDC·ED·NIH·CMS·CPIR·MI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="40" y="330" width="170" height="50" as="geometry" /></mxCell>
-        <mxCell id="c2b" value="Ingest + rights guard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="235" y="330" width="150" height="50" as="geometry" /></mxCell>
-        <mxCell id="c3b" value="SqliteCorpus&#10;(278 chunks)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="410" y="330" width="150" height="50" as="geometry" /></mxCell>
-        <mxCell id="c4b" value="Retrieval (FTS5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="585" y="330" width="150" height="50" as="geometry" /></mxCell>
-
+        <mxCell id="t2lab" value="Track 2 — Corpus (wegofwd-arivu): federal spine ingested, feeds grounding" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="760" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c1b" value="Federal sources&#xa;CDC·ED·NIH·CMS·CPIR·MI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="330" width="170" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c2b" value="Ingest + rights guard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="235" y="330" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c3b" value="SqliteCorpus&#xa;(278 chunks)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="410" y="330" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c4b" value="Retrieval (FTS5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="585" y="330" width="150" height="50" as="geometry" />
+        </mxCell>
         <!-- GATED CLUSTER -->
-        <mxCell id="glab" value="Blocked on a person  (the real unlocks)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="470" width="760" height="20" as="geometry" /></mxCell>
-        <mxCell id="gg1" value="Clinician  →  KC-16 validators · M1 progress engine · parent progress report" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="40" y="500" width="380" height="55" as="geometry" /></mxCell>
-        <mxCell id="gg2" value="DPO / legal  →  real child data · accounts + DOB go live" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="440" y="500" width="360" height="55" as="geometry" /></mxCell>
-        <mxCell id="gg3" value="Counsel  →  commercial layer (ADR-013)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="820" y="500" width="320" height="55" as="geometry" /></mxCell>
-
+        <mxCell id="glab" value="Blocked on a person  (the real unlocks)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="470" width="760" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="gg1" value="Clinician  →  KC-16 validators · M1 progress engine · parent progress report" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="500" width="380" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="gg2" value="DPO / legal  →  real child data · accounts + DOB go live" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="440" y="500" width="360" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="gg3" value="Counsel  →  commercial layer (ADR-013)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="820" y="500" width="320" height="55" as="geometry" />
+        </mxCell>
         <!-- PLANNED CLUSTER -->
-        <mxCell id="qlab" value="Planned / next  (no permission needed for most)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="600" width="760" height="20" as="geometry" /></mxCell>
-        <mxCell id="qq1" value="Surface 2 — Practice Assistant (cited Q&amp;A · entitlement discovery)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="40" y="630" width="300" height="50" as="geometry" /></mxCell>
-        <mxCell id="qq2" value="Corpus: PDF extractor · Tier-2 PMC · retraction daemon" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="360" y="630" width="300" height="50" as="geometry" /></mxCell>
-        <mxCell id="qq3" value="Entitlement tagging schema (ADR-009 D10)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="680" y="630" width="280" height="50" as="geometry" /></mxCell>
-        <mxCell id="qq4" value="Agent / MCP layers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="980" y="630" width="200" height="50" as="geometry" /></mxCell>
-
+        <mxCell id="qlab" value="Planned / next  (no permission needed for most)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="600" width="760" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="qq1" value="Surface 2 — Practice Assistant (cited Q&amp;A · entitlement discovery)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="630" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="qq2" value="Corpus: PDF extractor · Tier-2 PMC · retraction daemon" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="630" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="qq3" value="Entitlement tagging schema (ADR-009 D10)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="630" width="280" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="qq4" value="Agent / MCP layers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="980" y="630" width="200" height="50" as="geometry" />
+        </mxCell>
         <!-- EDGES track1 -->
-        <mxCell id="pe1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s1" target="s2b"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s2b" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s3" target="s4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s4" target="s5b"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s5b" target="s6"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s6" target="s7"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s7" target="s8b"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe8" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s8b" target="s9b"><mxGeometry relative="1" as="geometry" /></mxCell>
-
+        <mxCell id="pe1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s1" target="s2b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s2b" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s3" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s4" target="s5b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s5b" target="s6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s6" target="s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s7" target="s8b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe8" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="s8b" target="s9b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- EDGES track2 -->
-        <mxCell id="pe9" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="c1b" target="c2b"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe10" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="c2b" target="c3b"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="pe11" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="c3b" target="c4b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="pe9" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="c1b" target="c2b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe10" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="c2b" target="c3b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pe11" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="c3b" target="c4b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- corpus retrieval feeds the Ground step of track 1 -->
-        <mxCell id="pe12" value="grounds" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="c4b" target="s5b"><mxGeometry relative="1" as="geometry" /></mxCell>
-
+        <mxCell id="pe12" value="grounds" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="c4b" target="s5b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- clinician unblocks -->
-        <mxCell id="pe13" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D79B00;endArrow=block;dashed=1;" edge="1" parent="1" source="gg1" target="s7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="pe13" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D79B00;endArrow=block;dashed=1;" edge="1" parent="1" source="gg1" target="s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- corpus enables surface 2 -->
-        <mxCell id="pe14" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=block;dashed=1;" edge="1" parent="1" source="c4b" target="qq1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="pe14" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=block;dashed=1;" edge="1" parent="1" source="c4b" target="qq1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-
   <diagram name="3 · Serving Path (customer → corpus)" id="serving">
     <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <mxCell id="stitle" value="Serving Path — the customer never talks to the corpus directly" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="1100" height="30" as="geometry" /></mxCell>
-
+        <mxCell id="stitle" value="Serving Path — the customer never talks to the corpus directly" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1100" height="30" as="geometry" />
+        </mxCell>
         <!-- legend -->
-        <mxCell id="sl_a" value="Actor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="58" width="90" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl_s" value="Surface (front end)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="140" y="58" width="150" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl_g" value="App / API + safety" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="300" y="58" width="150" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl_l" value="LLM (via seam)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="460" y="58" width="140" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl_c" value="Corpus (internal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="610" y="58" width="140" height="28" as="geometry" /></mxCell>
-        <mxCell id="sl_p" value="Later / optional" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1"><mxGeometry x="760" y="58" width="140" height="28" as="geometry" /></mxCell>
-
+        <mxCell id="sl_a" value="Actor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="90" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl_s" value="Surface (front end)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="140" y="58" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl_g" value="App / API + safety" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="58" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl_l" value="LLM (via seam)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="460" y="58" width="140" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl_c" value="Corpus (internal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="58" width="140" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="sl_p" value="Later / optional" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="58" width="140" height="28" as="geometry" />
+        </mxCell>
         <!-- actors + front end -->
-        <mxCell id="cust" value="Customer&#10;(carer · self-advocate · senior)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1"><mxGeometry x="40" y="250" width="140" height="70" as="geometry" /></mxCell>
-        <mxCell id="fe" value="Front end&#10;(the product UI / surface)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1"><mxGeometry x="230" y="250" width="150" height="70" as="geometry" /></mxCell>
-
+        <mxCell id="cust" value="Customer&#xa;(carer · self-advocate · senior)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="fe" value="Front end&#xa;(the product UI / surface)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="230" y="250" width="150" height="70" as="geometry" />
+        </mxCell>
         <!-- app layer background -->
-        <mxCell id="appbg" value="Application / API layer  —  the customer-facing API; where the five laws live" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FBE5E4;strokeColor=#B85450;fontStyle=1;verticalAlign=top;dashed=0;" vertex="1" parent="1"><mxGeometry x="430" y="130" width="510" height="330" as="geometry" /></mxCell>
-        <mxCell id="api" value="Application API — request in / cited answer out" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1"><mxGeometry x="450" y="165" width="470" height="40" as="geometry" /></mxCell>
-        <mxCell id="pseudo" value="Pseudonymise personal input (name → token). Personal data stays HERE." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="450" y="220" width="230" height="60" as="geometry" /></mxCell>
-        <mxCell id="laws" value="The five laws enforced here: cite-or-refuse · navigate-never-determine · no personal data on the assistant · risk-of-harm → human" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1"><mxGeometry x="690" y="220" width="230" height="105" as="geometry" /></mxCell>
-        <mxCell id="llm" value="LLM — Opus 4.8 via wegofwd-llm seam (swappable)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="450" y="295" width="230" height="55" as="geometry" /></mxCell>
-        <mxCell id="retr" value="Retrieval (RAG) — query the corpus, get cited passages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="450" y="365" width="470" height="45" as="geometry" /></mxCell>
-
+        <mxCell id="appbg" value="Application / API layer  —  the customer-facing API; where the five laws live" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FBE5E4;strokeColor=#B85450;fontStyle=1;verticalAlign=top;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="430" y="130" width="510" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="Application API — request in / cited answer out" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="450" y="165" width="470" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pseudo" value="Pseudonymise personal input (name → token). Personal data stays HERE." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="450" y="220" width="230" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="laws" value="The five laws enforced here: cite-or-refuse · navigate-never-determine · no personal data on the assistant · risk-of-harm → human" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="690" y="220" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="llm" value="LLM — Opus 4.8 via wegofwd-llm seam (swappable)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="295" width="230" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="retr" value="Retrieval (RAG) — query the corpus, get cited passages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1">
+          <mxGeometry x="450" y="365" width="470" height="45" as="geometry" />
+        </mxCell>
         <!-- corpus + consumption modes -->
-        <mxCell id="corpus" value="wegofwd-arivu — CORPUS&#10;internal retrieval engine&#10;holds NO personal data (ADR-009 D6)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1000" y="235" width="270" height="95" as="geometry" /></mxCell>
-        <mxCell id="modeA" value="consumed as: in-process library (today)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="1000" y="345" width="270" height="35" as="geometry" /></mxCell>
-        <mxCell id="modeB" value="or: standalone internal service / MCP (later)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1"><mxGeometry x="1000" y="385" width="270" height="35" as="geometry" /></mxCell>
-
+        <mxCell id="corpus" value="wegofwd-arivu — CORPUS&#xa;internal retrieval engine&#xa;holds NO personal data (ADR-009 D6)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="235" width="270" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="modeA" value="consumed as: in-process library (today)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="345" width="270" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="modeB" value="or: standalone internal service / MCP (later)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="385" width="270" height="35" as="geometry" />
+        </mxCell>
         <!-- boundary note -->
-        <mxCell id="note" value="Personal data boundary: the customer's situation lives ONLY in the app layer (pseudonymised before retrieval). The corpus never receives it, and the front end never reads the corpus directly — that would bypass every gate above." style="text;html=1;align=left;fontSize=12;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="40" y="480" width="1230" height="40" as="geometry" /></mxCell>
-
+        <mxCell id="note" value="Personal data boundary: the customer&#39;s situation lives ONLY in the app layer (pseudonymised before retrieval). The corpus never receives it, and the front end never reads the corpus directly — that would bypass every gate above." style="text;html=1;align=left;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="1230" height="40" as="geometry" />
+        </mxCell>
         <!-- edges -->
-        <mxCell id="se1" value="asks" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="cust" target="fe"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="fe" target="api"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se3" value="query (pseudonymised)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="retr" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se4" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="corpus" target="retr"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se5" value="ground" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;endArrow=block;" edge="1" parent="1" source="retr" target="llm"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;endArrow=block;" edge="1" parent="1" source="llm" target="api"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se7" value="cited answer" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0;exitY=0.25;entryX=1;entryY=0.75;" edge="1" parent="1" source="api" target="fe"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se8" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=none;dashed=1;" edge="1" parent="1" source="modeA" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="se9" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=none;dashed=1;" edge="1" parent="1" source="modeB" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="se1" value="asks" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="cust" target="fe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="fe" target="api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se3" value="query (pseudonymised)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;" edge="1" parent="1" source="retr" target="corpus">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se4" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82B366;endArrow=block;dashed=1;" edge="1" parent="1" source="corpus" target="retr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se5" value="ground" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;endArrow=block;" edge="1" parent="1" source="retr" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673A6;endArrow=block;" edge="1" parent="1" source="llm" target="api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se7" value="cited answer" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0;exitY=0.25;entryX=1;entryY=0.75;" edge="1" parent="1" source="api" target="fe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se8" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=none;dashed=1;" edge="1" parent="1" source="modeA" target="corpus">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se9" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#999999;endArrow=none;dashed=1;" edge="1" parent="1" source="modeB" target="corpus">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-
   <diagram name="4 · Corpus — conceptual architecture" id="corpusarch">
     <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1150" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <mxCell id="ctitle" value="wegofwd-arivu — the corpus, conceptually  (rights-cleared data in ▸ cited passages out; no personal data)" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="1300" height="30" as="geometry" /></mxCell>
-
+        <mxCell id="ctitle" value="wegofwd-arivu — the corpus, conceptually  (rights-cleared data in ▸ cited passages out; no personal data)" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1300" height="30" as="geometry" />
+        </mxCell>
         <!-- legend -->
-        <mxCell id="cl1" value="Sources (input)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="58" width="130" height="26" as="geometry" /></mxCell>
-        <mxCell id="cl2" value="Ingestion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="180" y="58" width="110" height="26" as="geometry" /></mxCell>
-        <mxCell id="cl3" value="Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1"><mxGeometry x="300" y="58" width="90" height="26" as="geometry" /></mxCell>
-        <mxCell id="cl4" value="Retrieval" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="400" y="58" width="100" height="26" as="geometry" /></mxCell>
-        <mxCell id="cl5" value="Entitlement layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="510" y="58" width="140" height="26" as="geometry" /></mxCell>
-        <mxCell id="cl6" value="Rights/provenance (governance)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="660" y="58" width="220" height="26" as="geometry" /></mxCell>
-
+        <mxCell id="cl1" value="Sources (input)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="130" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="cl2" value="Ingestion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="180" y="58" width="110" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="cl3" value="Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="58" width="90" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="cl4" value="Retrieval" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="58" width="100" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="cl5" value="Entitlement layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="510" y="58" width="140" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="cl6" value="Rights/provenance (governance)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="58" width="220" height="26" as="geometry" />
+        </mxCell>
         <!-- vertical layered stack -->
-        <mxCell id="b1" value="SOURCES · rights-cleared inputs&#10;Tier-1 federal, public domain: CDC · ED/IDEA-OSEP · NIH · CMS/Medicaid · CPIR · Michigan   |   SSA/SSI: module ready, dormant (WAF)   |   Tier-2 PMC open-access: planned   |   Tier-3 (ERIC/Cochrane/WHO/paywalled): prohibited, never ingested" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="110" width="980" height="75" as="geometry" /></mxCell>
-        <mxCell id="b2" value="INGESTION pipeline&#10;Fetch (HttpFetcher — polite · rate-limited · full TLS chain)  →  Extract (html_to_text)  →  Chunk (bounded passages)  →  RIGHTS GUARD: refuse if no rights record / prohibited tier / disallowed licence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="215" width="980" height="75" as="geometry" /></mxCell>
-        <mxCell id="b3" value="STORAGE — SqliteCorpus  (holds NO personal data)&#10;chunks: text · source_id · licence_ref · currency     +     sources: tier · licence · currency     +     FTS5 index&#10;content-hash reconciliation: add / unchanged / superseded (supersession history kept)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="320" width="980" height="80" as="geometry" /></mxCell>
-        <mxCell id="b4" value="RETRIEVAL&#10;retrieve(query, limit) — FTS5 / BM25, currency-filtered   ·   source_chunks(source_id)   ·   no_support_rate (coverage metric)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="430" width="980" height="70" as="geometry" /></mxCell>
-        <mxCell id="b5" value="ENTITLEMENT LAYER  (ADR-009 D10)&#10;EntitlementProgram registry (program · criteria-as-written · jurisdiction · who-decides · how-to-apply)  +  EntitlementIndex.find&#10;cite-or-refuse · navigate-never-determine — cites the passages held below" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="530" width="980" height="80" as="geometry" /></mxCell>
-
+        <mxCell id="b1" value="SOURCES · rights-cleared inputs&#xa;Tier-1 federal, public domain: CDC · ED/IDEA-OSEP · NIH · CMS/Medicaid · CPIR · Michigan   |   SSA/SSI: module ready, dormant (WAF)   |   Tier-2 PMC open-access: planned   |   Tier-3 (ERIC/Cochrane/WHO/paywalled): prohibited, never ingested" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="980" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="INGESTION pipeline&#xa;Fetch (HttpFetcher — polite · rate-limited · full TLS chain)  →  Extract (html_to_text)  →  Chunk (bounded passages)  →  RIGHTS GUARD: refuse if no rights record / prohibited tier / disallowed licence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="215" width="980" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="STORAGE — SqliteCorpus  (holds NO personal data)&#xa;chunks: text · source_id · licence_ref · currency     +     sources: tier · licence · currency     +     FTS5 index&#xa;content-hash reconciliation: add / unchanged / superseded (supersession history kept)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="320" width="980" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="RETRIEVAL&#xa;retrieve(query, limit) — FTS5 / BM25, currency-filtered   ·   source_chunks(source_id)   ·   no_support_rate (coverage metric)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="430" width="980" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="ENTITLEMENT LAYER  (ADR-009 D10)&#xa;EntitlementProgram registry (program · criteria-as-written · jurisdiction · who-decides · how-to-apply)  +  EntitlementIndex.find&#xa;cite-or-refuse · navigate-never-determine — cites the passages held below" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="530" width="980" height="80" as="geometry" />
+        </mxCell>
         <!-- governance vertical band -->
-        <mxCell id="gov" value="RIGHTS &amp; PROVENANCE REGIME  (ADR-011)&#10;&#10;RightsRecord&#10;(licence + text-ref + attribution)&#10;&#10;SourceTier — 1 / 2 / 3&#10;&#10;CurrencyStatus&#10;current / superseded /&#10;retracted / withdrawn&#10;&#10;Every chunk stays traceable,&#10;correctable, withdrawable." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1070" y="215" width="300" height="395" as="geometry" /></mxCell>
-
+        <mxCell id="gov" value="RIGHTS &amp; PROVENANCE REGIME  (ADR-011)&#xa;&#xa;RightsRecord&#xa;(licence + text-ref + attribution)&#xa;&#xa;SourceTier — 1 / 2 / 3&#xa;&#xa;CurrencyStatus&#xa;current / superseded /&#xa;retracted / withdrawn&#xa;&#xa;Every chunk stays traceable,&#xa;correctable, withdrawable." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="215" width="300" height="395" as="geometry" />
+        </mxCell>
         <!-- consumers -->
-        <mxCell id="cons" value="CONSUMERS  (server-side, behind the app/API + safety layer — see page 3; via the wegofwd-llm seam)&#10;Grounding (KC-21) → the animation      ·      Practice / entitlement surface → later (gated on the risk-of-harm path, ADR-009 D7)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="60" y="650" width="980" height="70" as="geometry" /></mxCell>
-
+        <mxCell id="cons" value="CONSUMERS  (server-side, behind the app/API + safety layer — see page 3; via the wegofwd-llm seam)&#xa;Grounding (KC-21) → the animation      ·      Practice / entitlement surface → later (gated on the risk-of-harm path, ADR-009 D7)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="650" width="980" height="70" as="geometry" />
+        </mxCell>
         <!-- principles strip -->
-        <mxCell id="laws" value="Corpus laws:  holds NO personal data (ADR-009 D6)   ·   facts live here, not in model weights (ADR-010)   ·   cite-or-refuse   ·   currency is first-class (retraction-aware)" style="text;html=1;align=left;fontSize=13;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="60" y="740" width="1310" height="30" as="geometry" /></mxCell>
-
+        <mxCell id="laws" value="Corpus laws:  holds NO personal data (ADR-009 D6)   ·   facts live here, not in model weights (ADR-010)   ·   cite-or-refuse   ·   currency is first-class (retraction-aware)" style="text;html=1;align=left;fontSize=13;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="60" y="740" width="1310" height="30" as="geometry" />
+        </mxCell>
         <!-- flow edges -->
-        <mxCell id="ce1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b1" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="ce2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b2" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="ce3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b3" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="ce4" value="cites" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;" edge="1" parent="1" source="b5" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="ce5" value="serves" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b4" target="cons"><mxGeometry relative="1" as="geometry" /></mxCell>
-
+        <mxCell id="ce1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b1" target="b2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b2" target="b3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b3" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce4" value="cites" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;" edge="1" parent="1" source="b5" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce5" value="serves" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="b4" target="cons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <!-- governance touches ingestion/storage/retrieval -->
-        <mxCell id="cg1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="cg2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="cg3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cg1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cg2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cg3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="gov" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-
   <diagram name="5 · LLM vs Corpus" id="llmvcorpus">
-    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1998" dy="1204" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <!-- Title -->
-        <mxCell id="p5title" value="5 · LLM vs Corpus — &quot;the LLM phrases; the corpus knows&quot;  |  built current state" style="text;html=1;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="18" width="1200" height="30" as="geometry" /></mxCell>
-
-        <!-- LEGEND -->
-        <mxCell id="p5la" value="Knowledge asset (corpus)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="55" width="185" height="26" as="geometry" /></mxCell>
-        <mxCell id="p5lb" value="LLM seam" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="235" y="55" width="110" height="26" as="geometry" /></mxCell>
-        <mxCell id="p5lc" value="Entitlement layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="355" y="55" width="140" height="26" as="geometry" /></mxCell>
-        <mxCell id="p5ld" value="Built" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="505" y="55" width="80" height="26" as="geometry" /></mxCell>
-        <mxCell id="p5le" value="Guardrail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="595" y="55" width="90" height="26" as="geometry" /></mxCell>
-        <mxCell id="p5lf" value="Gate (person-blocked)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="695" y="55" width="175" height="26" as="geometry" /></mxCell>
-
-        <!-- ===== kc generate / kc intake PATH ===== -->
-        <mxCell id="p5t1label" value="kc generate / kc intake — grounded animation path (built)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="100" width="700" height="20" as="geometry" /></mxCell>
-
-        <mxCell id="p5s1" value="Parent story" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="40" y="130" width="110" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5s2" value="Pseudonymize&#10;(name stripped,&#10;stays on machine)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="175" y="130" width="145" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5s3" value="ArivuGroundingSource&#10;(query → corpus;&#10;cited passages back)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1"><mxGeometry x="350" y="130" width="175" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5s4" value="wegofwd-llm seam&#10;Anthropic ZDR (default — no-train/zero-retention)&#10;Gemini / Qwen: --synthetic-data flag only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;fontSize=11;" vertex="1" parent="1"><mxGeometry x="560" y="118" width="250" height="74" as="geometry" /></mxCell>
-        <mxCell id="p5s5" value="Scene script&#10;(validated)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="840" y="130" width="130" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5s6" value="Human review&#10;(required)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="995" y="130" width="120" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5s7" value="Renderer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="1140" y="130" width="100" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5s8" value="Animation&#10;(mp4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1265" y="130" width="90" height="50" as="geometry" /></mxCell>
-
-        <!-- generate path arrows -->
-        <mxCell id="p5ge1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s1" target="p5s2"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ge2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s2" target="p5s3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ge3" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;" edge="1" parent="1" source="p5s3" target="p5s4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ge4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s4" target="p5s5"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ge5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s5" target="p5s6"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ge6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s6" target="p5s7"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ge7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5s7" target="p5s8"><mxGeometry relative="1" as="geometry" /></mxCell>
-
-        <!-- ===== CORPUS BAND ===== -->
-        <mxCell id="p5corp" value="wegofwd-arivu corpus  (the knowledge asset — ADR-010: facts live here, not in model weights)&#10;SqliteCorpus · FTS5/BM25 · 3,438 chunks · currency-gated (current / superseded / retracted / withdrawn) · NO personal data (ADR-009 D6)&#10;Sources: federal regs (IDEA · CMS/Medicaid · SSA/SSI · ADA/Section 504) · Michigan MARSE PDF · PMC Tier-2 CC0/CC-BY literature · eCFR 20 CFR/34 CFR/42 CFR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=12;fontSize=12;" vertex="1" parent="1"><mxGeometry x="40" y="300" width="1310" height="100" as="geometry" /></mxCell>
-
-        <!-- grounding ↔ corpus arrows (down then up at different x offsets) -->
-        <mxCell id="p5cq" value="query (pseudonymised)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0.3;exitY=1;entryX=0.28;entryY=0;" edge="1" parent="1" source="p5s3" target="p5corp"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5cp" value="cited passages" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0.55;exitY=0;entryX=0.7;entryY=1;" edge="1" parent="1" source="p5corp" target="p5s4"><mxGeometry relative="1" as="geometry" /></mxCell>
-
-        <!-- ===== kc entitlements PATH ===== -->
-        <mxCell id="p5t2label" value="kc entitlements — navigate-never-determine (ADR-009 D10, built)" style="text;html=1;align=left;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="40" y="425" width="750" height="20" as="geometry" /></mxCell>
-
-        <mxCell id="p5eq1" value="--situation&#10;(free text)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" vertex="1" parent="1"><mxGeometry x="40" y="455" width="115" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5eq2" value="EntitlementIndex&#10;(11 programs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" vertex="1" parent="1"><mxGeometry x="185" y="455" width="175" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5eq3" value="cite-or-refuse on construction&#10;(every citation quote must be verbatim&#10;substring of a corpus chunk)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="395" y="450" width="225" height="60" as="geometry" /></mxCell>
-        <mxCell id="p5eq4" value="Matched programs&#10;criteria-as-written · citations&#10;who-decides · how-to-apply" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" vertex="1" parent="1"><mxGeometry x="650" y="455" width="205" height="50" as="geometry" /></mxCell>
-        <mxCell id="p5eq5" value="Navigational output&#10;(NOT: &quot;you qualify&quot;)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="885" y="455" width="185" height="50" as="geometry" /></mxCell>
-
-        <!-- entitlement path arrows -->
-        <mxCell id="p5ea1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq1" target="p5eq2"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ea2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq2" target="p5eq3"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ea3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq3" target="p5eq4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5ea4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" edge="1" parent="1" source="p5eq4" target="p5eq5"><mxGeometry relative="1" as="geometry" /></mxCell>
-
-        <!-- entitlement ↔ corpus arrow -->
-        <mxCell id="p5ec1" value="validate quotes&#10;against corpus chunks" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;exitX=0.5;exitY=0;entryX=0.19;entryY=1;" edge="1" parent="1" source="p5eq2" target="p5corp"><mxGeometry relative="1" as="geometry" /></mxCell>
-
-        <!-- ===== RIGHT RAIL: LAWS ===== -->
-        <mxCell id="p5laws" value="LAWS (hard gates, not hints)&#10;&#10;① cite-or-refuse&#10;no source → no claim&#10;&#10;② navigate-not-determine&#10;never &quot;you qualify&quot;&#10;&#10;③ child data&#10;pseudonymized; name&#10;stays on machine&#10;&#10;④ no-train / ZDR&#10;Anthropic only for&#10;real child data&#10;&#10;⑤ no personal data&#10;corpus = public reg&#10;text only" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1380" y="100" width="185" height="480" as="geometry" /></mxCell>
-
-        <!-- laws ↔ LLM and output dashed lines -->
-        <mxCell id="p5la1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="p5laws" target="p5s4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="p5la2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" edge="1" parent="1" source="p5laws" target="p5eq5"><mxGeometry relative="1" as="geometry" /></mxCell>
-
-        <!-- ===== KEY CALLOUT ===== -->
-        <mxCell id="p5callout" value="The LLM is the language faculty — it phrases what the corpus found.  The corpus is where knowledge lives.  No retrieved passage → no claim (cite-or-refuse, ADR-010)." style="text;html=1;align=center;fontSize=14;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="40" y="630" width="1520" height="30" as="geometry" /></mxCell>
-
+        <mxCell id="p5title" parent="1" style="text;html=1;align=left;fontSize=18;fontStyle=1;" value="5 · LLM vs Corpus — &quot;the LLM phrases; the corpus knows&quot;  |  built current state" vertex="1">
+          <mxGeometry height="30" width="1200" x="40" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="p5la" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" value="Knowledge asset (corpus)" vertex="1">
+          <mxGeometry height="26" width="185" x="40" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p5lb" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" value="LLM seam" vertex="1">
+          <mxGeometry height="26" width="110" x="235" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p5lc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" value="Entitlement layer" vertex="1">
+          <mxGeometry height="26" width="140" x="355" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ld" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" value="Built" vertex="1">
+          <mxGeometry height="26" width="80" x="505" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p5le" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" value="Guardrail" vertex="1">
+          <mxGeometry height="26" width="90" x="595" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p5lf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" value="Gate (person-blocked)" vertex="1">
+          <mxGeometry height="26" width="175" x="695" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p5t1label" parent="1" style="text;html=1;align=left;fontStyle=1;fontSize=13;" value="kc generate / kc intake — grounded animation path (built)" vertex="1">
+          <mxGeometry height="20" width="700" x="40" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="Parent story" vertex="1">
+          <mxGeometry height="50" width="110" x="40" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;" value="Pseudonymize&#xa;(name stripped,&#xa;stays on machine)" vertex="1">
+          <mxGeometry height="50" width="145" x="175" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" value="ArivuGroundingSource&#xa;(query → corpus;&#xa;cited passages back)" vertex="1">
+          <mxGeometry height="50" width="175" x="350" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;fontSize=11;" value="wegofwd-llm seam&#xa;Anthropic ZDR (default — no-train/zero-retention)&#xa;Gemini / Qwen: --synthetic-data flag only" vertex="1">
+          <mxGeometry height="74" width="250" x="560" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="Scene script&#xa;(validated)" vertex="1">
+          <mxGeometry height="50" width="130" x="840" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" value="Human review&#xa;(required)" vertex="1">
+          <mxGeometry height="50" width="120" x="995" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="Renderer" vertex="1">
+          <mxGeometry height="50" width="100" x="1140" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5s8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="Animation&#xa;(mp4)" vertex="1">
+          <mxGeometry height="50" width="90" x="1265" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge1" edge="1" parent="1" source="p5s1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge2" edge="1" parent="1" source="p5s2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge3" edge="1" parent="1" source="p5s3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;" target="p5s4" value="cited passages">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge4" edge="1" parent="1" source="p5s4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge5" edge="1" parent="1" source="p5s5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5s6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge6" edge="1" parent="1" source="p5s6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ge7" edge="1" parent="1" source="p5s7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5s8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5corp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=left;verticalAlign=middle;spacingLeft=12;fontSize=12;" value="wegofwd-arivu corpus  (the knowledge asset — ADR-010: facts live here, not in model weights)&#xa;SqliteCorpus · FTS5/BM25 · 3,438 chunks · currency-gated (current / superseded / retracted / withdrawn) · NO personal data (ADR-009 D6)&#xa;Sources: federal regs (IDEA · CMS/Medicaid · SSA/SSI · ADA/Section 504) · Michigan MARSE PDF · PMC Tier-2 CC0/CC-BY literature · eCFR 20 CFR/34 CFR/42 CFR" vertex="1">
+          <mxGeometry height="100" width="1310" x="40" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="p5cq" edge="1" parent="1" source="p5s3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0.3;exitY=1;entryX=0.28;entryY=0;" target="p5corp" value="query (pseudonymised)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5cp" edge="1" parent="1" source="p5corp" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6C8EBF;endArrow=block;dashed=1;exitX=0.55;exitY=0;entryX=0.7;entryY=1;" target="p5s4" value="cited passages">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5t2label" parent="1" style="text;html=1;align=left;fontStyle=1;fontSize=13;" value="kc entitlements — navigate-never-determine (ADR-009 D10, built)" vertex="1">
+          <mxGeometry height="20" width="750" x="40" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="p5eq1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;" value="--situation&#xa;(free text)" vertex="1">
+          <mxGeometry height="50" width="115" x="40" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="p5eq2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;" value="EntitlementIndex&#xa;(11 programs)" vertex="1">
+          <mxGeometry height="50" width="175" x="185" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="p5eq3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" value="cite-or-refuse on construction&#xa;(every citation quote must be verbatim&#xa;substring of a corpus chunk)" vertex="1">
+          <mxGeometry height="60" width="225" x="395" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="p5eq4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B0E3E6;strokeColor=#0E8088;fontSize=11;" value="Matched programs&#xa;criteria-as-written · citations&#xa;who-decides · how-to-apply" vertex="1">
+          <mxGeometry height="50" width="205" x="650" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="p5eq5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontStyle=1;" value="Navigational output&#xa;(NOT: &quot;you qualify&quot;)" vertex="1">
+          <mxGeometry height="50" width="185" x="885" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ea1" edge="1" parent="1" source="p5eq1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5eq2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ea2" edge="1" parent="1" source="p5eq2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5eq3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ea3" edge="1" parent="1" source="p5eq3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5eq4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ea4" edge="1" parent="1" source="p5eq4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#333333;endArrow=block;" target="p5eq5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5ec1" edge="1" parent="1" source="p5eq2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0E8088;endArrow=block;dashed=1;exitX=0.5;exitY=0;entryX=0.19;entryY=1;" target="p5corp" value="validate quotes&#xa;against corpus chunks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5laws" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=12;" value="LAWS (hard gates, not hints)&#xa;&#xa;① cite-or-refuse&#xa;no source → no claim&#xa;&#xa;② navigate-not-determine&#xa;never &quot;you qualify&quot;&#xa;&#xa;③ child data&#xa;pseudonymized; name&#xa;stays on machine&#xa;&#xa;④ no-train / ZDR&#xa;Anthropic only for&#xa;real child data&#xa;&#xa;⑤ no personal data&#xa;corpus = public reg&#xa;text only" vertex="1">
+          <mxGeometry height="480" width="185" x="1380" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p5la1" edge="1" parent="1" source="p5laws" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" target="p5s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5la2" edge="1" parent="1" source="p5laws" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#B85450;endArrow=none;dashed=1;" target="p5eq5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5callout" parent="1" style="text;html=1;align=center;fontSize=14;fontStyle=2;" value="The LLM is the language faculty — it phrases what the corpus found.  The corpus is where knowledge lives.  No retrieved passage → no claim (cite-or-refuse, ADR-010)." vertex="1">
+          <mxGeometry height="30" width="1520" x="40" y="630" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
