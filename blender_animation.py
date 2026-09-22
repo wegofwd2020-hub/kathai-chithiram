@@ -730,6 +730,13 @@ _PROP_GP_DRAWERS = {
     Prop.SHOE.value: _draw_shoe,
 }
 
+# Module-level set of drawable props — derived from _PROP_GP_DRAWERS so it
+# stays in sync automatically. Imported by BlenderSubprocessRenderer without
+# triggering a bpy import (bpy is only loaded lazily by _load_bpy()).
+BLENDER_DRAWABLE_PROPS: frozenset[Prop] = frozenset(
+    p for p in Prop if p.value in _PROP_GP_DRAWERS
+)
+
 # Extra scene-label synonyms that resolve to a canonical Prop value, in priority
 # order alongside the canonical names themselves (preserves the original
 # substring-match precedence).
@@ -866,9 +873,13 @@ class BlenderGreasePencilRenderer(SceneScriptRenderer):
     supported_majors = frozenset({1, 2})
 
     def drawable_props(self) -> frozenset[Prop]:
-        # Derived from the drawer table, so adding a Prop without a grease-pencil
-        # drawer drops it from the set and fails conformance.
-        return frozenset(p for p in Prop if p.value in _PROP_GP_DRAWERS)
+        """Return the set of drawable props supported by this renderer.
+
+        Returns:
+            A frozenset of Prop enum members that have grease-pencil drawers.
+            This constant is importable without loading bpy.
+        """
+        return BLENDER_DRAWABLE_PROPS
 
     def _render(self, plan: RenderPlan, *, draft_path: str | None) -> RenderSafetyReport:
         """Build the GP scene from the plan, render it, and return a report.
