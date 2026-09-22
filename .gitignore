@@ -51,6 +51,9 @@ skills-lock.json
 # Subagent-driven-development scratch (ledgers, briefs, review diffs) — local only
 .superpowers/
 
+# Scratch / trash
+TRASH/
+
 # AI tool configs (stray, not part of project)
 opencode.jsonc
 opencode.jasonc
