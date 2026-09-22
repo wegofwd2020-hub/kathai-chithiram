@@ -23,6 +23,7 @@ __all__ = [
     "ProviderResponseError",
     "ProviderUnavailableError",
     "RenderSafetyError",
+    "RendererError",
     "ReviewError",
     "SuggestionError",
     "SceneScriptGenerationError",
@@ -435,3 +436,19 @@ class UnsupportedSchemaVersionError(KathaiChithiramError):
             f"renderer {renderer_name!r} does not support schema MAJOR {major} "
             f"(supports {supported})"
         )
+
+
+class RendererError(KathaiChithiramError):
+    """A renderer failed to produce output for a non-safety reason.
+
+    Covers subprocess failures (Blender exited nonzero), missing binaries,
+    missing renderer scripts, or unexpected missing output files. Distinct
+    from :class:`RenderSafetyError` (which is a content-safety violation) and
+    from :class:`SceneScriptInvalidError` (which is a contract violation).
+
+    Args:
+        detail: Human-readable description of what went wrong.
+    """
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
