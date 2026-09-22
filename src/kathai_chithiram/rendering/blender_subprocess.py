@@ -199,7 +199,8 @@ class BlenderSubprocessRenderer(SceneScriptRenderer):
             proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)
             stderr_lines: list[str] = []
             try:
-                assert proc.stderr is not None
+                if proc.stderr is None:
+                    raise RendererError("subprocess.Popen did not open stderr pipe")
                 for line in proc.stderr:
                     sys.stderr.write(line)
                     stderr_lines.append(line)
@@ -216,7 +217,8 @@ class BlenderSubprocessRenderer(SceneScriptRenderer):
                 )
 
             if output_path is not None:
-                assert tmp_out is not None
+                if tmp_out is None:
+                    raise RendererError("internal: output temp path was not initialized")
                 if not os.path.exists(tmp_out):
                     raise RendererError(
                         "Blender exited 0 but output not found at expected path"
